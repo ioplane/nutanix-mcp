@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/NutanixMcp.Core/NutanixMcp.Core.csproj" />
+    <Project Path="src/NutanixMcp.Embedding/NutanixMcp.Embedding.csproj" />
+    <Project Path="src/NutanixMcp.Data/NutanixMcp.Data.csproj" />
+    <Project Path="src/NutanixMcp.Server/NutanixMcp.Server.csproj" />
+    <Project Path="src/NutanixMcp.Cli/NutanixMcp.Cli.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/NutanixMcp.Core.Tests/NutanixMcp.Core.Tests.csproj" />
+    <Project Path="tests/NutanixMcp.Embedding.Tests/NutanixMcp.Embedding.Tests.csproj" />
+    <Project Path="tests/NutanixMcp.Data.Tests/NutanixMcp.Data.Tests.csproj" />
+    <Project Path="tests/NutanixMcp.Server.Tests/NutanixMcp.Server.Tests.csproj" />
+    <Project Path="tests/NutanixMcp.E2E/NutanixMcp.E2E.csproj" />
+  </Folder>
+</Solution>

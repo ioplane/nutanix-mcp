@@ -1,0 +1,12 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  <PropertyGroup>
+    <!-- Test-only relaxations:
+         CA1707 — underscore-separated test names (Method_Scenario_Expectation pattern).
+         CA1711 — xUnit `*Collection` naming.
+         MA0004 — ConfigureAwait noise in test contexts.
+         MA0051 — long arrange/act/assert blocks intentionally not extracted. -->
+    <NoWarn>$(NoWarn);CA1707;CA1711;MA0004;MA0051</NoWarn>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+</Project>

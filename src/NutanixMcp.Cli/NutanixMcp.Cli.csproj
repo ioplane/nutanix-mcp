@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>NutanixMcp.Cli</RootNamespace>
+    <AssemblyName>nutanix-mcp</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NutanixMcp.Core/NutanixMcp.Core.csproj" />
+    <ProjectReference Include="../NutanixMcp.Embedding/NutanixMcp.Embedding.csproj" />
+    <ProjectReference Include="../NutanixMcp.Data/NutanixMcp.Data.csproj" />
+    <ProjectReference Include="../NutanixMcp.Server/NutanixMcp.Server.csproj" />
+    <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="Spectre.Console" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+  </ItemGroup>
+</Project>

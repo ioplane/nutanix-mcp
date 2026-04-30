@@ -1,0 +1,76 @@
+name: nutanix-mcp
+
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: Containerfile
+    image: nutanix-mcp-postgres:18
+    container_name: nutanix-mcp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nutanix
+      POSTGRES_USER: nutanix
+      POSTGRES_PASSWORD: nutanix
+      POSTGRES_INITDB_ARGS: --data-checksums --encoding=UTF-8 --locale=C.UTF-8
+      PGDATA: /var/lib/postgresql/18/data
+    ports:
+      # 0.0.0.0 rather than 127.0.0.1: on Windows/Podman (WSL2 backend, UserModeNetworking=false)
+      # a 127.0.0.1 bind only exposes the port inside the podman-machine WSL distro, unreachable
+      # from the Windows host. Binding to 0.0.0.0 inside WSL2 is forwarded back to Windows localhost
+      # via WSL interop. The dev container still only listens on the loopback exposed by WSL.
+      # Port 5435 (5434 is taken by arista-mcp + ntx-mcp).
+      - "0.0.0.0:5435:5432"
+    volumes:
+      - nutanix-pgdata:/var/lib/postgresql/18/data
+    # Memory sized for full Nutanix corpus (~7000 chunks across 1983 PDFs + KB + Bible + API).
+    # Same envelope as arista-mcp post-CRLF-fix scale; smaller working set than EOS-User-Manual
+    # so we could trim, but headroom is cheap.
+    command: >-
+      postgres
+      -c shared_preload_libraries=vector,vchord,vchord_bm25,pg_tokenizer
+      -c max_connections=20
+      -c shared_buffers=2GB
+      -c effective_cache_size=8GB
+      -c work_mem=256MB
+      -c maintenance_work_mem=4GB
+      -c max_wal_size=4GB
+      -c wal_buffers=64MB
+      -c io_method=worker
+      -c io_workers=3
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nutanix -d nutanix"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+
+  # Optional Qwen2.5-3B GGUF for HyDE / listwise rerank experiments.
+  # Disabled by default — feedback memory shows listwise regresses 4.39pp on arista-mcp.
+  # Enable: podman compose --profile llm up -d
+  llm:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    container_name: nutanix-mcp-llm
+    restart: unless-stopped
+    profiles: ["llm"]
+    command: >-
+      --model /models/qwen2.5-3b-instruct-q4_k_m.gguf
+      --port 8090
+      --host 0.0.0.0
+      --ctx-size 4096
+      --threads 8
+      --log-disable
+    ports:
+      # Port 8091 (8090 is taken by arista-mcp llm).
+      - "0.0.0.0:8091:8090"
+    volumes:
+      - ../models/llm:/models:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8090/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+volumes:
+  nutanix-pgdata:

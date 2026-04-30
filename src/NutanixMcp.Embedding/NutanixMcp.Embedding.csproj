@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>NutanixMcp.Embedding</RootNamespace>
+    <!--
+      Pick ONE of Microsoft.ML.OnnxRuntime (CPU) or .Gpu at build time. Both ship the
+      same managed assembly; having both in one output directory produces ambiguous
+      onnxruntime.dll resolution and undefined behaviour at runtime
+      (see microsoft/onnxruntime#2184).
+
+      Default = CPU. Opt-in to GPU with `dotnet build -p:UseGpuOnnx=true` — for
+      one-shot batch ingests where the 5-10× embedding speedup justifies a separate
+      build. Production serve stays CPU.
+    -->
+    <UseGpuOnnx Condition="'$(UseGpuOnnx)' == ''">false</UseGpuOnnx>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NutanixMcp.Core/NutanixMcp.Core.csproj" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Condition="'$(UseGpuOnnx)' != 'true'" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Condition="'$(UseGpuOnnx)' == 'true'" />
+    <PackageReference Include="Microsoft.ML.Tokenizers" />
+    <PackageReference Include="Microsoft.Extensions.AI" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+  </ItemGroup>
+</Project>

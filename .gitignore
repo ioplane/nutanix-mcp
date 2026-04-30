@@ -1,0 +1,26 @@
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+.vscode/
+*.log
+*.pdb
+
+# Models (fetched via scripts/fetch-models.ps1)
+models/
+
+# Local data + caches
+data/
+
+# Test outputs
+TestResults/
+*.trx
+*.coverage
+coverage.xml
+analyzers.sarif
+
+# OS
+.DS_Store
+Thumbs.db
