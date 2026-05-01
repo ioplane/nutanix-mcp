@@ -8,6 +8,59 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 
 ## [Unreleased]
 
+### Added (Sprint 005 — Cli + ingest pipeline)
+
+- Corpus audit of the local 7343-document snapshot at
+  `data/converted/`. Findings recorded in `docs/en/sprints/sprint-005.md`
+  (and `docs/ru/`): 81 % CRLF line endings, 24 % surviving marker
+  page-break tokens, 24 % empty marker image refs, 16 % start with a
+  `## **Contents**` table, three JSON enrichment shapes (`dict-list`,
+  `string-list`, empty), zero duplicate stems, zero zero-heading docs.
+- `NutanixMcp.Core.Catalog`:
+  - `CatalogEntry`, `JsonSection`, `EnrichedDocumentJson`,
+    `LoadedDocument` records.
+  - `CatalogReader` — walks `<base>/md/` and pairs each stem with the
+    optional `<base>/json/<stem>.json`. Reads category, KB number,
+    tags, and version from the JSON; falls back to filename heuristics
+    for the 24 % of docs without enrichment. Sorts entries by id for
+    deterministic catalog SHA.
+  - `DocumentLoader` — CRLF normalise, strip page markers
+    (`{N}-+`), strip empty marker image refs
+    (`![](_page_N_(Picture|Figure|Image)_M.ext)`), drop the TOC L2
+    section (`Contents`/`Table of Contents`/`Содержание`), parse ATX
+    headings, MD↔JSON pair via cleaned-title sequence with a small
+    lookahead, fall back to MD-only when JSON is empty.
+    Path-traversal guard: `ResolveInside` refuses any catalog-relative
+    path that escapes the base directory (Semgrep CWE-22 finding).
+- `NutanixMcp.Core.Chunking`:
+  - `Section`, `ChunkDraft`, `ChunkSet`, `IChunker`, `ChunkingOptions`.
+  - `SectionAwareChunker` — emits one parent and one or more leaves
+    per section, slides a target+overlap window over over-budget
+    sections, merges tiny neighbours within a section, truncates
+    parents over budget with a head/tail summary.
+- `NutanixMcp.Cli.Ingest`:
+  - `IngestOptions`, `IngestResult`, `IIngestProgress` /
+    `NullIngestProgress`, `SpectreIngestProgress`.
+  - `IngestService` — catalog-level skip (sha-match short-circuit),
+    per-document skip (`pdf_sha256` match), parent-then-leaf insert
+    sequence with bigint id read-back for the parent FK.
+- CLI `ingest` verb wired with `--catalog`, `--category`, `--force`,
+  `--dry-run`, `--limit`, `--verbose`. Exit code: 0 on success or
+  catalog-skipped, 2 partial, 3 unhandled, 130 cancelled.
+
+### Verified (Sprint 005)
+
+- 52/52 tests green: Core 21 (incl. 6 DocumentLoader, 4
+  SectionAwareChunker, 4 CatalogReader), Server 4, Embedding 15,
+  Data 12.
+- Real ingest of 10 KB articles ran end-to-end against the local
+  PostgreSQL: 30 leaves embedded with bge-m3, 30 parents, 60 chunks
+  total, ingest_run row written.
+- Live `search_docs` over HTTP returned three Karbon/NKE-related KB
+  articles for "Nutanix Kubernetes Engine self-service", top-1 hit
+  `KB-10048` with cross-encoder score −0.28 and per-stage diagnostics
+  attached.
+
 ### Added — release prep
 
 - `LICENSE` — MIT.

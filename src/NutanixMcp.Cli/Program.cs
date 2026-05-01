@@ -10,6 +10,7 @@ internal static class Program
         var root = new RootCommand("nutanix-mcp — hybrid retrieval MCP server for Nutanix documentation")
         {
             ServeCommand.Build(),
+            IngestCommand.Build(),
         };
         return root.Parse(args).InvokeAsync();
     }
