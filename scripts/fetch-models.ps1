@@ -19,11 +19,20 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $files = @(
-    # bge-m3 ONNX (1024-dim multilingual embedder)
+    # bge-m3 ONNX (1024-dim multilingual embedder).
+    # The ONNX export uses the external-data pattern: model.onnx is a tiny
+    # graph file (~725 KB) that REFERENCES model.onnx_data (~2.27 GB) holding
+    # the actual weights. Both files must sit in the same directory or
+    # ONNX Runtime fails at session-create with "Failed to load external data".
     @{
         Url = 'https://huggingface.co/BAAI/bge-m3/resolve/main/onnx/model.onnx'
         Dest = Join-Path $ModelsRoot 'embedder\model.onnx'
-        MinBytes = 1.0GB
+        MinBytes = 100KB
+    },
+    @{
+        Url = 'https://huggingface.co/BAAI/bge-m3/resolve/main/onnx/model.onnx_data'
+        Dest = Join-Path $ModelsRoot 'embedder\model.onnx_data'
+        MinBytes = 2.0GB
     },
     @{
         Url = 'https://huggingface.co/BAAI/bge-m3/resolve/main/sentencepiece.bpe.model'
@@ -40,20 +49,34 @@ $files = @(
         Dest = Join-Path $ModelsRoot 'embedder\special_tokens_map.json'
         MinBytes = 100
     },
-    # bge-reranker-v2-m3 (XLM-R-base cross-encoder)
+    # bge-reranker-v2-m3 — XLM-R-base cross-encoder. BAAI does not ship an ONNX
+    # build, so we use hooman650's Optimum-O4-optimized export (graph-level fused
+    # ops, kept FP32). It uses the same external-data split: model.onnx graph +
+    # model.onnx.data weights. Producing our own INT8 export is queued as a
+    # Sprint 003.5 follow-up (arista shipped INT8 in the v2-m3 win recipe).
     @{
-        Url = 'https://huggingface.co/BAAI/bge-reranker-v2-m3/resolve/main/onnx/model.onnx'
+        Url = 'https://huggingface.co/hooman650/bge-reranker-v2-m3-onnx-o4/resolve/main/model.onnx'
         Dest = Join-Path $ModelsRoot 'reranker\model.onnx'
-        MinBytes = 500MB
+        MinBytes = 50KB
     },
     @{
-        Url = 'https://huggingface.co/BAAI/bge-reranker-v2-m3/resolve/main/sentencepiece.bpe.model'
+        Url = 'https://huggingface.co/hooman650/bge-reranker-v2-m3-onnx-o4/resolve/main/model.onnx.data'
+        Dest = Join-Path $ModelsRoot 'reranker\model.onnx.data'
+        MinBytes = 1.0GB
+    },
+    @{
+        Url = 'https://huggingface.co/hooman650/bge-reranker-v2-m3-onnx-o4/resolve/main/sentencepiece.bpe.model'
         Dest = Join-Path $ModelsRoot 'reranker\sentencepiece.bpe.model'
         MinBytes = 4MB
     },
     @{
-        Url = 'https://huggingface.co/BAAI/bge-reranker-v2-m3/resolve/main/tokenizer_config.json'
+        Url = 'https://huggingface.co/hooman650/bge-reranker-v2-m3-onnx-o4/resolve/main/tokenizer_config.json'
         Dest = Join-Path $ModelsRoot 'reranker\tokenizer_config.json'
+        MinBytes = 100
+    },
+    @{
+        Url = 'https://huggingface.co/hooman650/bge-reranker-v2-m3-onnx-o4/resolve/main/special_tokens_map.json'
+        Dest = Join-Path $ModelsRoot 'reranker\special_tokens_map.json'
         MinBytes = 100
     }
 )
