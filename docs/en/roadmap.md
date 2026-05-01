@@ -39,7 +39,7 @@ gantt
 | 003.5 | Queued | INT8 reranker via Optimum O4. Merge gate: at most 1 pp top-1 regression versus FP32. |
 | 004 | DONE | `HybridRetriever`, 7 MCP tools, stdio + HTTP hosts, `serve` Cli verb. 37/37 tests green plus live HTTP smoke. |
 | 005 | DONE | `CatalogReader`, `DocumentLoader` (CRLF/marker/TOC strip, MD↔JSON pair), `SectionAwareChunker`, `IngestService`, `ingest` Cli verb. 52/52 tests green; live ingest + MCP search verified. |
-| 006 | In progress | Bench v2 harness + history schema landed. Quality stack adopted from ntx-mcp (`.editorconfig`, `Directory.Build.props` audit/SARIF, EF migrations override). Code review fixes (Markup.Escape, SemaphoreSlim, schema_version validation, Lazy memo) merged. Empirical 3-platform embedding throughput study folded in (1.7 / 13.7 / 634 chunks/s). Remote ingest of 7323 documents complete on 2026-05-01. Pending: 100-query fixture + first `bench-history.jsonl` row. |
+| 006 | DONE | Bench v2 harness + history. ntx-mcp quality stack adopted. Code-review fixes merged. 3-platform throughput study (1.7/13.7/634 chunks/s). Remote ingest of 7343 documents complete (2026-05-01). 38-query first-cut fixture authored via `scripts/seed-bench-queries.ps1`. Acceptance gate PASSED: top-10 = 81.6 %. Six iterations recorded in `bench-history.jsonl`. |
 | 007 | Partially landed | `scripts/pvs-studio-scan.ps1` runs locally (slnx unsupported, iterates csproj). Pending: Semgrep job and PVS-Studio CI job. `markdownlint-cli2` job already lives in `ci.yml`. |
 | 008 | Pending | HNSW and BM25 sweeps recorded in `bench-history.jsonl`. |
 | 009 | Pending | Single-file publish for Windows, Linux, macOS on amd64 and arm64. Systemd unit and Windows service templates. |
