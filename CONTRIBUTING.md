@@ -13,7 +13,7 @@ Types we use:
 | `perf` | runtime / index / query speedup with no behaviour change |
 | `refactor` | internal rework, no behaviour change |
 | `test` | add or refine tests, no production code change |
-| `docs` | README / CLAUDE.md / CHANGELOG / plan |
+| `docs` | README / docs/ / CHANGELOG / plan |
 | `build` | csproj, Directory.Packages.props, global.json, Containerfile |
 | `ci` | GitHub Actions, dependabot, semgrep, pvs-studio jobs |
 | `chore` | uninteresting maintenance (gitignore, formatter pass) |
@@ -54,6 +54,14 @@ Every PR that lands on `main` updates `[Unreleased]`.
 - Engine config (`containers.conf`, `containers-mounts.conf`) is **not** vendored —
   developer-local. Document required mounts per ADR if any are needed.
 
+## Documentation
+
+The canonical documentation lives in `docs/en/`. The Russian translation
+in `docs/ru/` is updated in the same commit as the English source. The
+top-level [`docs/README.md`](./docs/README.md) is the index. All schemas
+are authored in Mermaid. Run `markdownlint-cli2` before pushing — CI
+fails on any violation.
+
 ## Code quality gate
 
-See `CLAUDE.md` § *Quality gate (extended vs arista-mcp)*.
+See [`docs/en/quality-gate.md`](./docs/en/quality-gate.md).

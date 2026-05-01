@@ -1,0 +1,30 @@
+{
+  "name": "nutanix-mcp",
+  "version": "0.1.0",
+  "description": "Hybrid retrieval over the Nutanix documentation corpus via the nutanix-mcp MCP server (dense bge-m3 + BM25 + cross-encoder rerank).",
+  "author": {
+    "name": "dantte-lp",
+    "url": "https://github.com/dantte-lp"
+  },
+  "homepage": "https://github.com/dantte-lp/nutanix-mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dantte-lp/nutanix-mcp.git",
+    "directory": "plugin"
+  },
+  "license": "MIT",
+  "keywords": [
+    "nutanix",
+    "mcp",
+    "rag",
+    "retrieval",
+    "documentation",
+    "search",
+    "bge-m3",
+    "postgres",
+    "pgvector"
+  ],
+  "commands": "./commands",
+  "skills": "./skills",
+  "mcpServers": "./.mcp.json"
+}

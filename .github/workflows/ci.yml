@@ -1,0 +1,90 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  build-and-unit-test:
+    name: build + unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Restore
+        run: dotnet restore nutanix-mcp.slnx
+      - name: Build (Release, warnings as errors)
+        run: dotnet build nutanix-mcp.slnx --configuration Release --no-restore
+      - name: Format check
+        run: dotnet format nutanix-mcp.slnx --verify-no-changes --no-restore
+      - name: Unit tests (no Pgvector collection)
+        run: |
+          dotnet test nutanix-mcp.slnx --configuration Release --no-build \
+            --filter 'FullyQualifiedName!~NutanixMcp.Data.Tests&FullyQualifiedName!~NutanixMcp.Embedding.Tests'
+
+  integration-test:
+    name: integration tests (Postgres)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: tensorchord/vchord-suite:pg18-latest
+        env:
+          POSTGRES_DB: nutanix
+          POSTGRES_USER: nutanix
+          POSTGRES_PASSWORD: nutanix
+          POSTGRES_INITDB_ARGS: --data-checksums --encoding=UTF-8 --locale=C.UTF-8
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U nutanix -d nutanix"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Apply init.sql to default database
+        run: |
+          export PGPASSWORD=nutanix
+          psql -h 127.0.0.1 -U nutanix -d nutanix -f docker/init.sql
+      - name: Restore + build
+        run: |
+          dotnet restore nutanix-mcp.slnx
+          dotnet build nutanix-mcp.slnx --configuration Release --no-restore
+      - name: Data integration tests
+        env:
+          NUTANIX_MCP_TEST_CS: Host=127.0.0.1;Port=5432;Database=nutanix_test;Username=nutanix;Password=nutanix
+        run: |
+          dotnet test tests/NutanixMcp.Data.Tests/NutanixMcp.Data.Tests.csproj \
+            --configuration Release --no-build --logger 'console;verbosity=normal'
+
+  docs-lint:
+    name: docs lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install markdownlint-cli2
+        run: npm install --global markdownlint-cli2
+      - name: Lint Markdown
+        run: markdownlint-cli2 '**/*.md' '#node_modules' '#bin' '#obj'

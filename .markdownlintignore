@@ -1,0 +1,7 @@
+node_modules/
+bin/
+obj/
+TestResults/
+analyzers.sarif
+models/
+data/

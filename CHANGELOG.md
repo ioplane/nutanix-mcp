@@ -8,6 +8,33 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 
 ## [Unreleased]
 
+### Added — release prep
+- `LICENSE` — MIT.
+- `README.md` and `README.ru.md` — declarative overview, installation,
+  link out to `docs/`.
+- `docs/` reorganised under `docs/en/` and `docs/ru/`. Eight canonical
+  topics: overview, architecture, quickstart, operations, retrieval,
+  chunking, training-rag, quality-gate, roadmap. All schemas authored
+  in Mermaid. Top-level `docs/README.md` and `docs/README.ru.md` index.
+- `.markdownlint.jsonc` and `.markdownlintignore` — strict ruleset for
+  Markdown linting.
+- `.github/workflows/ci.yml` — build + format + unit + integration +
+  docs lint, every PR.
+- `.github/workflows/release.yml` — single-file publish for
+  `linux-x64`, `linux-arm64`, `win-x64`, `win-arm64`, `osx-x64`,
+  `osx-arm64`. Tag-validated against a strict semver regex. Each
+  artefact ships with a `.sha256` sidecar.
+- `plugin/` — Claude Code plugin with `.claude-plugin/plugin.json`
+  manifest, `.mcp.json` server registration, two slash commands
+  (`/nutanix-search`, `/nutanix-status`), one auto-engaging skill
+  (`nutanix-search`), and a plugin README.
+- `.claude-plugin/marketplace.json` — marketplace descriptor that
+  exposes the plugin under the `dantte-lp/nutanix-mcp` GitHub repo.
+
+### Removed — release prep
+- `CLAUDE.md` — content migrated into `docs/en/architecture.md` and
+  `docs/en/quality-gate.md`.
+
 ### Added
 - `CONTRIBUTING.md` documenting Conventional Commits 1.0.0, SemVer 2.0.0,
   Keep a Changelog 1.1.0, compose-spec, Containerfile.5 and containerignore.5
@@ -177,7 +204,7 @@ Initial scaffold sprint. Solution skeleton, package pins, Postgres docker stack.
 - Optional `llm` profile in compose for Qwen 2.5 3B GGUF (HyDE / listwise experiments;
   default OFF).
 - `nutanix-mcp.slnx` solution file, `global.json` pinning .NET SDK 10.0.201,
-  `CLAUDE.md` architecture notes, `README.md`.
+  architecture notes under `docs/en/architecture.md`, `README.md`.
 - Trivial `Program.cs` in CLI for build smoke; stub `Program.Main` in Server
   (Web SDK requires entry point even though hosting runs via CLI verbs).
 

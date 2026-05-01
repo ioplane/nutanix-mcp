@@ -1,0 +1,129 @@
+name: release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g. v0.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  publish:
+    name: publish ${{ matrix.rid }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest,   rid: linux-x64,   archive: tar.gz }
+          - { os: ubuntu-latest,   rid: linux-arm64, archive: tar.gz }
+          - { os: windows-latest,  rid: win-x64,     archive: zip }
+          - { os: windows-latest,  rid: win-arm64,   archive: zip }
+          - { os: macos-latest,    rid: osx-x64,     archive: tar.gz }
+          - { os: macos-latest,    rid: osx-arm64,   archive: tar.gz }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # Resolve the release tag, validate it against a strict semver-ish regex,
+      # and publish the result as a step output. User-controlled input
+      # (`inputs.tag`) is read only via an env-var so it never lands in the
+      # rendered shell text — script-injection-safe per Semgrep p/github.
+      - name: Resolve and validate tag
+        id: tag
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          candidate="${INPUT_TAG:-$REF_NAME}"
+          if ! printf '%s' "$candidate" \
+              | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$'; then
+              printf 'invalid release tag: %q\n' "$candidate" >&2
+              exit 1
+          fi
+          printf 'name=%s\n' "$candidate" >> "$GITHUB_OUTPUT"
+
+      - name: Publish single-file
+        env:
+          RID: ${{ matrix.rid }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet publish src/NutanixMcp.Cli/NutanixMcp.Cli.csproj \
+            --configuration Release \
+            --runtime "$RID" \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -p:PublishTrimmed=false \
+            --output "publish/$RID"
+
+      - name: Stage release artefacts
+        env:
+          TAG_NAME: ${{ steps.tag.outputs.name }}
+          RID: ${{ matrix.rid }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          stage="stage/nutanix-mcp-$TAG_NAME-$RID"
+          mkdir -p "$stage"
+          cp -r "publish/$RID/." "$stage/"
+          cp README.md LICENSE CHANGELOG.md "$stage/" 2>/dev/null || true
+          mkdir -p "$stage/docs"
+          cp -r docs/. "$stage/docs/" 2>/dev/null || true
+
+      - name: Archive (tar.gz)
+        if: matrix.archive == 'tar.gz'
+        env:
+          TAG_NAME: ${{ steps.tag.outputs.name }}
+          RID: ${{ matrix.rid }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="nutanix-mcp-$TAG_NAME-$RID.tar.gz"
+          cd stage
+          tar -czf "../$archive" "nutanix-mcp-$TAG_NAME-$RID"
+          cd ..
+          sha256sum "$archive" > "$archive.sha256"
+
+      - name: Archive (zip)
+        if: matrix.archive == 'zip'
+        env:
+          TAG_NAME: ${{ steps.tag.outputs.name }}
+          RID: ${{ matrix.rid }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $name    = "nutanix-mcp-$env:TAG_NAME-$env:RID"
+          $archive = "$name.zip"
+          Compress-Archive -Path "stage/$name" -DestinationPath $archive
+          Get-FileHash $archive -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash.ToLower())  $archive" } |
+            Set-Content "$archive.sha256"
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.name }}
+          name: ${{ steps.tag.outputs.name }}
+          draft: false
+          prerelease: ${{ contains(steps.tag.outputs.name, '-') }}
+          files: |
+            nutanix-mcp-*.tar.gz
+            nutanix-mcp-*.tar.gz.sha256
+            nutanix-mcp-*.zip
+            nutanix-mcp-*.zip.sha256
