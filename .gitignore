@@ -8,8 +8,10 @@ obj/
 *.log
 *.pdb
 
-# Models (fetched via scripts/fetch-models.ps1)
-models/
+# ONNX model assets (fetched via scripts/fetch-models.ps1) live at the repo
+# root only. The leading slash anchors the rule there so it does NOT match
+# the C# `Models/` directory inside Core (a name collision that bit Sprint 004).
+/models/
 
 # Local data + caches
 data/

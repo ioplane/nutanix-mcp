@@ -253,10 +253,27 @@ HyDE / listwise rerank (оставляем выключенным — feedback m
 - `optimum-cli onnxruntime quantize --avx512_vnni`.
 - Bench against FP32 baseline; merge if delta < 1 pp top-1.
 
-### Sprint 004 — Server layer + Hybrid retriever
-- HybridRetriever (dense + sparse RRF + rerank).
-- 7 MCP tools.
-- Stdio + Http hosts, OTel opt-in.
+### Sprint 004 — Server layer + Hybrid retriever ✅ DONE (2026-05-01) — 37/37 tests green + live e2e
+- ✅ HybridRetriever (упрощённый по сравнению с arista — НЕТ HyDE, multi-query,
+  listwise; всё это регрессировало по `feedback_*_regression` memories).
+  Сохранены: dense+sparse parallel, RRF k=60, adaptive rerank floor (top-5 spread
+  ≤ 0.02 → cap 10), parent hydration, optional per-section dedup, query embedding
+  cache (256 entries, capacity-half eviction).
+- ✅ Core models: ChunkResult, SearchDiagnostics (без Hyde/Listwise полей),
+  SearchResponse.
+- ✅ Core retrieval: QueryExpander (26 Nutanix acronyms, FrozenDictionary).
+- ✅ NutanixMcpSettings + ModelPaths + McpTransport в Core.Settings.
+- ✅ ServerHosting.AddNutanixMcpServices — единая DI surface для stdio + http,
+  warm-up bge-m3 embedder.
+- ✅ 7 MCP tools (расширили arista 5 → 7): search_docs, lookup_section,
+  list_documents, get_document, get_status, **list_categories**, **get_kb_article**.
+- ✅ StdioHost (logs to stderr) + HttpHost (port 7456 default).
+- ✅ Cli serve verb (System.CommandLine 2.0.6 API).
+- ✅ Тесты (37/37 green): QueryExpander x6, QueryEmbeddingCache x4,
+  HybridRetrieverIntegration x3 (живой PG + DeterministicMockEmbedder),
+  все Sprint 002/003 тесты остались green.
+- ✅ Live HTTP e2e: `serve --transport http --port 7461` → 7 tools registered,
+  `get_status` returns `{healthy:true, documents:0, chunks:0}` (пустая БД до Sprint 005 ingest).
 - Тесты: HybridRetrieverIntegration, Bm25Score_OnDenseSparseCoHit.
 
 ### Sprint 005 — CLI + миграция данных

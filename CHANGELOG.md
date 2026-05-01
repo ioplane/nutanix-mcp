@@ -96,11 +96,61 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
   CPU. Run wall-clock: ~10s. bge-m3 cross-lingual EN↔RU sanity holds
   (cosine well above 0.5 on AHV/VLAN topic).
 
+### Added (Sprint 004 — Server layer + hybrid retriever)
+- Core models: `ChunkResult`, `SearchResponse`, `SearchDiagnostics` (a tighter
+  shape than arista's — Hyde/Listwise/MultiQuery fields are intentionally
+  omitted, see `docs/plans/training-and-rag-roadmap.md`).
+- Core retrieval helpers: `QueryExpansion` record + `QueryExpander` with 26
+  Nutanix-specific acronyms (AHV, AOS, NDB, NCM, NKE, NKP, NCC, NUS, LCM, CVM,
+  IPMI, PE, PC, DSF, RF, DR, … ) backed by a `FrozenDictionary` for fast
+  lookup on the query hot path.
+- `NutanixMcp.Server.Retrieval` — `IHybridRetriever`, `RetrievalOptions` (incl.
+  Nutanix-specific `Version` filter for multi-version corpora),
+  `QueryEmbeddingCache` (256-entry, capacity-half eviction), `HybridRetriever`
+  with adaptive-rerank floor (top-5 RRF spread ≤ 0.02 → cap N to 10), parent
+  hydration before cross-encoder scoring, optional per-section dedup.
+- HyDE / multi-query / listwise re-rank are **deliberately absent** from the
+  retriever — all three regressed on arista bench v2 (memory entries
+  feedback_multiquery_regression, feedback_listwise_regression). The
+  surrounding doc (HybridRetriever class summary) records the rationale.
+- `NutanixMcp.Core.Settings` — `NutanixMcpSettings`, `ModelPaths`,
+  `McpTransport`. Default conn-string targets local `localhost:5435`.
+- `ServerHosting.AddNutanixMcpServices` — single DI registration surface used
+  by both Stdio and Http hosts; embedder warmed during DI resolution to
+  amortise the ~600 ms ONNX session init.
+- 7 MCP tools (5 ported from arista + 2 new for Nutanix):
+  - `search_docs` (hybrid dense + BM25 + cross-encoder rerank;
+    `version` filter exposed)
+  - `lookup_section`, `list_documents` (`version` filter), `get_document`,
+    `get_status`
+  - `list_categories` (NEW) — discovery of all 16 Nutanix categories with
+    document and chunk counts
+  - `get_kb_article` (NEW) — O(1) lookup by KB-NNNNN identifier, hits the
+    partial unique index `uq_documents_kb_number`
+- `StdioHost` (`Host.CreateApplicationBuilder` with stderr-only logs) +
+  `HttpHost` (`WebApplication`, port 7456 default, `Stateless = true`).
+- `NutanixMcp.Cli` `serve` verb wired to both transports via
+  `System.CommandLine 2.0.6` (`SetAction((ParseResult, CancellationToken) => …)`).
+- `CliConfiguration.Load()` reads `NUTANIX_MCP__*` env vars + optional
+  `nutanix-mcp.json`.
+
+### Verified (Sprint 004)
+- Full test suite green: **37/37** — 6 Core (QueryExpander), 4 Server
+  (QueryEmbeddingCache), 15 Embedding (bge-m3 + reranker), 12 Data
+  (incl. 3 HybridRetriever integration tests against live `nutanix_test`).
+- Live HTTP e2e: `dotnet run --project src/NutanixMcp.Cli -- serve
+  --transport http --port 7461` registers all 7 tools, `tools/list`
+  returns full schemas, `get_status` returns
+  `{healthy:true, documents:0, chunks:0}` against the `nutanix` database
+  after a clean `dotnet ef database update`.
+
 ### Planned
 - Sprint 002 follow-on: `DocumentRepositoryTest` (incl. `KbNumber` lookup).
 - Sprint 003.5 (queued): INT8 reranker quantization via Optimum.
-- Sprint 004: `HybridRetriever` (dense + sparse RRF + rerank), 7 MCP tools,
-  stdio + http hosts.
+- Sprint 005: CLI verbs `ingest`, `bench`, `validate`, `curate-triples`,
+  `migrate-from-python` + ingest pipeline (CatalogReader → DocumentLoader →
+  SectionAwareChunker → IEmbedder → repos). Production seed of the
+  `nutanix` DB once the remote conversion finishes.
 - Sprint 003: bge-m3 ONNX embedder + bge-reranker-v2-m3 cross-encoder.
 - Evaluation: `pg_textsearch` (Tapir) as a v0.2/v0.3 alternative BM25 engine.
 
