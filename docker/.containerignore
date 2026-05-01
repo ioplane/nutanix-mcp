@@ -1,0 +1,5 @@
+# Per containerignore.5 (containers/common). Excludes from build context.
+# Keeps `podman build docker/` minimal — only Containerfile + init.sql go in.
+**/*
+!Containerfile
+!init.sql

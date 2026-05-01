@@ -207,22 +207,51 @@ HyDE / listwise rerank (оставляем выключенным — feedback m
 
 ## 10. Roadmap (sprint-driven)
 
-### Sprint 001 — scaffold + docker (тек. ETA: ½ дня после конвертации)
+### Sprint 001 — scaffold + docker ✅ DONE (2026-04-30)
 - `dotnet new sln && projects` (5 src + 5 tests), AssemblyName, OutputType.
 - `Directory.Build.props/Packages.props/BannedSymbols.txt` (копируем из arista, заменяем версии где нужно).
 - `docker/{Containerfile,compose.yaml,init.sql}` (порт 5435, db `nutanix`).
 - `pg_isready` + `psql -c "\dx"` smoke.
+- **Acceptance**: 0 warnings / 0 errors; 6 PG extensions installed; ALTER DATABASE settings applied; `english_analyzer` row in `tokenizer_catalog.text_analyzer`.
 
-### Sprint 002 — Data layer
-- Entities + DbContext + миграции (Initial, AddBm25Column, AddParentChunkSupport).
-- DataSourceFactory + DesignTimeDbContextFactory + PgvectorFixture.
-- Тесты: HalfVectorRoundtrip, HnswIndexSearch, Bm25IndexSearch, ChunkRepositoryBulkInsert, IngestRunRepository, FakeTimeProviderIngestRunTest.
+### Sprint 002 — Data layer ✅ DONE (2026-05-01) — 9/9 tests green
+- ✅ Entities + DbContext + миграции (Initial с baked-in parent-child;
+  AddBm25Column hand-written с SQL-block для bm25vector + trigger + bm25-index).
+- ✅ DataSourceFactory + DesignTimeDbContextFactory + PgvectorFixture (`_test` guard).
+- ✅ Core models (NutanixDocument с KbNumber, NutanixChunk, ChunkKind).
+- ✅ Repositories (Document, Chunk binary COPY, IngestRun с TimeProvider).
+- ✅ Тесты (9/9 green в реальном postgres): HalfVectorRoundtripTest, HnswIndexSearchTest,
+  Bm25IndexSearchTest, ChunkRepositoryBulkInsertTest x2, IngestRunRepositoryTest x2,
+  FakeTimeProviderIngestRunTest x2.
+- ⏳ Sprint 002.1 (опц.): DocumentRepositoryTest (включая GetByKbNumberAsync canary).
+- **Note**: `AddParentChunkSupport` отдельная миграция НЕ генерится — схема
+  с `parent_chunk_id` приземляется в Initial (отличие от arista, который добавлял
+  поле в Sprint 15.1).
 
-### Sprint 003 — Embedding layer
-- bge-m3 ONNX + SentencePiece tokenizer.
-- bge-reranker-v2-m3 + XlmRobertaOnnxReranker.
-- `fetch-models.ps1` (HF download с SHA guard).
-- Тесты: EmbeddingDimension, RerankerScore, BatchEncode, GpuVsCpuEquivalence.
+### Sprint 003 — Embedding layer ✅ DONE (2026-05-01) — 15/15 tests green
+- ✅ Plan (`sprint-003-embedding.md`) — bge-m3 vs Snowflake delta documented.
+- ✅ `fetch-models.ps1` — fixed для ONNX external-data layout
+  (`model.onnx` + `model.onnx_data`). 3.3 GB downloaded локально (4070).
+- ✅ Reranker source: `hooman650/bge-reranker-v2-m3-onnx-o4` (Optimum O4, FP32).
+  INT8 conversion → Sprint 003.5.
+- ✅ Embedding interfaces: `IEmbedder`, `IReranker`, `EmbeddingOptions`
+  (без QueryPrefix), `RerankerOptions`, `XlmRobertaTokenizer` (fairseq remap),
+  `NoopReranker`. Build green.
+- ✅ `OnnxEmbedder` — bge-m3 ONNX export ships pre-pooled `sentence_embedding [B, 1024]`
+  (verified через `InspectModel` диагностику — mean-pool + normalize zapeчены в графе).
+  Defensive re-normalize в .NET для resilience.
+- ✅ `XlmRobertaOnnxReranker` (XLM-R pair `<s> q </s></s> d </s>`).
+- ✅ `RerankerFamilyDetector` (XLM-R / BERT-WordPiece / None) + `Build()` factory.
+- ✅ `IReranker`/`RerankCandidate`/`RerankResult` в `Core.Retrieval`.
+- ✅ `NoopReranker` — returns 0 score, preserves chunk-ID order.
+- ✅ Тесты под `SkippableFact`: Dimension=1024, UnitNorm, SameTopicCloser,
+  MultilingualCrossLingual (EN↔RU), RerankerRelevantBeatsIrrelevant,
+  RerankerEmpty, FamilyDetector x4, NoopReranker x2, InspectModel x2.
+
+### Sprint 003.5 — INT8 reranker (queued)
+- Calibration набор: 200 (query, positive) пар.
+- `optimum-cli onnxruntime quantize --avx512_vnni`.
+- Bench against FP32 baseline; merge if delta < 1 pp top-1.
 
 ### Sprint 004 — Server layer + Hybrid retriever
 - HybridRetriever (dense + sparse RRF + rerank).
@@ -291,7 +320,48 @@ HyDE / listwise rerank (оставляем выключенным — feedback m
 - **NO docling** — память: OOM на 4070.
 - **NO удаление старого Python проекта** `C:/SHARE/nutanix-docs-mcp/` — память: keep history rule.
 
-## 13. Открытые вопросы
+## 13. pg_textsearch (Tapir) — отдельная оценка для v0.2/v0.3
+
+[Источник](https://github.com/timescale/pg_textsearch) — Timescale's BM25 extension, "Tapir"
+(Textual Analysis for Postgres Information Retrieval). v1.2.0-dev, ~3.7k stars, PG-OSS license.
+PostgreSQL 17/18 only — наша база `tensorchord/vchord-suite:pg18-latest` совместима.
+
+**Сравнение с текущим vchord_bm25 0.3.0:**
+
+| | vchord_bm25 0.3.0 (v0.1) | pg_textsearch 1.2.0-dev |
+|--|--|--|
+| Тип хранения | `bm25vector` (предтокенизированный) + trigger | прямой text-индекс на колонке |
+| Запрос | `bm25v <&> to_bm25query(...)` (negative score, ASC) | `content <@> 'query'` (auto-detect index) |
+| Тюнинг | через analyzer (stopwords, stemmer) | k1, b как WITH-параметры (`k1=1.5, b=0.8`) |
+| Top-k speedup | стандартный bm25 | **Block-Max WAND** |
+| Multilingual | через свой analyzer/stemmer | через text_config (postgres FTS configs) |
+| Phrase queries | нет | нет (post-filter workaround) |
+| Партиционирование | OK | OK (но статистика per-partition) |
+| Зрелость в стэке | работает в arista-mcp v0.2.5 | новый, не в вchord-suite образе |
+
+**Решение для v0.1**: остаёмся на vchord_bm25, чтобы зеркально повторить рецепт arista-mcp
+(top-1 92.86% @ v2-m3 reranker — feedback memory `feedback_v2m3_finetune_lands.md`).
+Замена BM25-движка в момент запуска проекта = размывание эксперимента "арктэст переносится на nutanix".
+
+**v0.2 candidate** — добавить опц. контейнерный layer с pg_textsearch (отдельный extension
+помимо vchord_bm25), сравнить top-1/top-10 на bench v2-style. Конкретная гипотеза:
+Block-Max WAND даст p95 -30% при равной точности → если подтвердится, мигрируем основной
+индекс. Если нет — оставляем vchord_bm25.
+
+**Внедрение для эксперимента (v0.3 если поднимем)**:
+```sql
+CREATE EXTENSION pg_textsearch;
+-- alongside vchord_bm25, не вместо. Двойная индексация на тестовой БД.
+CREATE INDEX chunks_pgts_idx ON chunks USING bm25(content)
+  WITH (text_config='english', k1=1.2, b=0.75);
+SELECT bm25_force_merge('chunks_pgts_idx');  -- консолидация сегментов
+```
+
+Билд из source — `tensorchord/vchord-suite` не содержит pg_textsearch. Возможные пути:
+(а) `Containerfile.experimental` с `apt-get install postgresql-18-pg-textsearch`,
+(б) форк `vchord-suite` + multi-stage build с pre-built бинарей с GitHub Releases.
+
+## 14. Открытые вопросы
 
 - **Embedder dim 1024 vs 768**: bge-m3 даёт 1024, плюс multilingual. Если корпус чисто английский (а почти весь Nutanix английский) — оптимальнее snowflake-arctic (768d, быстрее, меньше). Решение: **сделать configurable** через `EmbeddingModel` setting, default = bge-m3 для совместимости с RU-запросами user'а, но fallback на arctic-embed-m через `NUTANIX_MCP__EmbeddingModel=snowflake-arctic-embed-m-v1.5`.
 - **Категория**: 16 захардкожена или из catalog.json? Делаем gener из ingest-time meta (расширяемо).
