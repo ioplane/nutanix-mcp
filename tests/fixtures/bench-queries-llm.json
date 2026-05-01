@@ -1,0 +1,3064 @@
+{
+  "schema_version": 2,
+  "corpus_sha": "unknown",
+  "queries": [
+    {
+      "query_id": "q-0001",
+      "query": "what are the conditions for migrating vGPU-enabled VMs using ADS?",
+      "expect_chunk_ids": [
+        2740,
+        1252,
+        5674,
+        4346
+      ],
+      "expect_doc": "AHV-Admin-Guide-v10_3",
+      "expect_section": "**ADS support for VMs with vGPUs**",
+      "expect_product": null,
+      "category": "ahv",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0002",
+      "query": "what are the available features for amd naples cpu generation?",
+      "expect_chunk_ids": [
+        4458,
+        1370,
+        2851,
+        5785
+      ],
+      "expect_doc": "AHV-Admin-Guide-v11_0",
+      "expect_section": "**AMD CPU**",
+      "expect_product": null,
+      "category": "ahv",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0003",
+      "query": "what is the bond type for active-backup mode?",
+      "expect_chunk_ids": [
+        2381,
+        18485,
+        481495
+      ],
+      "expect_doc": "AHV-Admin-Guide-v10_3",
+      "expect_section": "Where:",
+      "expect_product": null,
+      "category": "ahv",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0004",
+      "query": "What is the first step in the startup sequence defined by the policies for category-A?",
+      "expect_chunk_ids": [
+        4226,
+        4237,
+        426641,
+        4234
+      ],
+      "expect_doc": "AHV-Admin-Guide-v11_0",
+      "expect_section": "<span id=\"page-194-0\"></span>**VM Startup Policy**",
+      "expect_product": null,
+      "category": "ahv",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0005",
+      "query": "How do I ensure VMs in category-C are powered on after those in category-B?",
+      "expect_chunk_ids": [
+        4226,
+        426639
+      ],
+      "expect_doc": "AHV-Admin-Guide-v11_0",
+      "expect_section": "<span id=\"page-194-0\"></span>**VM Startup Policy**",
+      "expect_product": null,
+      "category": "ahv",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0006",
+      "query": "what does nutanix aos not rely on for storage interconnects?",
+      "expect_chunk_ids": [
+        17301,
+        16527,
+        16918,
+        16128,
+        16521,
+        16912,
+        16122,
+        324310
+      ],
+      "expect_doc": "Advanced-Admin-AOS-v7_5",
+      "expect_section": "<span id=\"page-6-0\"></span>**Nutanix AOS Architecture**",
+      "expect_product": null,
+      "category": "aos",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0007",
+      "query": "What are the recommended sizes for Intel Optane and NVMe SSDs in an all-NVMe configuration?",
+      "expect_chunk_ids": [
+        17057,
+        16272,
+        17440,
+        16672
+      ],
+      "expect_doc": "Advanced-Admin-AOS-v7_3",
+      "expect_section": "**Intel Optane And NVMe Drive Configurations**",
+      "expect_product": null,
+      "category": "aos",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0008",
+      "query": "How does AOS prioritize data migration between different tiers in an all-NVMe setup with Intel Optane?",
+      "expect_chunk_ids": [
+        17057,
+        17440,
+        16272,
+        16672
+      ],
+      "expect_doc": "Advanced-Admin-AOS-v7_3",
+      "expect_section": "**Intel Optane And NVMe Drive Configurations**",
+      "expect_product": null,
+      "category": "aos",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0009",
+      "query": "What does AOS do with data segments that are no longer read-hot?",
+      "expect_chunk_ids": [
+        17441,
+        17058,
+        16273,
+        16673
+      ],
+      "expect_doc": "Advanced-Admin-AOS-v7_5",
+      "expect_section": "**Summary: AOS Optimizations for Optane**",
+      "expect_product": null,
+      "category": "aos",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0010",
+      "query": "what is the minimum log level recommended for module logs in aos?",
+      "expect_chunk_ids": [
+        16610,
+        17383,
+        17000
+      ],
+      "expect_doc": "Advanced-Admin-AOS-v7_0",
+      "expect_section": "**AOS Log Levels**",
+      "expect_product": null,
+      "category": "aos",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0011",
+      "query": "how many levels are covered if i set aos log level to info?",
+      "expect_chunk_ids": [
+        16610,
+        17383,
+        17000
+      ],
+      "expect_doc": "Advanced-Admin-AOS-v7_0",
+      "expect_section": "**AOS Log Levels**",
+      "expect_product": null,
+      "category": "aos",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0012",
+      "query": "change data services IP address after CVMs",
+      "expect_chunk_ids": [
+        16941,
+        16550,
+        16151,
+        17324,
+        16543,
+        17317,
+        116058
+      ],
+      "expect_doc": "Advanced-Admin-AOS-v7_3",
+      "expect_section": "**Perform the following procedure to change the CVM IP addresses**",
+      "expect_product": null,
+      "category": "aos",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0013",
+      "query": "What is the method used to fetch VM events?",
+      "expect_chunk_ids": [
+        8478,
+        10927,
+        15805,
+        13366
+      ],
+      "expect_doc": "API-Ref-AOS-v6_10",
+      "expect_section": "<span id=\"page-339-0\"></span>**Get the list of events generated on any VM**",
+      "expect_product": null,
+      "category": "api",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0014",
+      "query": "GET /disks/{id}/alerts?resolved=true",
+      "expect_chunk_ids": [
+        10160,
+        7711,
+        12604,
+        87743
+      ],
+      "expect_doc": "API-Ref-AOS-v7_0",
+      "expect_section": "<span id=\"page-114-0\"></span>**Get the list of alerts generated on a specified Disk**",
+      "expect_product": null,
+      "category": "api",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0015",
+      "query": "What is the type for acropolisVm in create.dto.stats.VMDTO?",
+      "expect_chunk_ids": [
+        15826,
+        10973,
+        8524,
+        13413,
+        15852,
+        10947,
+        8498,
+        13387
+      ],
+      "expect_doc": "API-Ref-AOS-v7_5",
+      "expect_section": "**Table 1010: create.dto.stats.VMDTO**",
+      "expect_product": null,
+      "category": "api",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0016",
+      "query": "How is diskCapacityInBytes formatted in create.dto.stats.VMDTO?",
+      "expect_chunk_ids": [
+        15826,
+        10973,
+        8524,
+        15852,
+        13413,
+        8498,
+        13387,
+        15790,
+        8464
+      ],
+      "expect_doc": "API-Ref-AOS-v7_5",
+      "expect_section": "**Table 1010: create.dto.stats.VMDTO**",
+      "expect_product": null,
+      "category": "api",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0017",
+      "query": "what is the role of ads in ahv stack?",
+      "expect_chunk_ids": [
+        487105,
+        2149,
+        3734,
+        5184
+      ],
+      "expect_doc": "bible-5a-book-of-ahv-architecture",
+      "expect_section": "Acropolis Dynamic Scheduler (ADS)",
+      "expect_product": null,
+      "category": "bible",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0018",
+      "query": "how does flow network security control traffic in an example application",
+      "expect_chunk_ids": [
+        485895,
+        475860
+      ],
+      "expect_doc": "bible-12a-book-of-network-services-flow-network-security",
+      "expect_section": "Security Policies",
+      "expect_product": null,
+      "category": "bible",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0019",
+      "query": "how do i set up my google cloud subscription for nutanix clusters?",
+      "expect_chunk_ids": [
+        485781,
+        296294,
+        296285,
+        295698
+      ],
+      "expect_doc": "bible-10c-book-of-nutanix-clusters-gc",
+      "expect_section": "Usage and Configuration",
+      "expect_product": null,
+      "category": "bible",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0020",
+      "query": "What does the AOS Dynamic Scheduler use for placement decisions?",
+      "expect_chunk_ids": [
+        486587,
+        487105
+      ],
+      "expect_doc": "bible-4a-book-of-aos-architecture",
+      "expect_section": "Dynamic Scheduler",
+      "expect_product": null,
+      "category": "bible",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0021",
+      "query": "How often does the dynamic scheduler run to optimize resource placement?",
+      "expect_chunk_ids": [
+        486587,
+        487105
+      ],
+      "expect_doc": "bible-4a-book-of-aos-architecture",
+      "expect_section": "Dynamic Scheduler",
+      "expect_product": null,
+      "category": "bible",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0022",
+      "query": "what headers do i need to use for etag in get requests?",
+      "expect_chunk_ids": [
+        64934,
+        458201,
+        459563,
+        468920,
+        470999
+      ],
+      "expect_doc": "Files-v5_1",
+      "expect_section": "**ETag Usage**",
+      "expect_product": null,
+      "category": "files",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0023",
+      "query": "how do i specify etag in put and delete requests?",
+      "expect_chunk_ids": [
+        64934,
+        64933,
+        477777,
+        477962,
+        388954,
+        388873,
+        402957,
+        477965
+      ],
+      "expect_doc": "Files-v5_1",
+      "expect_section": "**ETag Usage**",
+      "expect_product": null,
+      "category": "files",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0024",
+      "query": "what is hard limit enforcement type in files quotas?",
+      "expect_chunk_ids": [
+        64883,
+        313043,
+        64888,
+        396162,
+        399186
+      ],
+      "expect_doc": "Files-v5_1",
+      "expect_section": "**Policies**",
+      "expect_product": null,
+      "category": "files",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0025",
+      "query": "how long does it take before a new quota policy starts enforcing?",
+      "expect_chunk_ids": [
+        64883,
+        313043
+      ],
+      "expect_doc": "Files-v5_1",
+      "expect_section": "**Policies**",
+      "expect_product": null,
+      "category": "files",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0026",
+      "query": "What role is required to Create_Quota_Policy_File_Server_Share?",
+      "expect_chunk_ids": [
+        63967,
+        63959,
+        311607,
+        312136
+      ],
+      "expect_doc": "Files-Manager-v5_1",
+      "expect_section": "**Feature Files Manager Operation Permission Required Role** View\\_Source\\_File\\_Server\\_Mount\\_Target • Files Admin • Files Viewer • Prism Admin • Prism Viewer • Internal Super Admin • Super Admin Scan\\_Source\\_File\\_Server\\_Mount\\_Target • Files Admin • Prism Admin • Internal Super Admin • Super Admin View\\_File\\_Server\\_Migration\\_Plan • Files Admin • Files Viewer • Prism Admin • Prism Viewer • Internal Super Admin • Super Admin Create\\_File\\_Server\\_Migration\\_Plan • Files Admin • Prism Admin • Internal Super Admin • Super Admin Update\\_File\\_Server\\_Migration\\_Plan • Files Admin • Prism Admin • Internal Super Admin • Super Admin Delete\\_File\\_Server\\_Migration\\_Plan • Files Admin • Prism Admin • Internal Super Admin • Super Admin",
+      "expect_product": null,
+      "category": "files",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0027",
+      "query": "What is the caution about using Files Storage v4 APIs?",
+      "expect_chunk_ids": [
+        64932
+      ],
+      "expect_doc": "Files-v5_1",
+      "expect_section": "<span id=\"page-118-0\"></span>**Files Storage REST APIs**",
+      "expect_product": null,
+      "category": "files",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0028",
+      "query": "What is required AD information for Files Storage?",
+      "expect_chunk_ids": [
+        64619,
+        313010,
+        312783,
+        312782,
+        64618
+      ],
+      "expect_doc": "Files-v5_1",
+      "expect_section": "<span id=\"page-12-2\"></span>**Required Active Directory Information**",
+      "expect_product": null,
+      "category": "files",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0029",
+      "query": "How does Files Storage handle UPNs and domain users?",
+      "expect_chunk_ids": [
+        64619,
+        312783,
+        313797
+      ],
+      "expect_doc": "Files-v5_1",
+      "expect_section": "<span id=\"page-12-2\"></span>**Required Active Directory Information**",
+      "expect_product": null,
+      "category": "files",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0030",
+      "query": "How many SSDs are required if NVMe drives are included in an NX-3170N-G8 configuration?",
+      "expect_chunk_ids": [
+        227396,
+        473950,
+        228018,
+        228142,
+        226708,
+        227529,
+        228862,
+        228408,
+        227104
+      ],
+      "expect_doc": "NX3170NG8-Fan-Replacement-HyperV",
+      "expect_section": "<span id=\"page-8-2\"></span>**Node Naming (NX-3170N-G8)**",
+      "expect_product": null,
+      "category": "hardware-replacement",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0031",
+      "query": "What is the name of the node in an NX-3155G-G8 block?",
+      "expect_chunk_ids": [
+        216745,
+        473705,
+        216224,
+        215664,
+        213038,
+        212928,
+        216603,
+        213510,
+        213784
+      ],
+      "expect_doc": "NX3155GG8-NIC-Replacement-HyperV",
+      "expect_section": "<span id=\"page-7-2\"></span>**Node Naming (NX-3155G-G8)**",
+      "expect_product": null,
+      "category": "hardware-replacement",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0032",
+      "query": "How many drive slots can be populated in an NX-3155G-G8?",
+      "expect_chunk_ids": [
+        216745,
+        473705,
+        216224,
+        215309,
+        215495,
+        215664,
+        215135,
+        213038
+      ],
+      "expect_doc": "NX3155GG8-NIC-Replacement-HyperV",
+      "expect_section": "<span id=\"page-7-2\"></span>**Node Naming (NX-3155G-G8)**",
+      "expect_product": null,
+      "category": "hardware-replacement",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0033",
+      "query": "nx8170-g9-all-ssd-configurations",
+      "expect_chunk_ids": [
+        287931,
+        474951,
+        288212,
+        286643,
+        286359,
+        287280,
+        287765,
+        286822,
+        286935,
+        286169
+      ],
+      "expect_doc": "NX8170G9-Memory-Replacement-vSphere",
+      "expect_section": "**Drive Configurations**",
+      "expect_product": null,
+      "category": "hardware-replacement",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0034",
+      "query": "How do I access the M.2 devices in NX-3170-G7 and NX-8170-G7?",
+      "expect_chunk_ids": [
+        222353,
+        222856,
+        222725,
+        222476,
+        282025,
+        192762,
+        230790,
+        211564,
+        161990
+      ],
+      "expect_doc": "NX3170G7-M2-Replacement-HyperV",
+      "expect_section": "<span id=\"page-3-2\"></span>**M.2 RAID Hypervisor Boot Drive Failure**",
+      "expect_product": null,
+      "category": "hardware-replacement",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0035",
+      "query": "What command shows the PID of a specific VM?",
+      "expect_chunk_ids": [
+        118741,
+        95695,
+        404131,
+        25592,
+        487208
+      ],
+      "expect_doc": "KB-9795",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0036",
+      "query": "What are common symptoms of the issue after LSI SAS 3008 HBA firmware upgrade to PH16?",
+      "expect_chunk_ids": [
+        117401,
+        180132,
+        224818,
+        173586,
+        182742,
+        243132,
+        180344,
+        210988,
+        227684
+      ],
+      "expect_doc": "KB-8896",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0037",
+      "query": "How can I confirm if multiple disks marked offline is an issue with my node running PH16 firmware?",
+      "expect_chunk_ids": [
+        117401,
+        94172,
+        81478,
+        117402
+      ],
+      "expect_doc": "KB-8896",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0038",
+      "query": "Why are my HPE HDDs not mounted post-SPP firmware update?",
+      "expect_chunk_ids": [
+        84642,
+        84643
+      ],
+      "expect_doc": "KB-13488",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0039",
+      "query": "What does virsh vcpuinfo show for CPU affinity?",
+      "expect_chunk_ids": [
+        118744,
+        118745
+      ],
+      "expect_doc": "KB-9795",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0040",
+      "query": "How do I check memory pinning with numastat in AHV?",
+      "expect_chunk_ids": [
+        118744,
+        118747
+      ],
+      "expect_doc": "KB-9795",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0041",
+      "query": "What environment variable might be incorrect for NGT communication?",
+      "expect_chunk_ids": [
+        100430,
+        447678,
+        100429
+      ],
+      "expect_doc": "KB-18905",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0042",
+      "query": "What causes an upgrade operation failure in LCM for a specific node?",
+      "expect_chunk_ids": [
+        103500,
+        82190,
+        115210,
+        115217
+      ],
+      "expect_doc": "KB-19844",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0043",
+      "query": "What commands can be used to run the pc_pe_version_compatibility_check health check?",
+      "expect_chunk_ids": [
+        113421,
+        82070
+      ],
+      "expect_doc": "KB-6323",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0044",
+      "query": "What should I check for high CPU utilization of the mantle service on my CVMs?",
+      "expect_chunk_ids": [
+        95340,
+        433057,
+        108621,
+        431120
+      ],
+      "expect_doc": "KB-17461",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0045",
+      "query": "How do I identify if my MantleService.crt certificate has expired?",
+      "expect_chunk_ids": [
+        95340,
+        100229,
+        95341,
+        100230,
+        413233,
+        78671,
+        81034
+      ],
+      "expect_doc": "KB-17461",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0046",
+      "query": "how do i enable route reflectors for calico in nkp clusters?",
+      "expect_chunk_ids": [
+        92113,
+        92117
+      ],
+      "expect_doc": "KB-16547",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0047",
+      "query": "what are the steps to add BGP route reflectors to my nkp cluster?",
+      "expect_chunk_ids": [
+        92113,
+        92117
+      ],
+      "expect_doc": "KB-16547",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0048",
+      "query": "what is the airgap feature for nutanix kubernetes engine",
+      "expect_chunk_ids": [
+        117419,
+        325159,
+        325553
+      ],
+      "expect_doc": "KB-8909",
+      "expect_section": "Frequently asked questions",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0049",
+      "query": "when was the airgap feature introduced in nutanix kubernetes engine",
+      "expect_chunk_ids": [
+        117419,
+        325159,
+        325553
+      ],
+      "expect_doc": "KB-8909",
+      "expect_section": "Frequently asked questions",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0050",
+      "query": "What command stops the Zookeeper service on the removed CVM?",
+      "expect_chunk_ids": [
+        106545,
+        112992
+      ],
+      "expect_doc": "KB-20751",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0051",
+      "query": "ncli cluster set-timezone timezone=Asia/Kolkata",
+      "expect_chunk_ids": [
+        79536,
+        451631,
+        452524
+      ],
+      "expect_doc": "KB-1050",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0052",
+      "query": "date after changing timezone in pcvm",
+      "expect_chunk_ids": [
+        79536,
+        452524,
+        451631
+      ],
+      "expect_doc": "KB-1050",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0053",
+      "query": "What does the cvm_startup_dependency_check check for in ESXi hosts?",
+      "expect_chunk_ids": [
+        105708,
+        105710,
+        105709,
+        113491,
+        115432,
+        103075,
+        115620
+      ],
+      "expect_doc": "KB-2050",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0054",
+      "query": "Where is the rc local script located on ESXi clusters, and what version of ESXi uses /etc/rc.local.d/local.sh?",
+      "expect_chunk_ids": [
+        105708,
+        489458,
+        488976,
+        488496
+      ],
+      "expect_doc": "KB-2050",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0055",
+      "query": "What is the first step to remove the existing ExternalSwitch in PowerShell?",
+      "expect_chunk_ids": [
+        109558,
+        392510,
+        396312
+      ],
+      "expect_doc": "KB-3099",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0056",
+      "query": "What command runs the pc_sufficient_disk_space_check on Prism Central?",
+      "expect_chunk_ids": [
+        110959,
+        411566,
+        409971,
+        408389,
+        413332,
+        479248
+      ],
+      "expect_doc": "KB-4340",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0057",
+      "query": "What file pattern affects CrystalDiskMark's performance test results?",
+      "expect_chunk_ids": [
+        81853,
+        81849,
+        81850,
+        81852,
+        82906,
+        118472
+      ],
+      "expect_doc": "KB-11934",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0058",
+      "query": "How does compression affect file sizes in CrystalDiskMark tests?",
+      "expect_chunk_ids": [
+        81853,
+        118472
+      ],
+      "expect_doc": "KB-11934",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0059",
+      "query": "How do I resolve duplicate Volume Group names errors during Cisco B200 M5 server imaging?",
+      "expect_chunk_ids": [
+        104690,
+        20122,
+        20125,
+        89225,
+        95393
+      ],
+      "expect_doc": "KB-20227",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0060",
+      "query": "how do I resolve an error message like 'The following entities cannot be updated as they are disabled'",
+      "expect_chunk_ids": [
+        117802,
+        117736
+      ],
+      "expect_doc": "KB-9173",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0061",
+      "query": "What specific error message appears in the genesis log when Cluster Expansion gets stuck?",
+      "expect_chunk_ids": [
+        88068,
+        117710
+      ],
+      "expect_doc": "KB-14917",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0062",
+      "query": "what nodes are affected by the firmware upgrade support change?",
+      "expect_chunk_ids": [
+        88088,
+        98278,
+        98279
+      ],
+      "expect_doc": "KB-14924",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0063",
+      "query": "What could cause repeated false-positive 'Lower Critical - going low' events?",
+      "expect_chunk_ids": [
+        97905,
+        97903
+      ],
+      "expect_doc": "KB-18169",
+      "expect_section": "Scenario 1:",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0064",
+      "query": "What domains need to be allowed for file downloads from Prism Central?",
+      "expect_chunk_ids": [
+        98247,
+        294122,
+        294227
+      ],
+      "expect_doc": "KB-18260",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0065",
+      "query": "What is the command to update Intel Native Driver (ixgben) parameters on ESXi hosts?",
+      "expect_chunk_ids": [
+        117341,
+        117338
+      ],
+      "expect_doc": "KB-8853",
+      "expect_section": "Below are the steps to do this:",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0066",
+      "query": "How do I set both receive and transmit descriptors to 2048 for all ports in ESXi using the ixgben driver?",
+      "expect_chunk_ids": [
+        117341,
+        117338,
+        111677,
+        111679,
+        113666
+      ],
+      "expect_doc": "KB-8853",
+      "expect_section": "Below are the steps to do this:",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0067",
+      "query": "What is the default IPMI Web GUI password if I don't know the node's serial number?",
+      "expect_chunk_ids": [
+        88339,
+        203075,
+        199773,
+        172359,
+        168986,
+        205633,
+        197091,
+        238621
+      ],
+      "expect_doc": "KB-15034",
+      "expect_section": "Default PW",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0068",
+      "query": "What does the log message 'The home partition isn't third partition or the disk isn't /dev/sdb' indicate?",
+      "expect_chunk_ids": [
+        118311,
+        118310
+      ],
+      "expect_doc": "KB-9525",
+      "expect_section": "",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0069",
+      "query": "/home is not mounted on /dev/sdb3, what command should I use to check this?",
+      "expect_chunk_ids": [
+        118311,
+        96681
+      ],
+      "expect_doc": "KB-9525",
+      "expect_section": "",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0070",
+      "query": "What slot is already in use for user creation?",
+      "expect_chunk_ids": [
+        91427,
+        91425
+      ],
+      "expect_doc": "KB-16284",
+      "expect_section": "Scenario 2",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0071",
+      "query": "How do I proceed when encountering an error related to VLAN Basic Subnets associated with Nutanix Files VMs?",
+      "expect_chunk_ids": [
+        97080,
+        79406,
+        323268
+      ],
+      "expect_doc": "KB-17928",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0072",
+      "query": "What steps should I take if my VLAN Basic Subnet is linked to a Protection Domain for disaster recovery?",
+      "expect_chunk_ids": [
+        97080
+      ],
+      "expect_doc": "KB-17928",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0073",
+      "query": "What steps should I take to resolve NIC total receive errors on ESXi hypervisor?",
+      "expect_chunk_ids": [
+        85622,
+        84667,
+        85614
+      ],
+      "expect_doc": "KB-1381",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0074",
+      "query": "How do I validate the secret to be used for DKP upgrades?",
+      "expect_chunk_ids": [
+        92162
+      ],
+      "expect_doc": "KB-16558",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0075",
+      "query": "What is the command to store the control-plane-containerd-configuration secret into a local file?",
+      "expect_chunk_ids": [
+        92162,
+        106524
+      ],
+      "expect_doc": "KB-16558",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0076",
+      "query": "What command should I use to check the available memory in the Witness Service VM?",
+      "expect_chunk_ids": [
+        95041,
+        95038
+      ],
+      "expect_doc": "KB-17384",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0077",
+      "query": "How do I identify guest VMs that inherited new CPU features?",
+      "expect_chunk_ids": [
+        111822
+      ],
+      "expect_doc": "KB-5104",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0078",
+      "query": "What command should I use to check the FRU data on my host?",
+      "expect_chunk_ids": [
+        91463,
+        94194
+      ],
+      "expect_doc": "KB-16293",
+      "expect_section": "Root Cause:",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0079",
+      "query": "How do I verify if BMC is returning non-UTF-8 characters causing issues?",
+      "expect_chunk_ids": [
+        91463
+      ],
+      "expect_doc": "KB-16293",
+      "expect_section": "Root Cause:",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0080",
+      "query": "What's the filename for the Certificate Authority Chain Certificate in step 3?",
+      "expect_chunk_ids": [
+        111907,
+        375004,
+        373816,
+        47220
+      ],
+      "expect_doc": "KB-5191",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0081",
+      "query": "How do you consolidate multiple certificates into one single PEM file?",
+      "expect_chunk_ids": [
+        111907,
+        80436
+      ],
+      "expect_doc": "KB-5191",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0082",
+      "query": "How do I review the Maintenance Event Logs from the Host CLI?",
+      "expect_chunk_ids": [
+        88338,
+        91104
+      ],
+      "expect_doc": "KB-15034",
+      "expect_section": "MEL: Review the Maintenance Event Logs",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0083",
+      "query": "What command is used to clear the BMC maintenance event log in AHV?",
+      "expect_chunk_ids": [
+        88338,
+        97912
+      ],
+      "expect_doc": "KB-15034",
+      "expect_section": "MEL: Review the Maintenance Event Logs",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0084",
+      "query": "How do I resize the filesystem of the Archive mount?",
+      "expect_chunk_ids": [
+        91895,
+        304768,
+        88762
+      ],
+      "expect_doc": "KB-16434",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0085",
+      "query": "What command did you use to resize the filesystem?",
+      "expect_chunk_ids": [
+        91895
+      ],
+      "expect_doc": "KB-16434",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0086",
+      "query": "what is the formula to calculate maximum cluster utilization with RF=2?",
+      "expect_chunk_ids": [
+        89569
+      ],
+      "expect_doc": "KB-1557",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0087",
+      "query": "What is the file path for the upload?",
+      "expect_chunk_ids": [
+        83568
+      ],
+      "expect_doc": "KB-1294",
+      "expect_section": "Uploading a single file",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0088",
+      "query": "What is the command to disable Hyper-V enlightenments for a Windows VM?",
+      "expect_chunk_ids": [
+        116277,
+        95265
+      ],
+      "expect_doc": "KB-8313",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0089",
+      "query": "Where do I find the successful collection of logs for File Analytics?",
+      "expect_chunk_ids": [
+        85157,
+        135949,
+        138360,
+        85156,
+        91539,
+        85158
+      ],
+      "expect_doc": "KB-13697",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0090",
+      "query": "What command should I use to check the health of Istio's mesh in my Konvoy cluster?",
+      "expect_chunk_ids": [
+        92862,
+        358607
+      ],
+      "expect_doc": "KB-16671",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0091",
+      "query": "How do I inspect the Envoy configuration for an ingress gateway using istioctl?",
+      "expect_chunk_ids": [
+        92862
+      ],
+      "expect_doc": "KB-16671",
+      "expect_section": "Solution",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0092",
+      "query": "What command resets the VM's boot device to its default order?",
+      "expect_chunk_ids": [
+        118137,
+        96725,
+        5617,
+        1169,
+        2657
+      ],
+      "expect_doc": "KB-9400",
+      "expect_section": "Check VM boot configuration",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0093",
+      "query": "What is the alert type FileServerExternalIpFailure used for in Nutanix Files?",
+      "expect_chunk_ids": [
+        79399,
+        79400
+      ],
+      "expect_doc": "KB-10434",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0094",
+      "query": "what is the temperature of P1-DIMMF1 Temp",
+      "expect_chunk_ids": [
+        85316,
+        118968
+      ],
+      "expect_doc": "KB-13744",
+      "expect_section": "free alloc unit: 252",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0095",
+      "query": "how do i import a renewed certificate into windows certificate store",
+      "expect_chunk_ids": [
+        102065
+      ],
+      "expect_doc": "KB-19387",
+      "expect_section": "Workaround:",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0096",
+      "query": "what command do i use to find the thumbprint of a newly imported certificate",
+      "expect_chunk_ids": [
+        102065,
+        334866,
+        92342
+      ],
+      "expect_doc": "KB-19387",
+      "expect_section": "Workaround:",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0097",
+      "query": "How do I check for disk alerts on Prism Web console?",
+      "expect_chunk_ids": [
+        84219,
+        110695,
+        113377
+      ],
+      "expect_doc": "KB-13276",
+      "expect_section": "Troubleshooting and resolving the issue",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0098",
+      "query": "what does the error 'bytes' object has no attribute 'get'' mean in LCM BIOS upgrade?",
+      "expect_chunk_ids": [
+        102102,
+        103500,
+        102172,
+        82579,
+        102438,
+        102103,
+        445738,
+        120497
+      ],
+      "expect_doc": "KB-19397",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0099",
+      "query": "how do I resolve the 503 Service Unavailable issue for BIOS update task?",
+      "expect_chunk_ids": [
+        102102,
+        443388,
+        102173,
+        93460
+      ],
+      "expect_doc": "KB-19397",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0100",
+      "query": "How do I test SNMP connection from CVM?",
+      "expect_chunk_ids": [
+        84321,
+        86509
+      ],
+      "expect_doc": "KB-1333",
+      "expect_section": "Testing the Connection",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0101",
+      "query": "What is the required body parameter for creating a VM using Prism Central REST API v3?",
+      "expect_chunk_ids": [
+        113651,
+        113652
+      ],
+      "expect_doc": "KB-6440",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0102",
+      "query": "How do I add an iSCSI disk and NIC to a VM when creating it with Prism Central REST API v3?",
+      "expect_chunk_ids": [
+        113651,
+        113650,
+        113652
+      ],
+      "expect_doc": "KB-6440",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0103",
+      "query": "What does the NCC health check cpu_unblock_check do?",
+      "expect_chunk_ids": [
+        112435
+      ],
+      "expect_doc": "KB-5581",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0104",
+      "query": "How can I run the NCC health checks system_checks cpu_unblock_check?",
+      "expect_chunk_ids": [
+        112435,
+        84015,
+        86215,
+        124318
+      ],
+      "expect_doc": "KB-5581",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0105",
+      "query": "What status indicates that a node is part of the Cassandra ring?",
+      "expect_chunk_ids": [
+        89372,
+        113553,
+        82894,
+        116027,
+        82893,
+        116435,
+        116434,
+        486735
+      ],
+      "expect_doc": "KB-1547",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0106",
+      "query": "How do I run the NCC health check for the cassandra_status_check?",
+      "expect_chunk_ids": [
+        89372,
+        110850,
+        90520,
+        113554,
+        89373
+      ],
+      "expect_doc": "KB-1547",
+      "expect_section": "Description",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0107",
+      "query": "What version of Move supports viewing system metrics via grafana?",
+      "expect_chunk_ids": [
+        87696
+      ],
+      "expect_doc": "KB-14696",
+      "expect_section": "NOTE: Starting with Move version 5.5.0, Grafana and its related containers(Prometheus, cAdvisor and Node_exporter) have been removed. Proceed with the below KB only if Move version is below 5.5.0",
+      "expect_product": null,
+      "category": "kb",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0108",
+      "query": "What is the version of System BIOS - U34?",
+      "expect_chunk_ids": [
+        445264
+      ],
+      "expect_doc": "Release-Notes-LCM-RIM-HPE",
+      "expect_section": "**Spp Bundle:2025.09.00.00.01**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0109",
+      "query": "Can you provide the versions for System BIOS - A42?",
+      "expect_chunk_ids": [
+        445264
+      ],
+      "expect_doc": "Release-Notes-LCM-RIM-HPE",
+      "expect_section": "**Spp Bundle:2025.09.00.00.01**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0110",
+      "query": "what happens when migrating a subnet with both guest and prism central VMs vNICS?",
+      "expect_chunk_ids": [
+        321471,
+        323275,
+        322311,
+        320073,
+        323991,
+        320733
+      ],
+      "expect_doc": "Nutanix-Flow-Virtual-Networking-Guide-v5_0_0",
+      "expect_section": "**Migration Process**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0111",
+      "query": "What is the severity for the Xi Subscrip Expired check?",
+      "expect_chunk_ids": [
+        123239,
+        408885,
+        431375,
+        429134,
+        412074,
+        122936
+      ],
+      "expect_doc": "NCC-Checks-Reference-v5_2_0",
+      "expect_section": "<span id=\"page-225-0\"></span>Other(alertable)",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0112",
+      "query": "What add-ons are available for NCI Pro and Ultimate licenses?",
+      "expect_chunk_ids": [
+        302030,
+        296309,
+        302131
+      ],
+      "expect_doc": "Nutanix-Clusters-AWS",
+      "expect_section": "e. Under **Add-Ons**:",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0113",
+      "query": "in what format should subjects.name be set for the engineering group in all workspaces context?",
+      "expect_chunk_ids": [
+        349325,
+        349336,
+        340701
+      ],
+      "expect_doc": "Nutanix-Kubernetes-Platform-v2_16",
+      "expect_section": "**Limitation for Kommander Roles**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0114",
+      "query": "what is the severity level for ncm snapsho sync status check?",
+      "expect_chunk_ids": [
+        123146,
+        96600
+      ],
+      "expect_doc": "NCC-Checks-Reference-v5_2_0",
+      "expect_section": "<span id=\"page-2-1\"></span>Cluster(alertable)",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0115",
+      "query": "Issue with NCM Insights collector entity type collection task resolved as ENG-782551",
+      "expect_chunk_ids": [
+        447426,
+        413284,
+        96601,
+        79025
+      ],
+      "expect_doc": "Release-Notes-NCC-v5_1",
+      "expect_section": "NCC",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0116",
+      "query": "Error when onboarding NCM failed due to SAVE_ENDPOINT status ERROR, related to ENG-775824",
+      "expect_chunk_ids": [
+        447426,
+        107092,
+        447991,
+        447935
+      ],
+      "expect_doc": "Release-Notes-NCC-v5_1",
+      "expect_section": "NCC",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0117",
+      "query": "what is the purpose of dex-k8s-authenticator in sso?",
+      "expect_chunk_ids": [
+        340880,
+        357833,
+        349516
+      ],
+      "expect_doc": "Nutanix-Kubernetes-Platform-v2_14",
+      "expect_section": "**Single Sign On (SSO)**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0118",
+      "query": "What command is used to update Python eScripts in blueprints?",
+      "expect_chunk_ids": [
+        466825,
+        461155,
+        461160,
+        464910
+      ],
+      "expect_doc": "Self-Service-Admin-Operations-Guide-v4_2_1",
+      "expect_section": "<span id=\"page-489-0\"></span>**Updating eScripts When You Have a Development Instance of Self-Service in Prism Central**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0119",
+      "query": "What is the recommended method to generate a token for kubectl API access?",
+      "expect_chunk_ids": [
+        340746,
+        349388
+      ],
+      "expect_doc": "Nutanix-Kubernetes-Platform-v2_14",
+      "expect_section": "<span id=\"page-427-0\"></span>**Kubectl API Access Using an Identity Provider**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0120",
+      "query": "How often do I need to manually generate a kubeconfig file with a fresh token?",
+      "expect_chunk_ids": [
+        340746,
+        349392,
+        331640,
+        357702
+      ],
+      "expect_doc": "Nutanix-Kubernetes-Platform-v2_14",
+      "expect_section": "<span id=\"page-427-0\"></span>**Kubectl API Access Using an Identity Provider**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0121",
+      "query": "what are the attributes listed in table 7 for vhosts?",
+      "expect_chunk_ids": [
+        304096,
+        303807
+      ],
+      "expect_doc": "Nutanix-Collector-User-Guide-v6_0",
+      "expect_section": "**Table 7: vHosts**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0122",
+      "query": "What types of events are displayed on the Nutanix Move Events dashboard?",
+      "expect_chunk_ids": [
+        366257,
+        368257,
+        364313,
+        362489
+      ],
+      "expect_doc": "Nutanix-Move-v6_0",
+      "expect_section": "<span id=\"page-354-0\"></span>**NUTANIX MOVE EVENTS OVERVIEW**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0123",
+      "query": "How many events can be retained in the Nutanix Move system before old ones get purged?",
+      "expect_chunk_ids": [
+        366257,
+        368257,
+        364313,
+        362489
+      ],
+      "expect_doc": "Nutanix-Move-v6_0",
+      "expect_section": "<span id=\"page-354-0\"></span>**NUTANIX MOVE EVENTS OVERVIEW**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0124",
+      "query": "what is the main feature of nutanix kubernetes platform",
+      "expect_chunk_ids": [
+        356655,
+        330396,
+        339498
+      ],
+      "expect_doc": "Nutanix-Kubernetes-Platform-v2_17",
+      "expect_section": "<span id=\"page-10-0\"></span>**NUTANIX KUBERNETES® PLATFORM OVERVIEW**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0125",
+      "query": "How long does it take for Nutanix clusters to become usable after enabling/disabling network segmentation?",
+      "expect_chunk_ids": [
+        54683,
+        55989,
+        53407,
+        59021,
+        57414
+      ],
+      "expect_doc": "Disaster-Recovery-DRaaS-Guide-vpc_2024_3",
+      "expect_section": "**DR Network Segmentation Limitations**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0126",
+      "query": "What are the steps to manually reconfigure routes for active synchronous replication with network segmentation?",
+      "expect_chunk_ids": [
+        54683,
+        53407,
+        59021,
+        57414,
+        55989
+      ],
+      "expect_doc": "Disaster-Recovery-DRaaS-Guide-vpc_2024_3",
+      "expect_section": "**DR Network Segmentation Limitations**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0127",
+      "query": "What is the fallback action when the service VM IP address is not reachable?",
+      "expect_chunk_ids": [
+        319816,
+        322077,
+        322993,
+        321277
+      ],
+      "expect_doc": "Nutanix-Flow-Virtual-Networking-Guide-Flow-Controller-v7_5",
+      "expect_section": "Reroute Policy",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0128",
+      "query": "How do I find out what ESXi version was used to create the dvSwitch?",
+      "expect_chunk_ids": [
+        304102,
+        304400
+      ],
+      "expect_doc": "Nutanix-Collector-User-Guide-v6_0",
+      "expect_section": "**Table 18: dvSwitch**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0129",
+      "query": "what does include option do in aws edp cost governance",
+      "expect_chunk_ids": [
+        293368,
+        293361
+      ],
+      "expect_doc": "Nutanix-Beam-User-Guide",
+      "expect_section": "**AWS Enterprise Discount Program (AWS EDP)**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0130",
+      "query": "how is edp discount shown in the cost report if exclude is selected",
+      "expect_chunk_ids": [
+        293368,
+        293367
+      ],
+      "expect_doc": "Nutanix-Beam-User-Guide",
+      "expect_section": "**AWS Enterprise Discount Program (AWS EDP)**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0131",
+      "query": "what do i need to do after selecting default endpoint in create runbook",
+      "expect_chunk_ids": [
+        470332,
+        459395,
+        466177,
+        464262
+      ],
+      "expect_doc": "Self-Service-Admin-Operations-Guide-v4_3_1",
+      "expect_section": "<span id=\"page-163-0\"></span>**Creating a Runbook**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0132",
+      "query": "how do i proceed after creating a name and description for my runbook",
+      "expect_chunk_ids": [
+        470332,
+        466177,
+        464262,
+        468252
+      ],
+      "expect_doc": "Self-Service-Admin-Operations-Guide-v4_3_1",
+      "expect_section": "<span id=\"page-163-0\"></span>**Creating a Runbook**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0133",
+      "query": "what is the key difference between application policies and isolation policies in flow network security?",
+      "expect_chunk_ids": [
+        475864,
+        316414,
+        315777,
+        315464
+      ],
+      "expect_doc": "TN-2094-Flow",
+      "expect_section": "<span id=\"page-25-0\"></span>**Flow Network Security Application Policies**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0134",
+      "query": "What actions can be performed on the policy in visualization view?",
+      "expect_chunk_ids": [
+        314749,
+        316434,
+        317661
+      ],
+      "expect_doc": "Nutanix-Flow-Network-Security-Guide-Flow-Controller-vfc_7_5",
+      "expect_section": "<span id=\"page-39-0\"></span>**Individual Policy View**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0135",
+      "query": "How do you open the policy in list view from the visualization view?",
+      "expect_chunk_ids": [
+        314749,
+        317661,
+        317195
+      ],
+      "expect_doc": "Nutanix-Flow-Network-Security-Guide-Flow-Controller-vfc_7_5",
+      "expect_section": "<span id=\"page-39-0\"></span>**Individual Policy View**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0136",
+      "query": "what is the maximum memory setting for sql server small instance?",
+      "expect_chunk_ids": [
+        159878,
+        17778
+      ],
+      "expect_doc": "NVD-2155-Nutanix-Databases",
+      "expect_section": "<span id=\"page-43-1\"></span>**SQL Server Implementation Best Practices**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0137",
+      "query": "how much memory should be set for sql server large database?",
+      "expect_chunk_ids": [
+        159878,
+        17778,
+        18383
+      ],
+      "expect_doc": "NVD-2155-Nutanix-Databases",
+      "expect_section": "<span id=\"page-43-1\"></span>**SQL Server Implementation Best Practices**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0138",
+      "query": "I can register SQL Server 2019 Enterprise edition for NDB?",
+      "expect_chunk_ids": [
+        450235,
+        450558,
+        450614,
+        450502
+      ],
+      "expect_doc": "Release-Notes-Nutanix-NDB-v2_8_1_1",
+      "expect_section": "**SQL Server Versions Supported for AG**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0139",
+      "query": "which regions support s3 buckets deployment for aws to esxi migrations with nutanix move?",
+      "expect_chunk_ids": [
+        367854,
+        363950,
+        365884
+      ],
+      "expect_doc": "Nutanix-Move-v6_1",
+      "expect_section": "<span id=\"page-211-0\"></span>**Qualified Metrics (AWS to ESXi)**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0140",
+      "query": "what is the difference between v4 and v3 APIs for external repositories?",
+      "expect_chunk_ids": [
+        477872,
+        477843
+      ],
+      "expect_doc": "TN-2209-Nutanix-v4-API-Backup-Solutions",
+      "expect_section": "**Migration to v4 APIs From Legacy APIs**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0141",
+      "query": "can i use v3 external repository apis to manage v4 external repositories?",
+      "expect_chunk_ids": [
+        477872,
+        477830,
+        477856,
+        477857
+      ],
+      "expect_doc": "TN-2209-Nutanix-v4-API-Backup-Solutions",
+      "expect_section": "**Migration to v4 APIs From Legacy APIs**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0142",
+      "query": "What is the purpose of enabling encryption in Oracle Cluster Server Provision?",
+      "expect_chunk_ids": [
+        371811,
+        371289,
+        371683,
+        372102,
+        370863
+      ],
+      "expect_doc": "Nutanix-NDB-Oracle-Database-Management-Guide-v2_8",
+      "expect_section": "**6.** Click **Next**.",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0143",
+      "query": "What issues did ENG-754109 resolve?",
+      "expect_chunk_ids": [
+        451554
+      ],
+      "expect_doc": "Release-Notes-Prism-Central-vpc_2024_2_0_7",
+      "expect_section": "API Infra",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0144",
+      "query": "How does ENG-708714 affect access control policies?",
+      "expect_chunk_ids": [
+        451554,
+        451205,
+        451416,
+        451487,
+        322174,
+        323092,
+        321332,
+        319896
+      ],
+      "expect_doc": "Release-Notes-Prism-Central-vpc_2024_2_0_7",
+      "expect_section": "API Infra",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0145",
+      "query": "How do I configure custom user and password when building the OS image with NIB?",
+      "expect_chunk_ids": [
+        357479,
+        357437
+      ],
+      "expect_doc": "Nutanix-Kubernetes-Platform-v2_17",
+      "expect_section": "**The Base OS Image**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0146",
+      "query": "I can add, edit, delete, clone, export, download, email, save as config, and save as view charts from the Analysis dashboard.",
+      "expect_chunk_ids": [
+        77131,
+        298767,
+        75206,
+        74248,
+        78109
+      ],
+      "expect_doc": "Intelligent-Operations-Guide-vpc_7_3",
+      "expect_section": "<span id=\"page-23-0\"></span>**Chart Management**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0147",
+      "query": "What are the options to manage charts on the Analysis dashboard?",
+      "expect_chunk_ids": [
+        77131,
+        298767,
+        74248,
+        75206,
+        78109
+      ],
+      "expect_doc": "Intelligent-Operations-Guide-vpc_7_3",
+      "expect_section": "<span id=\"page-23-0\"></span>**Chart Management**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0148",
+      "query": "What role is required to view Snapshot File server Share?",
+      "expect_chunk_ids": [
+        311608,
+        63959,
+        312137
+      ],
+      "expect_doc": "Nutanix-Files-Manager-v5_2",
+      "expect_section": "**Feature Files Manager Operation Permission Required Role** View\\_Source\\_File\\_Server\\_Mount\\_Target • Files Admin • Files Viewer • Prism Admin • Prism Viewer • Internal Super Admin • Super Admin Scan\\_Source\\_File\\_Server\\_Mount\\_Target • Files Admin • Prism Admin • Internal Super Admin • Super Admin View\\_File\\_Server\\_Migration\\_Plan • Files Admin • Files Viewer • Prism Admin • Prism Viewer • Internal Super Admin • Super Admin Create\\_File\\_Server\\_Migration\\_Plan • Files Admin • Prism Admin • Internal Super Admin • Super Admin Update\\_File\\_Server\\_Migration\\_Plan • Files Admin • Prism Admin • Internal Super Admin • Super Admin Delete\\_File\\_Server\\_Migration\\_Plan • Files Admin • Prism Admin • Internal Super Admin • Super Admin",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0149",
+      "query": "What is used to switch between domains in Nutanix Central?",
+      "expect_chunk_ids": [
+        293845,
+        294286,
+        295262,
+        294761,
+        294751,
+        294280,
+        294279
+      ],
+      "expect_doc": "Nutanix-Central-Admin-Guide",
+      "expect_section": "<span id=\"page-39-0\"></span> **NUTANIX CENTRAL: APPS AND MARKETPLACE OVERVIEW**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0150",
+      "query": "which-license-tier-is-required-for-vdi-clusters",
+      "expect_chunk_ids": [
+        302029,
+        302656
+      ],
+      "expect_doc": "Nutanix-Clusters-AWS",
+      "expect_section": "c. Under **AOS Configuration**:",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0151",
+      "query": "what is the behavior when cluster references match in blueprint and environment VM config?",
+      "expect_chunk_ids": [
+        465949,
+        299274,
+        462157,
+        456046,
+        464034,
+        460443,
+        459065,
+        457703,
+        470015,
+        467935
+      ],
+      "expect_doc": "Self-Service-Admin-Operations-Guide-v4_2_1",
+      "expect_section": "<span id=\"page-36-0\"></span>**Patching for Clusters and Subnets**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0152",
+      "query": "how does patching occur when subnet references differ between blueprint and environment?",
+      "expect_chunk_ids": [
+        465949,
+        299274,
+        456046,
+        464034,
+        460443,
+        467935,
+        457703,
+        459065,
+        462157
+      ],
+      "expect_doc": "Self-Service-Admin-Operations-Guide-v4_2_1",
+      "expect_section": "<span id=\"page-36-0\"></span>**Patching for Clusters and Subnets**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0153",
+      "query": "How do I specify which applications to run in the Custom test variant?",
+      "expect_chunk_ids": [
+        484991,
+        484727,
+        484522
+      ],
+      "expect_doc": "X-Ray-Guide-v6_2",
+      "expect_section": "**15.** Configure the test.",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0154",
+      "query": "What metrics are monitored for VMs, hosts, and clusters?",
+      "expect_chunk_ids": [
+        298873,
+        299157,
+        299158
+      ],
+      "expect_doc": "Nutanix-Cloud-Manager-Guide-v2_0",
+      "expect_section": "**Anomaly Detection**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0155",
+      "query": "How often does the system measure usage to compare with predicted values?",
+      "expect_chunk_ids": [
+        298873,
+        73450,
+        77292,
+        78271,
+        76322,
+        75363,
+        74405
+      ],
+      "expect_doc": "Nutanix-Cloud-Manager-Guide-v2_0",
+      "expect_section": "**Anomaly Detection**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0156",
+      "query": "I need to create a PersistentVolumeClaim for the PostgreSQL OS volume, how do I define it in YAML?",
+      "expect_chunk_ids": [
+        477226,
+        300726,
+        476799,
+        477228
+      ],
+      "expect_doc": "TN-2196-PostgreSQL-Red-Hat-OpenShift-Container-NDK",
+      "expect_section": "<span id=\"page-14-0\"></span>**Creating a Persistent Volume Claim**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0157",
+      "query": "How can I proceed with creating the PersistentVolumeClaim for the PostgreSQL OS volume using the oc apply command?",
+      "expect_chunk_ids": [
+        477226,
+        477228,
+        300726,
+        476799,
+        476798
+      ],
+      "expect_doc": "TN-2196-PostgreSQL-Red-Hat-OpenShift-Container-NDK",
+      "expect_section": "<span id=\"page-14-0\"></span>**Creating a Persistent Volume Claim**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0158",
+      "query": "What does B represent in the Nutanix hardware model name?",
+      "expect_chunk_ids": [
+        474332,
+        473134,
+        475126,
+        474700
+      ],
+      "expect_doc": "System-Specs-NX8150GG10",
+      "expect_section": "<span id=\"page-20-0\"></span>**NUTANIX HARDWARE NAMING CONVENTION**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0159",
+      "query": "What is the latest SSDs version with Dell Express Flash NVMe PCIe SSD CM7 U.2 ISE Firmware Maintenance Release?",
+      "expect_chunk_ids": [
+        445196,
+        445192,
+        445191,
+        445209
+      ],
+      "expect_doc": "Release-Notes-LCM-RIM-Dell",
+      "expect_section": "**MAINSTREAM RIM PAYLOAD**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0160",
+      "query": "Which NVMe SSD Controllers got an Ent NVMe AGN Firmware release at version 1.0.0?",
+      "expect_chunk_ids": [
+        445196,
+        445213,
+        445207,
+        445197
+      ],
+      "expect_doc": "Release-Notes-LCM-RIM-Dell",
+      "expect_section": "**MAINSTREAM RIM PAYLOAD**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0161",
+      "query": "when to use source currency over target currency in cost governance?",
+      "expect_chunk_ids": [
+        293381,
+        293091,
+        293386,
+        293086,
+        293374,
+        293079,
+        293090,
+        293385,
+        293082
+      ],
+      "expect_doc": "Nutanix-Beam-User-Guide",
+      "expect_section": "**Analyze**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0162",
+      "query": "what is short term support in nutanix upgrade",
+      "expect_chunk_ids": [
+        120622,
+        113276
+      ],
+      "expect_doc": "Life-Cycle-Manager-Guide-v3_1",
+      "expect_section": "<span id=\"page-79-0\"></span>**UPGRADE REFERENCES AND RESOURCES**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0163",
+      "query": "where can i find long term support for my nutanix release",
+      "expect_chunk_ids": [
+        120622,
+        120234,
+        121648,
+        121124
+      ],
+      "expect_doc": "Life-Cycle-Manager-Guide-v3_1",
+      "expect_section": "<span id=\"page-79-0\"></span>**UPGRADE REFERENCES AND RESOURCES**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0164",
+      "query": "I want to calculate daily cost for a VM with vCPU=1 and vRAM=1GiB. How do I set unit rates?",
+      "expect_chunk_ids": [
+        293039,
+        300173
+      ],
+      "expect_doc": "Nutanix-Beam-User-Guide",
+      "expect_section": "**User Defined Metering**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0165",
+      "query": "What is HIPAA (version 5010) supported by Security Central?",
+      "expect_chunk_ids": [
+        319245,
+        444840,
+        319331
+      ],
+      "expect_doc": "Nutanix-Flow-Security-Central-User-Guide",
+      "expect_section": "**Supported Security Compliances - Azure**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0166",
+      "query": "Which CIS version does Security Central support for Azure?",
+      "expect_chunk_ids": [
+        319245,
+        444840
+      ],
+      "expect_doc": "Nutanix-Flow-Security-Central-User-Guide",
+      "expect_section": "**Supported Security Compliances - Azure**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0167",
+      "query": "What happens if I skip networking during cluster expansion?",
+      "expect_chunk_ids": [
+        452356,
+        82148,
+        451563,
+        452115
+      ],
+      "expect_doc": "Release-Notes-Prism-Central-vpc_2024_3_1_13",
+      "expect_section": "Foundation",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0168",
+      "query": "what is the process to clone a vm in nutanix cloud manager?",
+      "expect_chunk_ids": [
+        298896,
+        479794,
+        481830,
+        483898
+      ],
+      "expect_doc": "Nutanix-Cloud-Manager-Guide-v2_0",
+      "expect_section": "**Table 57: Playbook Actions**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0169",
+      "query": "What are the steps involved when adding memory to a VM using NCM Intelligent Operations?",
+      "expect_chunk_ids": [
+        298896,
+        298488,
+        296727
+      ],
+      "expect_doc": "Nutanix-Cloud-Manager-Guide-v2_0",
+      "expect_section": "**Table 57: Playbook Actions**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0170",
+      "query": "create a nutanix cluster in vcenter",
+      "expect_chunk_ids": [
+        488910,
+        488921,
+        487970,
+        489392
+      ],
+      "expect_doc": "vSphere-Admin6-AOS-v7_3",
+      "expect_section": "<span id=\"page-28-0\"></span>**VCENTER CONFIGURATION**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0171",
+      "query": "What is the command to create a cluster with automated certificate renewal?",
+      "expect_chunk_ids": [
+        342671,
+        333285,
+        350484,
+        358810
+      ],
+      "expect_doc": "Nutanix-Kubernetes-Platform-v2_14",
+      "expect_section": "**vSphere: Certificate Renewal**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0172",
+      "query": "what-is-the-minimum-ha-admission-control-setting-for-redundancy-factor-2-deployments?",
+      "expect_chunk_ids": [
+        487984,
+        489417,
+        488456
+      ],
+      "expect_doc": "vSphere-Admin6-AOS-v6_10",
+      "expect_section": "**Table 2: Minimum Reservation Percentage for vSphere HA Admission Control Setting**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0173",
+      "query": "[nai-inference-ui.nai-ui-image.tag] What is the default tag for the NAI UI Docker image?",
+      "expect_chunk_ids": [
+        307911
+      ],
+      "expect_doc": "Nutanix-Enterprise-AI-v2_3",
+      "expect_section": "<span id=\"page-24-0\"></span>**Nutanix Enterprise AI Configuration Parameters**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0174",
+      "query": "How much memory (in Gi) does the NAI UI container request by default?",
+      "expect_chunk_ids": [
+        307911
+      ],
+      "expect_doc": "Nutanix-Enterprise-AI-v2_3",
+      "expect_section": "<span id=\"page-24-0\"></span>**Nutanix Enterprise AI Configuration Parameters**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0175",
+      "query": "what conditions prevent iam-ha from being enabled?",
+      "expect_chunk_ids": [
+        382241,
+        388803,
+        382255
+      ],
+      "expect_doc": "Nutanix-Objects-v5_3",
+      "expect_section": "<span id=\"page-90-0\"></span>**IAM-High Availability Limitations**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0176",
+      "query": "how can stale active directory users cause iam-ha to fail?",
+      "expect_chunk_ids": [
+        382241,
+        105025
+      ],
+      "expect_doc": "Nutanix-Objects-v5_3",
+      "expect_section": "<span id=\"page-90-0\"></span>**IAM-High Availability Limitations**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0177",
+      "query": "[KB-19916](https://portal.nutanix.com/kb/19916) for fixing the missing VM Ext ID issue after upgrading to pc.7.3?",
+      "expect_chunk_ids": [
+        453091,
+        453172,
+        453383,
+        453474
+      ],
+      "expect_doc": "Release-Notes-Prism-Central-vpc_7_3",
+      "expect_section": "Data Replication and Protection",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0178",
+      "query": "What is the access Key ID for a single AWS account?",
+      "expect_chunk_ids": [
+        304380,
+        304741,
+        304084,
+        303794,
+        303520
+      ],
+      "expect_doc": "Nutanix-Collector-User-Guide-v6_1",
+      "expect_section": "**AWS**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0179",
+      "query": "what group must my username be part of for ssr login to succeed?",
+      "expect_chunk_ids": [
+        53747,
+        59412,
+        57815,
+        56361,
+        434635
+      ],
+      "expect_doc": "Disaster-Recovery-DRaaS-Guide-vpc_2024_2",
+      "expect_section": "**Note:** If you use:",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0180",
+      "query": "What should I check in RSOP to confirm RequireSecuritySignature is set to Disabled?",
+      "expect_chunk_ids": [
+        60251,
+        60508
+      ],
+      "expect_doc": "Field-Installation-Guide-v4_6",
+      "expect_section": "Set-SMBClientConfiguration -RequireSecuritySignature \\$False -Force",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0181",
+      "query": "How do I propagate changes made in Active Directory to the SCVMM server?",
+      "expect_chunk_ids": [
+        60251,
+        60508
+      ],
+      "expect_doc": "Field-Installation-Guide-v4_6",
+      "expect_section": "Set-SMBClientConfiguration -RequireSecuritySignature \\$False -Force",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0182",
+      "query": "What are the SKUs for 480GB M.2 TLC SSDs?",
+      "expect_chunk_ids": [
+        72703,
+        72715
+      ],
+      "expect_doc": "Intel-Hardware-Firmware-Compatibility",
+      "expect_section": "<span id=\"page-20-0\"></span>**R2216WF 2U1N 24SFF Hardware Compatibility**",
+      "expect_product": null,
+      "category": "other",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0183",
+      "query": "what port does vtep gateways use for communication",
+      "expect_chunk_ids": [
+        487460,
+        487466
+      ],
+      "expect_doc": "nutanix-ports-protocols",
+      "expect_section": "Flow Controller",
+      "expect_product": null,
+      "category": "ports",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0184",
+      "query": "What ports are used for iSCSI connections in NDB?",
+      "expect_chunk_ids": [
+        487485,
+        378909,
+        378973,
+        376058
+      ],
+      "expect_doc": "nutanix-ports-protocols",
+      "expect_section": "NDB (Database Server VM)",
+      "expect_product": null,
+      "category": "ports",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0185",
+      "query": "Which port is required for SSH access on Linux database server VMs?",
+      "expect_chunk_ids": [
+        487485,
+        487492,
+        487493
+      ],
+      "expect_doc": "nutanix-ports-protocols",
+      "expect_section": "NDB (Database Server VM)",
+      "expect_product": null,
+      "category": "ports",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0186",
+      "query": "[Balancer] What HTTP endpoint do external S3 clients use to access Objects?",
+      "expect_chunk_ids": [
+        487605,
+        382187,
+        487574,
+        487589
+      ],
+      "expect_doc": "nutanix-ports-protocols",
+      "expect_section": "Objects (IAM High Availability Enabled and Network Segmentation Enabled- Darksite - AHV)",
+      "expect_product": null,
+      "category": "ports",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0187",
+      "query": "What ports are used by Federation workflows and what network does Object Controller use for these connections?",
+      "expect_chunk_ids": [
+        487605,
+        487597,
+        487589,
+        487574,
+        487566,
+        487528,
+        487543,
+        487550,
+        487559
+      ],
+      "expect_doc": "nutanix-ports-protocols",
+      "expect_section": "Objects (IAM High Availability Enabled and Network Segmentation Enabled- Darksite - AHV)",
+      "expect_product": null,
+      "category": "ports",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0188",
+      "query": "what are limitations for live migration of vGPU-enabled VMs?",
+      "expect_chunk_ids": [
+        415282,
+        2751,
+        4354,
+        4357
+      ],
+      "expect_doc": "Prism-Central-Guide-vpc_2024_2",
+      "expect_section": "<span id=\"page-166-0\"></span>**Live Migration of vGPU-enabled VMs**",
+      "expect_product": null,
+      "category": "prism-central",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0189",
+      "query": "why should I not delete the SelfServiceContainer?",
+      "expect_chunk_ids": [
+        426028,
+        420150,
+        417772,
+        426077,
+        415559,
+        422923
+      ],
+      "expect_doc": "Prism-Central-Guide-vpc_7_5",
+      "expect_section": "**Storage Containers**",
+      "expect_product": null,
+      "category": "prism-central",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0190",
+      "query": "How do you view the Summary tab for specific percentile intervals of CPU usage?",
+      "expect_chunk_ids": [
+        423144,
+        420339,
+        415725,
+        419777
+      ],
+      "expect_doc": "Prism-Central-Guide-vpc_7_3",
+      "expect_section": "**Metrics Tab**",
+      "expect_product": null,
+      "category": "prism-central",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0191",
+      "query": "What is the default view in the NGT policies summary view?",
+      "expect_chunk_ids": [
+        415856,
+        426627,
+        418166,
+        420549
+      ],
+      "expect_doc": "Prism-Central-Guide-vpc_2024_2",
+      "expect_section": "**NGT Policies Summary View**",
+      "expect_product": null,
+      "category": "prism-central",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0192",
+      "query": "How do I access the NGT policies summary view from Prism Central?",
+      "expect_chunk_ids": [
+        415856,
+        426627,
+        423403,
+        420549
+      ],
+      "expect_doc": "Prism-Central-Guide-vpc_2024_2",
+      "expect_section": "**NGT Policies Summary View**",
+      "expect_product": null,
+      "category": "prism-central",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0193",
+      "query": "show identified application status in outgoing list",
+      "expect_chunk_ids": [
+        422565,
+        425653,
+        419797,
+        417426
+      ],
+      "expect_doc": "Prism-Central-Guide-vpc_7_3",
+      "expect_section": "<span id=\"page-144-0\"></span>**Apps & Relationships Tab**",
+      "expect_product": null,
+      "category": "prism-central",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0194",
+      "query": "what are the categories used for image placement policies in prism central?",
+      "expect_chunk_ids": [
+        420556,
+        423419,
+        426662,
+        415863
+      ],
+      "expect_doc": "Prism-Central-Guide-vpc_2024_3_1",
+      "expect_section": "<span id=\"page-509-1\"></span>**Image Placement Policies**",
+      "expect_product": null,
+      "category": "prism-central",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0195",
+      "query": "how can i enforce image placement policies using soft and hard enforcement?",
+      "expect_chunk_ids": [
+        420556,
+        423436,
+        426681,
+        420573,
+        418173,
+        418189,
+        426662,
+        423419,
+        415879
+      ],
+      "expect_doc": "Prism-Central-Guide-vpc_2024_3_1",
+      "expect_section": "<span id=\"page-509-1\"></span>**Image Placement Policies**",
+      "expect_product": null,
+      "category": "prism-central",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0196",
+      "query": "how do I access the alerts summary view in prism central?",
+      "expect_chunk_ids": [
+        411347,
+        409752,
+        408174,
+        413071
+      ],
+      "expect_doc": "Prism-Central-Alert-Reference-vpc_2024_3_1",
+      "expect_section": "<span id=\"page-5-0\"></span>**Alerts Summary View (Prism Central)**",
+      "expect_product": null,
+      "category": "prism-central",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0197",
+      "query": "what actions can be performed in the alerts summary view?",
+      "expect_chunk_ids": [
+        411347,
+        409752,
+        408174,
+        413071
+      ],
+      "expect_doc": "Prism-Central-Alert-Reference-vpc_2024_3_1",
+      "expect_section": "<span id=\"page-5-0\"></span>**Alerts Summary View (Prism Central)**",
+      "expect_product": null,
+      "category": "prism-central",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0198",
+      "query": "What features are not supported in an x-small Prism Central?",
+      "expect_chunk_ids": [
+        425430,
+        419692,
+        422341,
+        415126
+      ],
+      "expect_doc": "Prism-Central-Guide-vpc_7_5",
+      "expect_section": "**Limitations**",
+      "expect_product": null,
+      "category": "prism-central",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0199",
+      "query": "what is displayed in the list tab of kubernetes clusters page?",
+      "expect_chunk_ids": [
+        422761,
+        415415,
+        417614,
+        419986
+      ],
+      "expect_doc": "Prism-Central-Guide-vpc_7_3",
+      "expect_section": "<span id=\"page-225-0\"></span>**Kubernetes Clusters Summary View**",
+      "expect_product": null,
+      "category": "prism-central",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0200",
+      "query": "how do I define NGT policies for VM restarts?",
+      "expect_chunk_ids": [
+        418165,
+        426626,
+        420548,
+        423402
+      ],
+      "expect_doc": "Prism-Central-Guide-vpc_2024_3",
+      "expect_section": "<span id=\"page-504-0\"></span>**NGT Policies**",
+      "expect_product": null,
+      "category": "prism-central",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0201",
+      "query": "can I apply different NGT policies to VMs in different time zones?",
+      "expect_chunk_ids": [
+        418165,
+        420548,
+        423402,
+        426626
+      ],
+      "expect_doc": "Prism-Central-Guide-vpc_2024_3",
+      "expect_section": "<span id=\"page-504-0\"></span>**NGT Policies**",
+      "expect_product": null,
+      "category": "prism-central",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0202",
+      "query": "What is the first step to access VM-VM anti-affinity policy details?",
+      "expect_chunk_ids": [
+        420513,
+        426591,
+        4189,
+        423367
+      ],
+      "expect_doc": "Prism-Central-Guide-vpc_2024_3_1",
+      "expect_section": "<span id=\"page-496-0\"></span>**VM-VM Anti-Affinity Policies Details View**",
+      "expect_product": null,
+      "category": "prism-central",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0203",
+      "query": "how many unique Cloud Connect sites can be deployed per on-prem Prism Element cluster?",
+      "expect_chunk_ids": [
+        434693,
+        435655,
+        435652,
+        434689
+      ],
+      "expect_doc": "Prism-Element-Data-Protection-Guide-v6_10",
+      "expect_section": "**General Limitations and Recommendations**",
+      "expect_product": null,
+      "category": "prism-element",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0204",
+      "query": "What items does Pulse Health Monitoring collect?",
+      "expect_chunk_ids": [
+        435672,
+        482080,
+        484149,
+        480028,
+        434707,
+        437488,
+        436582
+      ],
+      "expect_doc": "Prism-Element-Data-Protection-Guide-v7_0",
+      "expect_section": "<span id=\"page-197-1\"></span>**Pulse Health Monitoring**",
+      "expect_product": null,
+      "category": "prism-element",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0205",
+      "query": "what causes consistency group conflicts in prism element?",
+      "expect_chunk_ids": [
+        428724,
+        433251,
+        430968
+      ],
+      "expect_doc": "Prism-Element-Alerts-Reference-v6_10",
+      "expect_section": "**Table 602: Consistency Group Conflict Occurred. [130349] [A130349]**",
+      "expect_product": null,
+      "category": "prism-element",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0206",
+      "query": "how do i resolve vm protection issues due to consistency group conflict?",
+      "expect_chunk_ids": [
+        428724,
+        411781,
+        408601,
+        413557,
+        433250,
+        433251,
+        411782,
+        410187
+      ],
+      "expect_doc": "Prism-Element-Alerts-Reference-v6_10",
+      "expect_section": "**Table 602: Consistency Group Conflict Occurred. [130349] [A130349]**",
+      "expect_product": null,
+      "category": "prism-element",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "q-0207",
+      "query": "what are the two viewing modes for data protection and recovery information",
+      "expect_chunk_ids": [
+        437110,
+        436203,
+        435274,
+        434315
+      ],
+      "expect_doc": "Prism-Element-Data-Protection-Guide-v7_5",
+      "expect_section": "**Menu Options**",
+      "expect_product": null,
+      "category": "prism-element",
+      "difficulty": "easy"
+    }
+  ]
+}

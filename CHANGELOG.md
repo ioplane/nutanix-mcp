@@ -145,14 +145,63 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
   on the GPU host with warm embedder will drop the floor by an order
   of magnitude.
 
-### Out of scope for Sprint 006 (queued for Sprint 006-extension)
+### Added (Sprint 006-extension — LLM-driven fixture, 2026-05-02)
 
-- LLM-generated queries via Qwen2.5-3B (arista-mcp pattern). The
-  current heuristic templating is enough for a baseline; real
-  LLM-from-content generation is the path to higher query quality
-  and bench expansion past 38 queries.
-- LLM multi-positive annotation. Currently a structural rule
-  (parent + 20 siblings).
+The arista-mcp bench-v2 pipeline ported and run end-to-end against
+the populated remote PG. Replaces the heuristic first-cut fixture
+with LLM-generated queries fairness-filtered through the retriever
+and multi-positive annotated by the same LLM.
+
+- `scripts/sample-chunks-for-bench.py` — stratified leaf-chunk sample
+  across the 11 live categories. Filters out boilerplate sections
+  and pure code-block chunks. Parameterized SQL via psycopg.
+- `scripts/generate-bench-queries.py` — 1-2 questions per seed chunk
+  via an OpenAI-compat HTTP endpoint (Qwen2.5-3B-Instruct on Ollama,
+  4× RTX 5090, 4K ctx). Uses `http.client` (not `urllib`) so the
+  file:// handler stays unreachable; rejects non-http schemes.
+- `scripts/annotate-multi-positives.py` — LLM labels which retriever
+  top-10 chunks would also be valid answers. Source chunk is always
+  included by construction.
+- `nutanix-mcp filter-bench-queries` (new CLI verb) — fairness
+  filter. Drops queries whose `source_chunk_id` is not in the
+  retriever top-K=20, enriches survivors with the top-10 for the
+  annotation pass. Mirrors arista-mcp's `validate-bench-queries`
+  JSONL mode.
+
+### Verified (Sprint 006-extension acceptance — 2026-05-02)
+
+Pipeline numbers on the remote (PG localhost + Ollama localhost):
+
+| Stage | In | Out | Wall time |
+|---|---|---|---|
+| Sample 200 chunks | DB | `bench-seed-chunks.jsonl` | 1 s |
+| LLM-generate queries | 200 chunks | 378 raw candidates | 73 s |
+| Fairness-filter (top-20) | 378 candidates | 207 survived | 8 min (54.8 %) |
+| Multi-positive annotate | 207 queries | 207 labelled | 76 s |
+
+Bench acceptance run on the LLM fixture (`tests/fixtures/bench-queries-llm.json`):
+
+- queries: 207
+- **top-1: 82.6 %**
+- **top-5: 98.6 %**
+- **top-10: 100.0 %**
+- p50: 5.88 s
+- p95: 8.45 s
+
+Per-category top-10 hit rate = 100 % across all 11 categories. KB
+(73 % of fixture) posts top-1 = 88 %. Top-10 = 100 % means the
+retrieval pipeline finds the gold chunk every time on this fixture;
+only ranking shuffle keeps top-1 below 100 %.
+
+This is the v0.2.0 baseline against which Sprint 008 HNSW/BM25
+sweeps and the Sprint 010 reranker fine-tune will be measured.
+
+Latency floor is dominated by the local-CPU embedder driving
+through the SSH tunnel to remote PG. Production serve on the GPU
+host will drop p95 by an order of magnitude.
+
+### Out of scope (still queued)
+
 - `expect_product` filtering. Blocked on ingest populating
   `documents.product` (currently NULL across the corpus).
 

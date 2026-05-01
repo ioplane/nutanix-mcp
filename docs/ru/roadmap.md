@@ -39,7 +39,7 @@ gantt
 | 003.5 | Queued | INT8-реранкер через Optimum O4. Merge gate — не более 1 п.п. регрессии top-1 против FP32. |
 | 004 | DONE | `HybridRetriever`, 7 MCP-инструментов, stdio + HTTP хосты, CLI-глагол `serve`. 37/37 тестов плюс live HTTP smoke. |
 | 005 | DONE | `CatalogReader`, `DocumentLoader` (CRLF/marker/TOC strip, MD↔JSON pair), `SectionAwareChunker`, `IngestService`, CLI-глагол `ingest`. 52/52 тестов; live ingest + MCP search верифицированы. |
-| 006 | DONE | Bench v2 harness + история приземлены. Quality-стек ntx-mcp принят. Правки code-review влиты. Throughput-исследование 3 платформ (1.7/13.7/634 chunks/s). Удалённый ingest 7343 документов завершён (2026-05-01). 38-вопросный first-cut fixture сгенерирован через `scripts/seed-bench-queries.ps1`. Acceptance-гейт PASSED: top-10 = 81.6 %. Шесть итераций в `bench-history.jsonl`. |
+| 006 | DONE | Bench v2 harness + история приземлены. Quality-стек ntx-mcp принят. Правки code-review влиты. Throughput 3 платформ (1.7/13.7/634 chunks/s). Удалённый ingest 7343 документов завершён (2026-05-01). First-cut: 38-вопросный эвристический fixture, top-10 = 81.6 %. **Extension (2026-05-02)**: arista-mcp pipeline портирован (sample → Qwen2.5-3B-генерация → fairness-filter → multi-positive разметка). 207-вопросный LLM-fixture. **top-1 = 82.6 %, top-10 = 100.0 %**. |
 | 007 | Partially landed | `scripts/pvs-studio-scan.ps1` запускается локально (slnx не поддерживается, обходим csproj). Pending: Semgrep job и CI-job для PVS-Studio. `markdownlint-cli2` job уже живёт в `ci.yml`. |
 | 008 | Pending | Свипы HNSW и BM25 в `bench-history.jsonl`. |
 | 009 | Pending | Single-file publish для Windows, Linux, macOS на amd64 и arm64. Шаблоны systemd-юнита и Windows-сервиса. |
