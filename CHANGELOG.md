@@ -205,6 +205,72 @@ host will drop p95 by an order of magnitude.
 - `expect_product` filtering. Blocked on ingest populating
   `documents.product` (currently NULL across the corpus).
 
+### Added (Sprint 008 — HNSW + BM25 sweep, 2026-05-02)
+
+One-at-a-time sweep across the four tunable retrieval knobs. Code
+lands locally, runs on the remote (PG + embedder localhost — no SSH
+tunnel and no laptop CPU bottleneck).
+
+- `bench` verb gains three new flags:
+  - `--ef-search <int>` — overrides `hnsw.ef_search` per Npgsql
+    physical connection.
+  - `--iterative-scan strict_order|relaxed_order` — overrides
+    `hnsw.iterative_scan` per connection.
+  - `--reranker-dir <path>` — point bench at an alternate reranker
+    model directory (used by the queued INT8 work).
+- `DataSourceFactory.Build(string, int?, string?)` overload uses
+  `NpgsqlDataSourceBuilder.UsePhysicalConnectionInitializer` to
+  apply the GUC overrides without an `ALTER DATABASE` round-trip.
+- `BenchRun` schema gains optional `ef_search`, `iterative_scan`,
+  `reranker_dir` fields. Older rows stay schema-clean (nullable).
+- `scripts/bench-sweep.sh` (and a PowerShell twin
+  `scripts/bench-sweep.ps1`) drive a 9-config one-at-a-time sweep:
+  `ef_search` × {50, 100, 200, 400}; `iterative_scan` strict;
+  `rrf_k` × {30, 100}; `candidate_pool_size` × {30, 100}. Each
+  config holds the other knobs at the v0.2.0 baseline. Wall-clock
+  on the remote: 84 minutes for 9 rows.
+
+### Verified (Sprint 008 acceptance — 2026-05-02)
+
+| Sweep | Quality delta | Latency delta | Verdict |
+|---|---|---|---|
+| `ef_search` 50/200/400 vs 100 | none (top-1 = 82.6 % flat) | flat (p50 ±5 %) | recall already saturated; baseline holds |
+| `strict_order` vs relaxed | none | none | keep relaxed (cheaper) |
+| `rrf_k` 30 vs 60 | none | p95 +115 % (3.4 → 7.3 s) | avoid k=30 |
+| `rrf_k` 100 vs 60 | top-1 −0.5 pp | p50 flat | avoid k=100 |
+| `pool=30` vs 50 | top-1 −1.9 pp, top-10 below 100 % | flat | avoid pool=30 |
+| `pool=100` vs 50 | top-1 −1.0 pp | p95 +12 % | extra pool wasted; rerank_top_n=30 caps it |
+
+**Verdict: keep current defaults** (ef_search=100,
+iterative_scan=relaxed_order, rrf_k=60, candidate_pool_size=50,
+rerank_top_n=30). Sub-pp deltas live below the n=207 noise floor;
+revisit when the fixture expands past 500 queries.
+
+### Out of scope for Sprint 008 (queued)
+
+- HNSW `m` rebuild (`m=16` → `m=32` / `m=48`). Gated on a fixture
+  where ef_search isn't already saturating recall; current top-10 = 100 %
+  ceiling says we're not there.
+- Bench expansion past 207 queries — see Sprint 010.x.
+
+### Blocked (Sprint 003.5 — INT8 reranker, 2026-05-02)
+
+`scripts/quantize-reranker.py` produces an INT8-weight ONNX from the
+FP32 Optimum-O4 source, but the source export ships FP16 activations.
+ORT injects `DynamicQuantizeLinear` ahead of every MatMul during
+dynamic quantization, and that op rejects FP16 input —
+`InferenceSession` fails to load the resulting model.
+
+Two paths forward (both heavier than the 60-line script):
+
+1. Walk the ONNX graph, cast every FP16 Initializer + ValueInfo to
+   FP32 and insert Cast nodes at FP16 op boundaries, then quantize.
+2. Quantize at the PyTorch level (BAAI/bge-reranker-v2-m3) via Optimum
+   NNCF or `torch.ao.quantization`, then re-export ONNX with INT8
+   weights baked in.
+
+Tracked in `scripts/quantize-reranker.py` docstring.
+
 ### Added (Sprint 005 — Cli + ingest pipeline)
 
 - Corpus audit of the local 7343-document snapshot at

@@ -51,6 +51,18 @@ public sealed record BenchRun
     [JsonPropertyName("limit")]
     public required int Limit { get; init; }
 
+    // Sprint 008 sweep params. Optional — nullable so older rows stay
+    // schema-clean and so a default-config run does not lie about the
+    // server-side ef_search.
+    [JsonPropertyName("ef_search")]
+    public int? EfSearch { get; init; }
+
+    [JsonPropertyName("iterative_scan")]
+    public string? IterativeScan { get; init; }
+
+    [JsonPropertyName("reranker_dir")]
+    public string? RerankerDir { get; init; }
+
     [JsonPropertyName("by_category")]
     public IReadOnlyDictionary<string, BenchCategoryStats>? ByCategory { get; init; }
 

@@ -69,6 +69,21 @@ public static class BenchCommand
             Description = "Skip the history append (debug aid).",
         };
 
+        var efSearch = new Option<int?>("--ef-search")
+        {
+            Description = "HNSW ef_search GUC override (per-connection SET). Default: server-side default.",
+        };
+
+        var iterativeScan = new Option<string?>("--iterative-scan")
+        {
+            Description = "HNSW iterative_scan GUC override: strict_order or relaxed_order.",
+        };
+
+        var rerankerDir = new Option<string?>("--reranker-dir")
+        {
+            Description = "Override reranker model directory (used by Sprint 003.5 INT8 swap).",
+        };
+
         var cmd = new Command("bench", "Run the bench v2 fixture against the live retriever and append a row to bench-history.jsonl")
         {
             queries,
@@ -80,6 +95,9 @@ public static class BenchCommand
             rrfK,
             smokeFloor,
             noHistory,
+            efSearch,
+            iterativeScan,
+            rerankerDir,
         };
 
         cmd.SetAction(async (pr, ct) =>
@@ -94,8 +112,11 @@ public static class BenchCommand
             int k = pr.GetValue(rrfK);
             double floor = pr.GetValue(smokeFloor);
             bool skipHistory = pr.GetValue(noHistory);
+            int? ef = pr.GetValue(efSearch);
+            string? scan = pr.GetValue(iterativeScan);
+            string? rrDir = pr.GetValue(rerankerDir);
 
-            await using var dataSource = DataSourceFactory.Build(settings.ConnectionString);
+            await using var dataSource = DataSourceFactory.Build(settings.ConnectionString, ef, scan);
             var dbOpts = new DbContextOptionsBuilder<NutanixDbContext>()
                 .UseNpgsql(dataSource, n => n.UseVector())
                 .Options;
@@ -103,7 +124,7 @@ public static class BenchCommand
 
             using var embedder = BuildEmbedder(settings);
             using var reranker = RerankerFamilyDetector.Build(
-                ModelPaths.RerankerDir(settings.ModelsDir),
+                rrDir ?? ModelPaths.RerankerDir(settings.ModelsDir),
                 settings.Gpu);
 
             var retriever = new HybridRetriever(embedder, reranker, dataSource);
@@ -136,6 +157,9 @@ public static class BenchCommand
                 RerankTopN = rerankTopN,
                 CandidatePoolSize = pool,
                 Limit = lim,
+                EfSearch = ef,
+                IterativeScan = scan,
+                RerankerDir = rrDir,
                 ByCategory = SummariseByCategory(outcome.PerQuery, q => q.Category),
                 ByDifficulty = SummariseByCategory(outcome.PerQuery, q => q.Difficulty),
             };
