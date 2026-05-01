@@ -30,3 +30,4 @@ pvs-report/
 # OS
 .DS_Store
 Thumbs.db
+scripts/__pycache__/

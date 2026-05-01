@@ -13,6 +13,7 @@ internal static class Program
             IngestCommand.Build(),
             BenchCommand.Build(),
             ValidateBenchQueriesCommand.Build(),
+            FilterBenchQueriesCommand.Build(),
         };
         return root.Parse(args).InvokeAsync();
     }
