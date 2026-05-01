@@ -9,6 +9,7 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 ## [Unreleased]
 
 ### Added — release prep
+
 - `LICENSE` — MIT.
 - `README.md` and `README.ru.md` — declarative overview, installation,
   link out to `docs/`.
@@ -32,10 +33,12 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
   exposes the plugin under the `dantte-lp/nutanix-mcp` GitHub repo.
 
 ### Removed — release prep
+
 - `CLAUDE.md` — content migrated into `docs/en/architecture.md` and
   `docs/en/quality-gate.md`.
 
 ### Added
+
 - `CONTRIBUTING.md` documenting Conventional Commits 1.0.0, SemVer 2.0.0,
   Keep a Changelog 1.1.0, compose-spec, Containerfile.5 and containerignore.5
   conventions used by this repo.
@@ -72,12 +75,14 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
     pending a running Postgres at `localhost:5435`.
 
 ### Verified
+
 - Sprint 002 gate: 9/9 Data tests pass against `nutanix_test` on
   `localhost:5435` (vchord-suite pg18). HNSW returns the seeded chunk as
   nearest, BM25 ranks AHV-VLAN co-hits first, COPY 1000×1024-dim halfvec
   in 2s, FakeTimeProvider drives ingest_run timestamps deterministically.
 
 ### Added (Sprint 003 prep)
+
 - Chunking strategy doc (`nutanix-mcp-plan/chunking-strategy.md`) capturing
   arista-mcp lessons (CRLF, level-ignored MD↔JSON pairing, no multi-query,
   no listwise) and Nutanix-specific rules (TOC skip, marker image-ref
@@ -98,6 +103,7 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
   `NoopReranker` (degraded-mode fallback). Build green.
 
 ### Added (Sprint 003 — Embedding layer)
+
 - `NutanixMcp.Core.Retrieval.IReranker` + `RerankCandidate`/`RerankResult`
   records (Core-level contract; Embedding implements).
 - `OnnxEmbedder` — bge-m3 1024-dim. The BAAI ONNX export ships a pre-pooled
@@ -119,11 +125,13 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
   ×4, `NoopRerankerTest` ×2, `InspectModel` diagnostic ×2.
 
 ### Verified
+
 - 15/15 Embedding tests pass against locally-fetched models on Windows
   CPU. Run wall-clock: ~10s. bge-m3 cross-lingual EN↔RU sanity holds
   (cosine well above 0.5 on AHV/VLAN topic).
 
 ### Added (Sprint 004 — Server layer + hybrid retriever)
+
 - Core models: `ChunkResult`, `SearchResponse`, `SearchDiagnostics` (a tighter
   shape than arista's — Hyde/Listwise/MultiQuery fields are intentionally
   omitted, see `docs/plans/training-and-rag-roadmap.md`).
@@ -162,6 +170,7 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
   `nutanix-mcp.json`.
 
 ### Verified (Sprint 004)
+
 - Full test suite green: **37/37** — 6 Core (QueryExpander), 4 Server
   (QueryEmbeddingCache), 15 Embedding (bge-m3 + reranker), 12 Data
   (incl. 3 HybridRetriever integration tests against live `nutanix_test`).
@@ -172,6 +181,7 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
   after a clean `dotnet ef database update`.
 
 ### Planned
+
 - Sprint 002 follow-on: `DocumentRepositoryTest` (incl. `KbNumber` lookup).
 - Sprint 003.5 (queued): INT8 reranker quantization via Optimum.
 - Sprint 005: CLI verbs `ingest`, `bench`, `validate`, `curate-triples`,
@@ -186,6 +196,7 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 Initial scaffold sprint. Solution skeleton, package pins, Postgres docker stack.
 
 ### Added
+
 - Solution skeleton: 5 src projects (`Core`, `Data`, `Embedding`, `Server`, `Cli`)
   and 5 test projects, layered as `Cli → Server → Core ← Embedding, Data`.
 - Centralised package versions via `Directory.Packages.props`
@@ -209,6 +220,7 @@ Initial scaffold sprint. Solution skeleton, package pins, Postgres docker stack.
   (Web SDK requires entry point even though hosting runs via CLI verbs).
 
 ### Notes
+
 - EF Core held back to 9.0.15 because `Pgvector.EntityFrameworkCore` 0.3.0
   pins `Microsoft.EntityFrameworkCore.Relational` 9.0.1; direct overpin to 9.0.15.
 - Postgres port 5435 chosen because 5434 is taken by arista-mcp + ntx-mcp on the

@@ -12,10 +12,9 @@
     "headings": false
   },
 
-  // GFM allows duplicate headings if they sit under different parents.
-  "MD024": {
-    "siblings_only": true
-  },
+  // CHANGELOG sections under [Unreleased] reuse "### Verified" or
+  // "### Added" intentionally; the heading set is the contract, not unique.
+  "MD024": false,
 
   // The first heading is the title; allow `#` to repeat the file name.
   "MD025": {
@@ -31,5 +30,10 @@
   "MD034": false,
 
   // First line need not be a heading — index files start with a paragraph.
-  "MD041": false
+  "MD041": false,
+
+  // Compact Markdown tables (`|---|---|`) trigger persistent false positives
+  // against headers that have padding. The compact-with-padded-headers visual
+  // style is consistent across the project; we keep it.
+  "MD060": false
 }
