@@ -77,7 +77,7 @@ public sealed class BenchHarness(
         RrfK = _options.RrfK,
     };
 
-    private static (double P50, double P95) ComputePercentiles(IReadOnlyList<double> values)
+    private static (double P50, double P95) ComputePercentiles(List<double> values)
     {
         if (values.Count == 0)
         {
@@ -107,30 +107,4 @@ public sealed class BenchHarness(
 
         return sorted[lo] + ((sorted[hi] - sorted[lo]) * (pos - lo));
     }
-}
-
-public sealed class BenchHarnessOptions
-{
-    public int Limit { get; init; } = 10;
-    public int CandidatePoolSize { get; init; } = 50;
-    public int RerankTopN { get; init; } = 30;
-    public int RrfK { get; init; } = 60;
-}
-
-public sealed record BenchPerQuery
-{
-    public required BenchQuery Query { get; init; }
-    public required int FirstHitRank { get; init; }
-    public required double LatencyMs { get; init; }
-    public required IReadOnlyList<long> ReturnedChunkIds { get; init; }
-}
-
-public sealed record BenchOutcome
-{
-    public required IReadOnlyList<BenchPerQuery> PerQuery { get; init; }
-    public required double Top1 { get; init; }
-    public required double Top5 { get; init; }
-    public required double Top10 { get; init; }
-    public required double P50Ms { get; init; }
-    public required double P95Ms { get; init; }
 }

@@ -210,7 +210,7 @@ public static class BenchCommand
         }
     }
 
-    private static IReadOnlyDictionary<string, BenchCategoryStats>? SummariseByCategory(
+    private static Dictionary<string, BenchCategoryStats>? SummariseByCategory(
         IReadOnlyList<BenchPerQuery> rows,
         Func<BenchQuery, string?> selector)
     {
