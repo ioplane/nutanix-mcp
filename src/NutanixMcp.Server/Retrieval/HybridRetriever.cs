@@ -71,10 +71,9 @@ public sealed class HybridRetriever : IHybridRetriever
         var expansion = QueryExpander.Expand(query);
 
         var embedSw = Stopwatch.StartNew();
-        HalfVector qVec;
-        if (!_queryCache.TryGet(expansion.Expanded, out qVec))
+        if (!_queryCache.TryGet(expansion.Expanded, out HalfVector qVec))
         {
-            var emb = await _embedder
+            float[][] emb = await _embedder
                 .EmbedAsync([expansion.Expanded], isQuery: true, ct)
                 .ConfigureAwait(false);
             Half[] halfArr = [.. emb[0].Select(static f => (Half)f)];
@@ -94,24 +93,23 @@ public sealed class HybridRetriever : IHybridRetriever
         var fused = ReciprocalRankFusion(denseRows, sparseRows, options.RrfK);
         rrfSw.Stop();
 
-        var rerankTopN = ComputeAdaptiveRerankTopN(fused, options.RerankTopN);
+        int rerankTopN = ComputeAdaptiveRerankTopN(fused, options.RerankTopN);
         var topForRerank = fused.Take(rerankTopN).ToList();
 
         // Parent hydration for the cross-encoder: pull each unique parent's
         // raw_content in one batch SELECT so the reranker scores against the
         // richer section text. Leaves with no parent (legacy) keep leaf text.
-        var distinctParentIds = topForRerank
+        long[] distinctParentIds = [.. topForRerank
             .Where(f => f.Row.ParentChunkId.HasValue)
             .Select(f => f.Row.ParentChunkId!.Value)
-            .Distinct()
-            .ToArray();
+            .Distinct()];
         var parentTexts = await FetchParentTextsAsync(distinctParentIds, ct).ConfigureAwait(false);
 
         var rerankSw = Stopwatch.StartNew();
         var rerankInput = topForRerank.Select(f =>
         {
-            var rerankText = f.Row.ParentChunkId is long pid
-                && parentTexts.TryGetValue(pid, out var pt)
+            string rerankText = f.Row.ParentChunkId is long pid
+                && parentTexts.TryGetValue(pid, out string? pt)
                     ? pt
                     : f.Row.RawContent;
             return new RerankCandidate(f.Row.ChunkId, rerankText);
@@ -123,12 +121,12 @@ public sealed class HybridRetriever : IHybridRetriever
 
         var rerankScore = rerankResults.ToDictionary(r => r.ChunkId, r => r.Score);
         var rerankedList = topForRerank
-            .OrderByDescending(f => rerankScore.TryGetValue(f.Row.ChunkId, out var s) ? s : 0f)
+            .OrderByDescending(f => rerankScore.TryGetValue(f.Row.ChunkId, out float s) ? s : 0f)
             .ToList();
 
         var ranked = options.DedupPerSection
             ? DedupPerSection(rerankedList).Take(options.Limit).ToList()
-            : rerankedList.Take(options.Limit).ToList();
+            : [.. rerankedList.Take(options.Limit)];
 
         var results = ranked.Select(f => Build(f, rerankScore)).ToList();
         total.Stop();
@@ -289,9 +287,9 @@ public sealed class HybridRetriever : IHybridRetriever
         {
             return configured;
         }
-        var top1 = fused[0].RrfScore;
-        var top5 = fused[4].RrfScore;
-        var spread = top1 - top5;
+        float top1 = fused[0].RrfScore;
+        float top5 = fused[4].RrfScore;
+        float spread = top1 - top5;
         return spread > AdaptiveSpreadThreshold ? configured : AdaptiveRerankFloor;
     }
 
@@ -302,21 +300,21 @@ public sealed class HybridRetriever : IHybridRetriever
     {
         var scores = new Dictionary<long, Accumulator>(dense.Count + sparse.Count);
 
-        for (var i = 0; i < dense.Count; i++)
+        for (int i = 0; i < dense.Count; i++)
         {
             var row = dense[i];
-            var rrf = 1f / (k + i + 1);
-            ref var slot = ref CollectionsMarshal.GetValueRefOrAddDefault(scores, row.ChunkId, out var existed);
+            float rrf = 1f / (k + i + 1);
+            ref var slot = ref CollectionsMarshal.GetValueRefOrAddDefault(scores, row.ChunkId, out bool existed);
             slot = existed
                 ? slot with { Rrf = slot.Rrf + rrf, DenseRank = i + 1, DenseDistance = row.Distance }
                 : new Accumulator(rrf, row, i + 1, null, row.Distance, null);
         }
 
-        for (var i = 0; i < sparse.Count; i++)
+        for (int i = 0; i < sparse.Count; i++)
         {
             var row = sparse[i];
-            var rrf = 1f / (k + i + 1);
-            ref var slot = ref CollectionsMarshal.GetValueRefOrAddDefault(scores, row.ChunkId, out var existed);
+            float rrf = 1f / (k + i + 1);
+            ref var slot = ref CollectionsMarshal.GetValueRefOrAddDefault(scores, row.ChunkId, out bool existed);
             slot = existed
                 ? slot with { Rrf = slot.Rrf + rrf, SparseRank = i + 1, SparseDistance = row.Distance }
                 : new Accumulator(rrf, row, null, i + 1, null, row.Distance);
@@ -356,14 +354,14 @@ public sealed class HybridRetriever : IHybridRetriever
             PageStart: f.Row.PageStart,
             PageEnd: f.Row.PageEnd,
             RawContent: f.Row.RawContent,
-            Score: rerankScore.TryGetValue(f.Row.ChunkId, out var rs) ? rs : f.RrfScore,
+            Score: rerankScore.TryGetValue(f.Row.ChunkId, out float rs) ? rs : f.RrfScore,
             // pgvector's <=> cosine distance ∈ [0, 2]; similarity = 1 - distance.
             DenseSimilarity: f.DenseDistance is null ? null : 1f - f.DenseDistance.Value,
             // vchord_bm25's <&> returns negative BM25 score; flip sign so
             // callers see a conventional "higher = more relevant" value.
             Bm25Score: f.SparseDistance is null ? null : -f.SparseDistance.Value,
             RrfScore: f.RrfScore,
-            RerankScore: rerankScore.TryGetValue(f.Row.ChunkId, out var rs2) ? rs2 : null);
+            RerankScore: rerankScore.TryGetValue(f.Row.ChunkId, out float rs2) ? rs2 : null);
 
     private sealed record CandidateRow(
         long ChunkId,

@@ -52,16 +52,16 @@ public sealed class XlmRobertaOnnxReranker : IReranker
             return [];
         }
 
-        var queryIds = _tok.EncodeBare(query);
+        int[] queryIds = _tok.EncodeBare(query);
         var results = new RerankResult[candidates.Count];
 
-        for (var start = 0; start < candidates.Count; start += _opt.BatchSize)
+        for (int start = 0; start < candidates.Count; start += _opt.BatchSize)
         {
             ct.ThrowIfCancellationRequested();
-            var end = Math.Min(start + _opt.BatchSize, candidates.Count);
+            int end = Math.Min(start + _opt.BatchSize, candidates.Count);
             var slice = candidates.Skip(start).Take(end - start).ToList();
-            var scores = await Task.Run(() => ScoreBatch(queryIds, slice), ct).ConfigureAwait(false);
-            for (var i = 0; i < scores.Length; i++)
+            float[] scores = await Task.Run(() => ScoreBatch(queryIds, slice), ct).ConfigureAwait(false);
+            for (int i = 0; i < scores.Length; i++)
             {
                 results[start + i] = new RerankResult(slice[i].ChunkId, scores[i]);
             }
@@ -72,23 +72,23 @@ public sealed class XlmRobertaOnnxReranker : IReranker
 
     private float[] ScoreBatch(int[] queryIds, List<RerankCandidate> batch)
     {
-        var maxSeq = _opt.MaxSequenceLength;
+        int maxSeq = _opt.MaxSequenceLength;
         // XLM-R pair: <s> q </s></s> d </s> — 4 special tokens total.
         const int specialTokens = 4;
-        var docBudget = Math.Max(1, maxSeq - queryIds.Length - specialTokens);
+        int docBudget = Math.Max(1, maxSeq - queryIds.Length - specialTokens);
 
         var encoded = new List<int[]>(batch.Count);
-        var maxLen = 0;
+        int maxLen = 0;
         foreach (var cand in batch)
         {
-            var docIds = _tok.EncodeBare(cand.Text);
+            int[] docIds = _tok.EncodeBare(cand.Text);
             if (docIds.Length > docBudget)
             {
                 docIds = docIds[..docBudget];
             }
 
-            var seq = new int[1 + queryIds.Length + 2 + docIds.Length + 1];
-            var idx = 0;
+            int[] seq = new int[1 + queryIds.Length + 2 + docIds.Length + 1];
+            int idx = 0;
             seq[idx++] = XlmRobertaTokenizer.BosTokenId;      // <s>
             Array.Copy(queryIds, 0, seq, idx, queryIds.Length);
             idx += queryIds.Length;
@@ -102,15 +102,15 @@ public sealed class XlmRobertaOnnxReranker : IReranker
             maxLen = Math.Max(maxLen, seq.Length);
         }
 
-        var seqLen = Math.Max(maxLen, 1);
-        var input = new long[batch.Count * seqLen];
-        var mask = new long[batch.Count * seqLen];
+        int seqLen = Math.Max(maxLen, 1);
+        long[] input = new long[batch.Count * seqLen];
+        long[] mask = new long[batch.Count * seqLen];
 
-        for (var b = 0; b < batch.Count; b++)
+        for (int b = 0; b < batch.Count; b++)
         {
-            var ids = encoded[b];
-            var rowStart = b * seqLen;
-            for (var i = 0; i < seqLen; i++)
+            int[] ids = encoded[b];
+            int rowStart = b * seqLen;
+            for (int i = 0; i < seqLen; i++)
             {
                 if (i < ids.Length)
                 {
@@ -140,8 +140,8 @@ public sealed class XlmRobertaOnnxReranker : IReranker
         var logits = results[0].GetTensorDataAsSpan<float>();
 
         // Output shape [B, 1] — one raw score per pair. Higher = more relevant.
-        var scores = new float[batch.Count];
-        for (var b = 0; b < batch.Count; b++)
+        float[] scores = new float[batch.Count];
+        for (int b = 0; b < batch.Count; b++)
         {
             scores[b] = logits[b];
         }

@@ -17,7 +17,7 @@ public sealed class ListDocumentsTool(NutanixDbContext db)
         [Description("Maximum rows returned. Defaults to 100, capped at 500.")] int limit = 100,
         CancellationToken ct = default)
     {
-        var capped = Math.Clamp(limit, 1, 500);
+        int capped = Math.Clamp(limit, 1, 500);
 
         var q = db.Documents.AsNoTracking();
         if (category is not null)

@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>NutanixMcp.Scripts.EmbedBench</RootNamespace>
+    <AssemblyName>embed-bench</AssemblyName>
+    <UseGpuOnnx Condition="'$(UseGpuOnnx)' == ''">false</UseGpuOnnx>
+    <NoWarn>$(NoWarn);CA1812;CA2007</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="**" />
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../src/NutanixMcp.Core/NutanixMcp.Core.csproj" />
+    <ProjectReference Include="../src/NutanixMcp.Embedding/NutanixMcp.Embedding.csproj" />
+  </ItemGroup>
+</Project>

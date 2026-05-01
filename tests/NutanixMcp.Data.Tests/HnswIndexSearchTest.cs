@@ -32,10 +32,10 @@ public class HnswIndexSearchTest(PgvectorFixture fx)
         await ctx.SaveChangesAsync();
 
         const int chunkCount = 500;
-        for (var i = 0; i < chunkCount; i++)
+        for (int i = 0; i < chunkCount; i++)
         {
             var v = new Half[1024];
-            for (var j = 0; j < 1024; j++)
+            for (int j = 0; j < 1024; j++)
             {
                 v[j] = (Half)((rng.NextSingle() * 2f) - 1f);
             }

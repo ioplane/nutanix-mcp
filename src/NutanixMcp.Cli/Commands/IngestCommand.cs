@@ -58,7 +58,7 @@ public static class IngestCommand
             verbose,
         };
 
-        cmd.SetAction(async (ParseResult pr, CancellationToken ct) =>
+        cmd.SetAction(async (pr, ct) =>
         {
             var settings = CliConfiguration.Load();
             var opts = new IngestOptions

@@ -64,7 +64,7 @@ public class QueryEmbeddingCacheTest
     private static HalfVector MakeVec(float seed)
     {
         var arr = new Half[1024];
-        for (var i = 0; i < arr.Length; i++)
+        for (int i = 0; i < arr.Length; i++)
         {
             arr[i] = (Half)(seed + (i * 1e-4f));
         }

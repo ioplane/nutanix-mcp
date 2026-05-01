@@ -32,9 +32,9 @@ public static partial class CatalogReader
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        var baseDir = Path.GetFullPath(options.CatalogBaseDir);
-        var mdDir = Path.Combine(baseDir, options.MdSubdir);
-        var jsonDir = Path.Combine(baseDir, options.JsonSubdir);
+        string baseDir = Path.GetFullPath(options.CatalogBaseDir);
+        string mdDir = Path.Combine(baseDir, options.MdSubdir);
+        string jsonDir = Path.Combine(baseDir, options.JsonSubdir);
         if (!Directory.Exists(mdDir))
         {
             throw new DirectoryNotFoundException(
@@ -42,10 +42,10 @@ public static partial class CatalogReader
         }
 
         var entries = new List<CatalogEntry>();
-        foreach (var mdPath in Directory.EnumerateFiles(mdDir, "*.md", SearchOption.TopDirectoryOnly))
+        foreach (string mdPath in Directory.EnumerateFiles(mdDir, "*.md", SearchOption.TopDirectoryOnly))
         {
-            var stem = Path.GetFileNameWithoutExtension(mdPath);
-            var jsonPath = Path.Combine(jsonDir, $"{stem}.json");
+            string stem = Path.GetFileNameWithoutExtension(mdPath);
+            string jsonPath = Path.Combine(jsonDir, $"{stem}.json");
             var entry = BuildEntry(stem, mdPath, jsonPath, options);
             entries.Add(entry);
         }
@@ -76,9 +76,9 @@ public static partial class CatalogReader
             version = InferVersionFromStem(stem);
         }
 
-        var sizeBytes = new FileInfo(mdPath).Length;
-        var relMd = Path.Combine(options.MdSubdir, Path.GetFileName(mdPath));
-        var relJson = Path.Combine(options.JsonSubdir, Path.GetFileName(jsonPath));
+        long sizeBytes = new FileInfo(mdPath).Length;
+        string relMd = Path.Combine(options.MdSubdir, Path.GetFileName(mdPath));
+        string relJson = Path.Combine(options.JsonSubdir, Path.GetFileName(jsonPath));
 
         return new CatalogEntry
         {
@@ -122,19 +122,19 @@ public static partial class CatalogReader
             using var doc = JsonDocument.Parse(stream);
             var root = doc.RootElement;
 
-            var title = root.TryGetProperty("title", out var t) ? t.GetString() ?? "" : "";
-            var category = root.TryGetProperty("category", out var c) ? c.GetString() ?? "" : "";
-            var product = root.TryGetProperty("product", out var p) ? p.GetString() : null;
-            var version = ReadVersionField(root);
+            string title = root.TryGetProperty("title", out var t) ? t.GetString() ?? "" : "";
+            string category = root.TryGetProperty("category", out var c) ? c.GetString() ?? "" : "";
+            string? product = root.TryGetProperty("product", out var p) ? p.GetString() : null;
+            string? version = ReadVersionField(root);
             var tags = ParseTags(root);
             int? pages = TryGetInt(root, "num_pages");
-            var sectionCount = TryGetInt(root, "section_count")
+            int sectionCount = TryGetInt(root, "section_count")
                 ?? CountArrayOrZero(root, "sections");
-            var tocCount = TryGetInt(root, "toc_count")
+            int tocCount = TryGetInt(root, "toc_count")
                 ?? CountArrayOrZero(root, "toc");
-            var imageCount = TryGetInt(root, "image_count") ?? 0;
+            int imageCount = TryGetInt(root, "image_count") ?? 0;
             int? kbNumber = TryGetInt(root, "kb_number");
-            var sourceType = root.TryGetProperty("source_type", out var st) ? st.GetString() : null;
+            string? sourceType = root.TryGetProperty("source_type", out var st) ? st.GetString() : null;
 
             return (title, category, product, version?.Length > 0 ? version : null,
                     tags, pages, sectionCount, tocCount, imageCount, kbNumber, sourceType);

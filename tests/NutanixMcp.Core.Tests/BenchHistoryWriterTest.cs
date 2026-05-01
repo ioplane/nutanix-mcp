@@ -10,14 +10,14 @@ public class BenchHistoryWriterTest
     [Fact]
     public async Task AppendsOneJsonLinePerCall()
     {
-        var dir = Directory.CreateTempSubdirectory("nutanix-bench-history-").FullName;
-        var path = Path.Combine(dir, "bench-history.jsonl");
+        string dir = Directory.CreateTempSubdirectory("nutanix-bench-history-").FullName;
+        string path = Path.Combine(dir, "bench-history.jsonl");
         try
         {
             await BenchHistoryWriter.AppendAsync(path, MakeRun("a"), CancellationToken.None);
             await BenchHistoryWriter.AppendAsync(path, MakeRun("b"), CancellationToken.None);
 
-            var lines = await File.ReadAllLinesAsync(path);
+            string[] lines = await File.ReadAllLinesAsync(path);
             lines.Should().HaveCount(2);
             lines[0].Should().Contain("\"label\":\"a\"");
             lines[1].Should().Contain("\"label\":\"b\"");
@@ -31,8 +31,8 @@ public class BenchHistoryWriterTest
     [Fact]
     public async Task CreatesParentDirectoryWhenMissing()
     {
-        var dir = Directory.CreateTempSubdirectory("nutanix-bench-history-").FullName;
-        var path = Path.Combine(dir, "nested", "tree", "bench-history.jsonl");
+        string dir = Directory.CreateTempSubdirectory("nutanix-bench-history-").FullName;
+        string path = Path.Combine(dir, "nested", "tree", "bench-history.jsonl");
         try
         {
             await BenchHistoryWriter.AppendAsync(path, MakeRun("a"), CancellationToken.None);

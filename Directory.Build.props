@@ -10,7 +10,13 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <!-- MA0004: ConfigureAwait. Console + ASP.NET Core hosts only, never UI SyncContext. -->
     <NoWarn>$(NoWarn);MA0004;MA0051;MA0009;S6966</NoWarn>
-    <ErrorLog>$(MSBuildProjectDirectory)/bin/$(Configuration)/analyzers.sarif</ErrorLog>
+    <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
+    <ErrorLog>$(MSBuildProjectDirectory)/bin/$(Configuration)/$(MSBuildProjectName).sarif.json,version=2.1</ErrorLog>
+
+    <!-- Inline NuGet vulnerability audit on every restore, fail at moderate. -->
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <NuGetAuditLevel>moderate</NuGetAuditLevel>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
 

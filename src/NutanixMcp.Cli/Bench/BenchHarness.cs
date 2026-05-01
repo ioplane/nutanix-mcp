@@ -28,7 +28,7 @@ public sealed class BenchHarness(
         var latenciesMs = new List<double>(queries.Count);
         progress.Start(queries.Count);
 
-        for (var i = 0; i < queries.Count; i++)
+        for (int i = 0; i < queries.Count; i++)
         {
             ct.ThrowIfCancellationRequested();
             var q = queries[i];
@@ -37,25 +37,26 @@ public sealed class BenchHarness(
                 .SearchAsync(q.Query, BuildOptions(), ct)
                 .ConfigureAwait(false);
             sw.Stop();
+            double ms = sw.Elapsed.TotalMilliseconds;
 
             var ranked = response.Results.Select(r => r.ChunkId).ToList();
-            var rank = BenchScoring.FirstHitRank(ranked, q.ExpectChunkIds);
+            int rank = BenchScoring.FirstHitRank(ranked, q.ExpectChunkIds);
             perQuery.Add(new BenchPerQuery
             {
                 Query = q,
                 FirstHitRank = rank,
-                LatencyMs = sw.Elapsed.TotalMilliseconds,
+                LatencyMs = ms,
                 ReturnedChunkIds = ranked,
             });
-            latenciesMs.Add(sw.Elapsed.TotalMilliseconds);
-            progress.Query(q.QueryId, rank, sw.Elapsed.TotalMilliseconds);
+            latenciesMs.Add(ms);
+            progress.Query(q.QueryId, rank, ms);
         }
 
         progress.Finish();
 
-        var top1 = perQuery.Count == 0 ? 0 : perQuery.Count(p => BenchScoring.IsHit(p.FirstHitRank, 1)) / (double)perQuery.Count;
-        var top5 = perQuery.Count == 0 ? 0 : perQuery.Count(p => BenchScoring.IsHit(p.FirstHitRank, 5)) / (double)perQuery.Count;
-        var top10 = perQuery.Count == 0 ? 0 : perQuery.Count(p => BenchScoring.IsHit(p.FirstHitRank, 10)) / (double)perQuery.Count;
+        double top1 = perQuery.Count == 0 ? 0 : perQuery.Count(p => BenchScoring.IsHit(p.FirstHitRank, 1)) / (double)perQuery.Count;
+        double top5 = perQuery.Count == 0 ? 0 : perQuery.Count(p => BenchScoring.IsHit(p.FirstHitRank, 5)) / (double)perQuery.Count;
+        double top10 = perQuery.Count == 0 ? 0 : perQuery.Count(p => BenchScoring.IsHit(p.FirstHitRank, 10)) / (double)perQuery.Count;
         var (p50, p95) = ComputePercentiles(latenciesMs);
 
         return new BenchOutcome
@@ -84,7 +85,7 @@ public sealed class BenchHarness(
             return (0, 0);
         }
 
-        var sorted = values.OrderBy(v => v).ToArray();
+        double[] sorted = [.. values.Order()];
         return (Percentile(sorted, 0.50), Percentile(sorted, 0.95));
     }
 
@@ -97,9 +98,9 @@ public sealed class BenchHarness(
             return sorted[0];
         }
 
-        var pos = q * (sorted.Length - 1);
-        var lo = (int)Math.Floor(pos);
-        var hi = (int)Math.Ceiling(pos);
+        double pos = q * (sorted.Length - 1);
+        int lo = (int)Math.Floor(pos);
+        int hi = (int)Math.Ceiling(pos);
         if (lo == hi)
         {
             return sorted[lo];

@@ -26,10 +26,10 @@ public static class ServeCommand
             port,
         };
 
-        cmd.SetAction(async (ParseResult pr, CancellationToken ct) =>
+        cmd.SetAction(async (pr, ct) =>
         {
-            var t = pr.GetValue(transport) ?? "stdio";
-            var p = pr.GetValue(port);
+            string t = pr.GetValue(transport) ?? "stdio";
+            int p = pr.GetValue(port);
             var settings = CliConfiguration.Load();
 
             try

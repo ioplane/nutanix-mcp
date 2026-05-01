@@ -57,21 +57,37 @@ sprint task is a `--force` ingest of all 7343 MD/JSON pairs into the
 local `nutanix` database. Numbers from that run land here once it
 finishes.
 
-### Empirical throughput (CPU, 2026-05-01)
+### Empirical throughput (2026-05-01)
 
-The first ingest run on a developer laptop without CUDA averaged:
+A standalone embedder microbenchmark (`scripts/EmbedBench`) measured
+the same `bge-m3` model against a 200-paragraph slice of an admin
+guide on three platforms:
 
-- About 6 minutes per document on the four largest admin guides
-  (`AHV-Admin-Guide-v1{0_0,0_3,1_0,6_10}` at 690-830 leaves each).
-- About 150 leaves per minute on small documents past the admin-guide
-  burst.
+| Path | Hardware | chunks/sec | per-chunk |
+|---|---|---|---|
+| Local CPU (Windows laptop) | 8-core consumer | 1.7 | 586 ms |
+| Remote CPU | 2× EPYC 9654, 384 threads, AVX-512 VNNI | 13.7 | 73 ms |
+| Remote GPU | 1× RTX 5090 | 634 | 1.6 ms |
 
-Total wall-clock for the 7343-document corpus on CPU is roughly two
-hours. The GPU build (`dotnet build -p:UseGpuOnnx=true`,
-`NUTANIX_MCP__Gpu=true`) should land it in ~15 minutes on a 4070,
-based on the OnnxRuntime CUDA profile. Production ingest pinning
-should select GPU on machines that have it; the CPU path is the
-default to keep the bench reproducible without CUDA.
+The GPU is **373× the local CPU and 46× the EPYC** on raw embedding.
+For a 30 000-chunk corpus the embedding phase alone is roughly 5
+hours / 36 minutes / 47 seconds respectively, before adding the
+PostgreSQL insert pipeline.
+
+Real ingest wall-clock includes chunker work, parent-then-leaf insert
+pairs, and BM25 trigger fire on every row, so total time is several
+minutes longer than raw embedding even on GPU.
+
+### CUDA toolkit notes
+
+`Microsoft.ML.OnnxRuntime.Gpu` 1.24.4 targets CUDA 12.x. Hosts with
+only a CUDA 13 toolkit installed need the CUDA 12 runtime
+redistributable libraries (`cublas64_12.dll`, `cublasLt64_12.dll`,
+`cudart64_12.dll`, plus cuDNN 9) on `LD_LIBRARY_PATH` (Linux) or
+`PATH` (Windows). The PyTorch wheel ships these as a side effect, so a
+local PyTorch venv works as a redist source. Production-deploy nodes
+should install the CUDA 12 runtime properly via the platform package
+manager.
 
 ### chunk_id stability
 

@@ -28,7 +28,7 @@ public class HalfVectorRoundtripTest(PgvectorFixture fx)
         await ctx.SaveChangesAsync();
 
         var vec = new Half[1024];
-        for (var i = 0; i < 1024; i++)
+        for (int i = 0; i < 1024; i++)
         {
             vec[i] = (Half)(i / 1024f);
         }

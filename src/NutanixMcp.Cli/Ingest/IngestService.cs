@@ -55,11 +55,11 @@ public sealed class IngestService(
             entries = entries.Take(options.Limit).ToList();
         }
 
-        var catalogSha = ComputeCatalogSha(entries);
+        string catalogSha = ComputeCatalogSha(entries);
 
         if (!options.Force)
         {
-            var lastSuccess = await runRepo
+            string? lastSuccess = await runRepo
                 .GetLastSuccessfulCatalogSha256Async(ct)
                 .ConfigureAwait(false);
             if (string.Equals(lastSuccess, catalogSha, StringComparison.Ordinal))
@@ -79,10 +79,10 @@ public sealed class IngestService(
 
         progress.Start(entries.Count);
         var run = await runRepo.StartAsync(catalogSha, ct).ConfigureAwait(false);
-        var skipped = 0;
-        var upserted = 0;
-        var failed = 0;
-        var chunkTotal = 0;
+        int skipped = 0;
+        int upserted = 0;
+        int failed = 0;
+        int chunkTotal = 0;
         string? lastError = null;
 
         foreach (var entry in entries)
@@ -90,10 +90,10 @@ public sealed class IngestService(
             ct.ThrowIfCancellationRequested();
             try
             {
-                var docHash = ComputeDocumentSha(entry);
+                string docHash = ComputeDocumentSha(entry);
                 if (!options.Force)
                 {
-                    var existing = await documentRepo
+                    string? existing = await documentRepo
                         .GetPdfSha256Async(entry.Id, ct)
                         .ConfigureAwait(false);
                     if (string.Equals(existing, docHash, StringComparison.Ordinal))
@@ -156,7 +156,7 @@ public sealed class IngestService(
             }
         }
 
-        var status = failed == 0 ? "success" : "partial";
+        string status = failed == 0 ? "success" : "partial";
         await runRepo.FinishAsync(
             run.Id,
             status,
@@ -182,7 +182,7 @@ public sealed class IngestService(
     private static List<NutanixChunk> MaterialiseParents(string docId, ChunkSet set)
     {
         var rows = new List<NutanixChunk>(set.Parents.Count);
-        for (var i = 0; i < set.Parents.Count; i++)
+        for (int i = 0; i < set.Parents.Count; i++)
         {
             var p = set.Parents[i];
             rows.Add(new NutanixChunk
@@ -218,15 +218,15 @@ public sealed class IngestService(
         }
 
         var contents = leaves.Select(l => l.Content).ToList();
-        var embeddings = await embedder
+        float[][] embeddings = await embedder
             .EmbedAsync(contents, isQuery: false, ct)
             .ConfigureAwait(false);
 
         var rows = new List<NutanixChunk>(leaves.Count);
         // Leaf chunk_index continues after the parents so the unique index
         // (document_id, chunk_index) is satisfied.
-        var indexBase = set.Parents.Count;
-        for (var i = 0; i < leaves.Count; i++)
+        int indexBase = set.Parents.Count;
+        for (int i = 0; i < leaves.Count; i++)
         {
             var l = leaves[i];
             long? parentId = null;
@@ -276,7 +276,7 @@ public sealed class IngestService(
 
     private static string Sha256(string value)
     {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(value));
+        byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(value));
         return Convert.ToHexStringLower(bytes);
     }
 }

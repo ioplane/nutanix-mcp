@@ -24,7 +24,7 @@ public sealed class SpectreIngestProgress(IAnsiConsole console) : IIngestProgres
     public void Document(string docId, string status, int chunkCount)
     {
         _seen++;
-        var marker = status switch
+        string marker = status switch
         {
             "ok" => "[green]ok[/]",
             "skip" => "[yellow]skip[/]",

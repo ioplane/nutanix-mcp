@@ -47,7 +47,7 @@ public class IngestRunRepositoryTest(PgvectorFixture fx)
         var running = await repo.StartAsync("LATER", CancellationToken.None);
         _ = running;
 
-        var lastSha = await repo.GetLastSuccessfulCatalogSha256Async(CancellationToken.None);
+        string? lastSha = await repo.GetLastSuccessfulCatalogSha256Async(CancellationToken.None);
 
         lastSha.Should().Be("GOOD");
     }

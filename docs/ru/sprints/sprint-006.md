@@ -56,21 +56,36 @@ Bench v2 ключуется на `chunk_id`. Каждый запрос несё�
 спринта — `--force` ingest всех 7343 MD/JSON пар в локальную базу
 `nutanix`. Цифры этого прогона приземлятся здесь по завершении.
 
-### Эмпирическая пропускная способность (CPU, 2026-05-01)
+### Эмпирическая пропускная способность (2026-05-01)
 
-Первый запуск ingest на машине разработчика без CUDA дал в среднем:
+Standalone-бенчмарк эмбеддера (`scripts/EmbedBench`) замерил ту же
+`bge-m3` модель на 200-параграфном срезе admin guide на трёх
+платформах:
 
-- Около 6 минут на документ для четырёх самых больших admin guides
-  (`AHV-Admin-Guide-v1{0_0,0_3,1_0,6_10}`, 690-830 листьев каждый).
-- Около 150 листьев в минуту на маленьких документах после
-  начального admin-guide-всплеска.
+| Путь | Железо | chunks/sec | на chunk |
+|---|---|---|---|
+| Local CPU (Windows-ноут) | 8-ядерный consumer | 1.7 | 586 мс |
+| Remote CPU | 2× EPYC 9654, 384 thread, AVX-512 VNNI | 13.7 | 73 мс |
+| Remote GPU | 1× RTX 5090 | 634 | 1.6 мс |
 
-Полный wall-clock для корпуса в 7343 документа на CPU — примерно
-2 часа. GPU-сборка (`dotnet build -p:UseGpuOnnx=true`,
-`NUTANIX_MCP__Gpu=true`) должна уложиться в ~15 минут на 4070
-исходя из CUDA-профиля OnnxRuntime. Production-ingest-пиннинг должен
-выбирать GPU на машинах с CUDA; CPU остаётся дефолтом ради
-воспроизводимости бенча без CUDA.
+GPU **в 373 раза быстрее local CPU и в 46 раз быстрее EPYC** на
+сыром embedding. Для корпуса в 30 000 чанков фаза embedding —
+~5 часов / ~36 минут / ~47 секунд соответственно, до учёта
+PG-insert-конвейера.
+
+Реальный wall-clock ingest добавляет работу chunker, парент-листового
+парного insert и срабатывание BM25-триггера на каждой строке —
+полное время на несколько минут больше сырого embedding даже на GPU.
+
+### Замечания по CUDA toolkit
+
+`Microsoft.ML.OnnxRuntime.Gpu` 1.24.4 рассчитан на CUDA 12.x. Хосты
+только с CUDA 13 нуждаются в redistributable-библиотеках CUDA 12
+(`cublas64_12.dll`, `cublasLt64_12.dll`, `cudart64_12.dll` плюс
+cuDNN 9) в `LD_LIBRARY_PATH` (Linux) или `PATH` (Windows). PyTorch
+ships эти DLL как side-effect — локальный PyTorch-venv работает как
+источник redist. Production-deploy ноды должны ставить CUDA 12
+runtime через системный пакетный менеджер.
 
 ### Стабильность chunk_id
 

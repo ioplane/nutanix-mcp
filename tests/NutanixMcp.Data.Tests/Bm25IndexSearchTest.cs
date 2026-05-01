@@ -30,7 +30,7 @@ public class Bm25IndexSearchTest(PgvectorFixture fx)
         });
         await ctx.SaveChangesAsync();
 
-        var texts = new[]
+        string[] texts = new[]
         {
             "AHV cluster networking with VLAN tagging on Nutanix",
             "Prism Element user authentication with Active Directory",
@@ -40,12 +40,12 @@ public class Bm25IndexSearchTest(PgvectorFixture fx)
         };
 
         var flat = new Half[1024];
-        for (var j = 0; j < 1024; j++)
+        for (int j = 0; j < 1024; j++)
         {
             flat[j] = (Half)0.1f;
         }
 
-        for (var i = 0; i < texts.Length; i++)
+        for (int i = 0; i < texts.Length; i++)
         {
             ctx.Chunks.Add(new ChunkEntity
             {

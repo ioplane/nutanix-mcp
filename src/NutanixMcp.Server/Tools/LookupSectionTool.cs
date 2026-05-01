@@ -32,7 +32,7 @@ public sealed class LookupSectionTool(NutanixDbContext db)
             };
         }
 
-        var body = string.Join("\n\n", chunks.Select(c => c.RawContent));
+        string body = string.Join("\n\n", chunks.Select(c => c.RawContent));
         return new
         {
             found = true,

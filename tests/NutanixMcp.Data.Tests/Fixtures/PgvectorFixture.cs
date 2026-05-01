@@ -75,7 +75,7 @@ public sealed class PgvectorFixture : IAsyncLifetime
     private async Task EnsureTestDatabaseAsync()
     {
         var target = new NpgsqlConnectionStringBuilder(ConnectionString);
-        var dbName = target.Database
+        string dbName = target.Database
             ?? throw new InvalidOperationException("Test connection string must specify Database=");
 
         if (!dbName.EndsWith("_test", StringComparison.Ordinal)
@@ -93,7 +93,7 @@ public sealed class PgvectorFixture : IAsyncLifetime
         await using var probe = conn.CreateCommand();
         probe.CommandText = "SELECT 1 FROM pg_database WHERE datname = @n";
         probe.Parameters.Add(new NpgsqlParameter<string>("n", dbName));
-        var exists = await probe.ExecuteScalarAsync();
+        object? exists = await probe.ExecuteScalarAsync();
         if (exists is null)
         {
             await using var create = conn.CreateCommand();
@@ -104,8 +104,8 @@ public sealed class PgvectorFixture : IAsyncLifetime
 
     private async Task EnsureExtensionsAsync()
     {
-        var path = ResolveRepoFile("docker/init.sql");
-        var sql = await File.ReadAllTextAsync(path);
+        string path = ResolveRepoFile("docker/init.sql");
+        string sql = await File.ReadAllTextAsync(path);
 
         await using var conn = new NpgsqlConnection(ConnectionString);
         await conn.OpenAsync();

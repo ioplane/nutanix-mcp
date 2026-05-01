@@ -44,11 +44,58 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
   ingest cost on the Nutanix corpus is ~2 hours and motivates a
   GPU-build production path.
 
+### Added (Sprint 006 — quality stack + ingest path benchmark)
+
+- Adopted the ntx-mcp quality stack:
+  - `.editorconfig` — CRLF, file-scoped namespaces, Allman braces,
+    naming rules including `s_camelCase` for private static fields
+    and `PascalCase` for constants (a const-specific rule is layered
+    in front of the static rule because both match a `private const`
+    field).
+  - `Directory.Build.props` — `CodeAnalysisTreatWarningsAsErrors=true`,
+    SARIF analyzer log per project, `NuGetAudit=true` at moderate
+    level for transitive CVE detection.
+  - `src/NutanixMcp.Data/Migrations/.editorconfig` — suppresses
+    CA1707/CA1825/CA1861/MA0005/MA0048/MA0051 for EF-generated code.
+- `scripts/pvs-studio-scan.ps1` — local PVS-Studio runner. Iterates
+  each `src/*.csproj` (PVS-Studio_Cmd does not accept `.slnx`),
+  merges per-project `.plog`s, renders the HTML report. Exit-code
+  mask treats codes 256/1024 as success-with-findings.
+- `scripts/Directory.Build.props` — opts the standalone embedder
+  microbenchmark project (`scripts/EmbedBench.csproj`) into the
+  shared analyzer/banned-symbols suite.
+- Empirical 3-platform embedding throughput study folded into
+  `docs/en/sprints/sprint-006.md` and `docs/ru/sprints/sprint-006.md`:
+  Local CPU 1.7 chunks/s, Remote EPYC 9654 CPU 13.7 chunks/s,
+  Remote 5090 GPU 634 chunks/s. Determines that production ingest
+  must run on the rented GPU host; CPU-only is a 2-hour wall-clock
+  alternative for emergency rebuilds.
+
+### Fixed (Sprint 006 — code review)
+
+- `BenchHistoryWriter` — switched `FileShare.Read` → `ReadWrite` and
+  guarded the append with a per-path `SemaphoreSlim` (via
+  `ConcurrentDictionary<string, SemaphoreSlim>`) so simultaneous
+  callers in the same process cannot interleave bytes mid-line.
+- `BenchQueryParser` — now rejects unknown `schema_version` values
+  (current bench schema is v2).
+- `SpectreBenchProgress` — escapes `query_id` via `Markup.Escape`
+  before passing it through Spectre interpolation, closing a markup-
+  injection hole if a fixture row ever carried `[`/`]` characters.
+  Column alignment for the rank marker switched to a `(rendered,
+  plainLength)` tuple because Spectre format width specifiers count
+  markup characters, not rendered glyphs.
+- `BenchCommand` — `ResolveGitSha` is now memoised in a
+  `Lazy<string?>` so the bench command does not fork `git`
+  rev-parse twice per run.
+- `DocumentLoader` — replaced `Replace("\r", "\n", StringComparison.Ordinal)`
+  with the char overload (`Replace('\r', '\n')`) per MA0089 to skip
+  the StringComparison overhead on the hot path.
+
 ### Pending (Sprint 006 — runtime gate)
 
-- Full-corpus ingest of 7343 documents into the local `nutanix`
-  database (in flight on the developer machine; CPU-only,
-  ~2 hour wall-clock).
+- Full-corpus ingest of 7343 documents into the populated remote
+  `nutanix` database (completed 2026-05-01 with docs=7323).
 - Authoring of the 100-query bench v2 fixture against the populated
   corpus.
 - First `bench-history.jsonl` row.

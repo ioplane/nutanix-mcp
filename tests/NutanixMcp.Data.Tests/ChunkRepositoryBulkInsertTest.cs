@@ -32,8 +32,8 @@ public class ChunkRepositoryBulkInsertTest(PgvectorFixture fx)
         var rng = new Random(7);
         var chunks = Enumerable.Range(0, 1000).Select(i =>
         {
-            var vec = new float[1024];
-            for (var j = 0; j < 1024; j++)
+            float[] vec = new float[1024];
+            for (int j = 0; j < 1024; j++)
             {
                 vec[j] = rng.NextSingle();
             }
@@ -51,13 +51,13 @@ public class ChunkRepositoryBulkInsertTest(PgvectorFixture fx)
 
         var repo = new ChunkRepository(fx.DataSource, ctx);
         var sw = Stopwatch.StartNew();
-        var inserted = await repo.BulkInsertAsync(chunks, CancellationToken.None);
+        int inserted = await repo.BulkInsertAsync(chunks, CancellationToken.None);
         sw.Stop();
 
         inserted.Should().Be(1000);
         sw.ElapsedMilliseconds.Should().BeLessThan(5000);
 
-        var count = await repo.CountAsync(CancellationToken.None);
+        int count = await repo.CountAsync(CancellationToken.None);
         count.Should().BeGreaterThanOrEqualTo(1000);
     }
 
@@ -92,7 +92,7 @@ public class ChunkRepositoryBulkInsertTest(PgvectorFixture fx)
         var repo = new ChunkRepository(fx.DataSource, ctx);
         await repo.BulkInsertAsync(chunks, CancellationToken.None);
 
-        var deleted = await repo.DeleteByDocumentAsync("del-doc", CancellationToken.None);
+        int deleted = await repo.DeleteByDocumentAsync("del-doc", CancellationToken.None);
         deleted.Should().Be(10);
     }
 }

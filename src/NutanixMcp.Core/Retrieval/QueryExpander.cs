@@ -14,7 +14,7 @@ namespace NutanixMcp.Core.Retrieval;
 public static partial class QueryExpander
 {
     // Frozen for fast lookup on the query hot path — read-only, built once at startup.
-    private static readonly FrozenDictionary<string, string> Synonyms =
+    private static readonly FrozenDictionary<string, string> s_synonyms =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             ["AHV"] = "Acropolis Hypervisor",
@@ -54,7 +54,7 @@ public static partial class QueryExpander
 
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var sb = new StringBuilder(query.Length + 32);
-        var lastIndex = 0;
+        int lastIndex = 0;
 
         foreach (Match m in WordRegex().Matches(query))
         {
@@ -63,10 +63,10 @@ public static partial class QueryExpander
                 sb.Append(query, lastIndex, m.Index - lastIndex);
             }
 
-            var token = m.Value;
+            string token = m.Value;
             sb.Append(token);
 
-            if (Synonyms.TryGetValue(token, out var expansion) && seen.Add(token))
+            if (s_synonyms.TryGetValue(token, out string? expansion) && seen.Add(token))
             {
                 sb.Append(" (").Append(expansion).Append(')');
             }
@@ -79,7 +79,7 @@ public static partial class QueryExpander
             sb.Append(query, lastIndex, query.Length - lastIndex);
         }
 
-        var expanded = sb.ToString();
+        string expanded = sb.ToString();
         return new QueryExpansion(query, expanded);
     }
 }

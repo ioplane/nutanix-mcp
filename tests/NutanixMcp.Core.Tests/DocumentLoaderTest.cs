@@ -9,7 +9,7 @@ public class DocumentLoaderTest
     [Fact]
     public void StripsCrlfBeforeMatchingHeadings()
     {
-        var crlf = "# Title\r\n\r\nbody one\r\n\r\n## Section\r\n\r\nbody two";
+        string crlf = "# Title\r\n\r\nbody one\r\n\r\n## Section\r\n\r\nbody two";
         var sections = DocumentLoader.ExtractSectionsFromMarkdown(crlf, "Fallback");
         sections.Should().HaveCount(2);
         sections[0].Title.Should().Be("Title");
@@ -19,7 +19,7 @@ public class DocumentLoaderTest
     [Fact]
     public void StripsMarkerPageTokens()
     {
-        var md = "# Title\n\n{0}--------\n\nbody one\n\n{42}---\n\n## Section\n\nbody two";
+        string md = "# Title\n\n{0}--------\n\nbody one\n\n{42}---\n\n## Section\n\nbody two";
         var sections = DocumentLoader.ExtractSectionsFromMarkdown(md, "Fallback");
         sections.Should().HaveCount(2);
         sections[0].Content.Should().NotContain("{0}");
@@ -29,7 +29,7 @@ public class DocumentLoaderTest
     [Fact]
     public void StripsEmptyImageReferences()
     {
-        var md = "# Title\n\n![](_page_3_Picture_5.jpeg)\n![](_page_4_Figure_2.png)\n\nactual body";
+        string md = "# Title\n\n![](_page_3_Picture_5.jpeg)\n![](_page_4_Figure_2.png)\n\nactual body";
         var sections = DocumentLoader.ExtractSectionsFromMarkdown(md, "Fallback");
         sections.Should().HaveCount(1);
         sections[0].Content.Should().Be("actual body");
@@ -38,7 +38,7 @@ public class DocumentLoaderTest
     [Fact]
     public void DropsContentsTableSection()
     {
-        var md = "# Title\n\ndoc body\n\n## **Contents**\n\n| Section | Page |\n|--|--|\n| One | 1 |\n\n## Real Section\n\nreal body";
+        string md = "# Title\n\ndoc body\n\n## **Contents**\n\n| Section | Page |\n|--|--|\n| One | 1 |\n\n## Real Section\n\nreal body";
         var sections = DocumentLoader.ExtractSectionsFromMarkdown(md, "Fallback");
         sections.Select(s => s.Title).Should().ContainInOrder("Title", "Real Section");
         sections.Select(s => s.Title).Should().NotContain(t => t.Contains("Content", StringComparison.OrdinalIgnoreCase));

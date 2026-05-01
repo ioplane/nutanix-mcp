@@ -60,16 +60,16 @@ public sealed class OnnxEmbedder : IEmbedder
             ? texts.Select(t => _opt.QueryPrefix + t).ToList()
             : [.. texts];
 
-        var results = new float[texts.Count][];
+        float[][] results = new float[texts.Count][];
 
-        for (var start = 0; start < prepped.Count; start += _opt.BatchSize)
+        for (int start = 0; start < prepped.Count; start += _opt.BatchSize)
         {
             ct.ThrowIfCancellationRequested();
-            var end = Math.Min(start + _opt.BatchSize, prepped.Count);
+            int end = Math.Min(start + _opt.BatchSize, prepped.Count);
             var batch = prepped.GetRange(start, end - start);
 
-            var embedded = await Task.Run(() => EmbedBatch(batch), ct).ConfigureAwait(false);
-            for (var i = 0; i < embedded.Length; i++)
+            float[][] embedded = await Task.Run(() => EmbedBatch(batch), ct).ConfigureAwait(false);
+            for (int i = 0; i < embedded.Length; i++)
             {
                 results[start + i] = embedded[i];
             }
@@ -96,8 +96,8 @@ public sealed class OnnxEmbedder : IEmbedder
         using var results = _session.Run(runOpts, feeds, ["sentence_embedding"]);
         var sentence = results[0].GetTensorDataAsSpan<float>();
 
-        var outputs = new float[batch.Count][];
-        for (var b = 0; b < batch.Count; b++)
+        float[][] outputs = new float[batch.Count][];
+        for (int b = 0; b < batch.Count; b++)
         {
             outputs[b] = ExtractAndNormalize(sentence, b);
         }
@@ -110,10 +110,10 @@ public sealed class OnnxEmbedder : IEmbedder
     // TensorPrimitives.Norm + Divide are SIMD-vectorized on .NET 10.
     private static float[] ExtractAndNormalize(ReadOnlySpan<float> sentence, int batchIdx)
     {
-        var vec = new float[HiddenSize];
+        float[] vec = new float[HiddenSize];
         sentence.Slice(batchIdx * HiddenSize, HiddenSize).CopyTo(vec);
 
-        var norm = TensorPrimitives.Norm<float>(vec);
+        float norm = TensorPrimitives.Norm<float>(vec);
         if (norm > 1e-9f)
         {
             TensorPrimitives.Divide(vec, norm, vec);

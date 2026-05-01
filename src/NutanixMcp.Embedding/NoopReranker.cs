@@ -16,7 +16,7 @@ public sealed class NoopReranker : IReranker
     {
         ArgumentNullException.ThrowIfNull(candidates);
         var results = new RerankResult[candidates.Count];
-        for (var i = 0; i < candidates.Count; i++)
+        for (int i = 0; i < candidates.Count; i++)
         {
             results[i] = new RerankResult(candidates[i].ChunkId, 0f);
         }

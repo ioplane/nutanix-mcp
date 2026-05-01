@@ -44,7 +44,7 @@ public static partial class DocumentLoader
     [GeneratedRegex(@"\s+", RegexOptions.ExplicitCapture)]
     private static partial Regex WhitespaceRegex();
 
-    private static readonly HashSet<string> TocTitles = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> s_tocTitles = new(StringComparer.OrdinalIgnoreCase)
     {
         "Contents",
         "Table of Contents",
@@ -59,16 +59,16 @@ public static partial class DocumentLoader
         ArgumentNullException.ThrowIfNull(entry);
         ArgumentException.ThrowIfNullOrEmpty(catalogBaseDir);
 
-        var baseFull = Path.GetFullPath(catalogBaseDir);
-        var mdFull = ResolveInside(baseFull, entry.MdPath, nameof(entry.MdPath));
+        string baseFull = Path.GetFullPath(catalogBaseDir);
+        string mdFull = ResolveInside(baseFull, entry.MdPath, nameof(entry.MdPath));
         if (!File.Exists(mdFull))
         {
             throw new FileNotFoundException($"MD file missing for doc {entry.Id}", mdFull);
         }
 
-        var md = await File.ReadAllTextAsync(mdFull, ct).ConfigureAwait(false);
+        string md = await File.ReadAllTextAsync(mdFull, ct).ConfigureAwait(false);
 
-        var jsonFull = ResolveInside(baseFull, entry.JsonPath, nameof(entry.JsonPath));
+        string jsonFull = ResolveInside(baseFull, entry.JsonPath, nameof(entry.JsonPath));
         var enriched = await TryLoadEnrichedJsonAsync(jsonFull, ct).ConfigureAwait(false);
 
         var mdSections = ExtractSectionsFromMarkdown(md, fallbackTitle: entry.Title);
@@ -134,15 +134,15 @@ public static partial class DocumentLoader
             throw new ArgumentException($"{argumentName} must not be empty", argumentName);
         }
 
-        var normalised = NormalizePath(relative);
+        string normalised = NormalizePath(relative);
         if (Path.IsPathRooted(normalised))
         {
             throw new InvalidOperationException(
                 $"{argumentName} must be relative to the catalog base; got '{relative}'.");
         }
 
-        var combined = Path.GetFullPath(Path.Combine(baseFull, normalised));
-        var baseWithSep = baseFull.EndsWith(Path.DirectorySeparatorChar)
+        string combined = Path.GetFullPath(Path.Combine(baseFull, normalised));
+        string baseWithSep = baseFull.EndsWith(Path.DirectorySeparatorChar)
             ? baseFull
             : baseFull + Path.DirectorySeparatorChar;
         if (!combined.StartsWith(baseWithSep, StringComparison.Ordinal)
@@ -162,36 +162,36 @@ public static partial class DocumentLoader
         // (81 % of the local corpus on the 2026-05-01 snapshot) the heading
         // regex `[^\r\n]+$` would otherwise fail and the whole document would
         // collapse into a single fallback-titled section.
-        var lf = md.Replace("\r\n", "\n", StringComparison.Ordinal)
-                   .Replace("\r", "\n", StringComparison.Ordinal);
+        string lf = md.Replace("\r\n", "\n", StringComparison.Ordinal)
+                   .Replace('\r', '\n');
 
         // Strip marker page-break tokens so they do not bleed into section
         // bodies. About a quarter of the local corpus carries them.
-        var noPageMarkers = PageMarkerRegex().Replace(lf, string.Empty);
+        string noPageMarkers = PageMarkerRegex().Replace(lf, string.Empty);
 
         // Strip empty marker image references — they have no semantic content
         // and pollute embeddings.
-        var cleaned = EmptyImageRegex().Replace(noPageMarkers, string.Empty);
+        string cleaned = EmptyImageRegex().Replace(noPageMarkers, string.Empty);
 
         var matches = HeadingRegex().Matches(cleaned);
         if (matches.Count == 0)
         {
-            var body = cleaned.Trim();
+            string body = cleaned.Trim();
             return body.Length == 0
                 ? []
                 : [new Section { Title = fallbackTitle, Level = 1, Content = body }];
         }
 
         var sections = new List<Section>(matches.Count);
-        for (var i = 0; i < matches.Count; i++)
+        for (int i = 0; i < matches.Count; i++)
         {
             var m = matches[i];
-            var level = (short)m.Groups["level"].Value.Length;
-            var title = m.Groups["title"].Value.Trim();
+            short level = (short)m.Groups["level"].Value.Length;
+            string title = m.Groups["title"].Value.Trim();
 
-            var bodyStart = m.Index + m.Length;
-            var bodyEnd = i + 1 < matches.Count ? matches[i + 1].Index : cleaned.Length;
-            var body = cleaned[bodyStart..bodyEnd].Trim();
+            int bodyStart = m.Index + m.Length;
+            int bodyEnd = i + 1 < matches.Count ? matches[i + 1].Index : cleaned.Length;
+            string body = cleaned[bodyStart..bodyEnd].Trim();
 
             if (body.Length == 0)
             {
@@ -208,7 +208,7 @@ public static partial class DocumentLoader
 
         if (sections.Count == 0)
         {
-            var body = cleaned.Trim();
+            string body = cleaned.Trim();
             return body.Length == 0
                 ? []
                 : [new Section { Title = fallbackTitle, Level = 1, Content = body }];
@@ -219,10 +219,10 @@ public static partial class DocumentLoader
 
     private static List<Section> DropTocSection(List<Section> sections)
     {
-        for (var i = 0; i < sections.Count; i++)
+        for (int i = 0; i < sections.Count; i++)
         {
             var s = sections[i];
-            if (s.Level == 2 && TocTitles.Contains(CleanHeading(s.Title)))
+            if (s.Level == 2 && s_tocTitles.Contains(CleanHeading(s.Title)))
             {
                 sections.RemoveAt(i);
                 return sections;
@@ -244,7 +244,7 @@ public static partial class DocumentLoader
     public static string CleanHeading(string raw)
     {
         ArgumentNullException.ThrowIfNull(raw);
-        var s = raw;
+        string s = raw;
         s = HtmlTagRegex().Replace(s, string.Empty);
         s = BoldRegex().Replace(s, "${inner}");
         s = ItalicRegex().Replace(s, "${inner}");
@@ -273,21 +273,21 @@ public static partial class DocumentLoader
         }
 
         var jsonCleaned = new (string Cleaned, JsonSection Section)[jsonSections.Count];
-        for (var i = 0; i < jsonSections.Count; i++)
+        for (int i = 0; i < jsonSections.Count; i++)
         {
             jsonCleaned[i] = (CleanHeading(jsonSections[i].Title), jsonSections[i]);
         }
 
         const int Lookahead = 3;
         var result = new List<Section>(mdSections.Count);
-        var jsonIdx = 0;
+        int jsonIdx = 0;
 
         foreach (var md in mdSections)
         {
-            var mdClean = CleanHeading(md.Title);
-            var matchAt = -1;
-            var bound = Math.Min(jsonCleaned.Length, jsonIdx + Lookahead + 1);
-            for (var probe = jsonIdx; probe < bound; probe++)
+            string mdClean = CleanHeading(md.Title);
+            int matchAt = -1;
+            int bound = Math.Min(jsonCleaned.Length, jsonIdx + Lookahead + 1);
+            for (int probe = jsonIdx; probe < bound; probe++)
             {
                 if (string.Equals(jsonCleaned[probe].Cleaned, mdClean, StringComparison.Ordinal))
                 {
@@ -361,7 +361,7 @@ public static partial class DocumentLoader
             switch (item.ValueKind)
             {
                 case JsonValueKind.String:
-                    var title = item.GetString() ?? "";
+                    string title = item.GetString() ?? "";
                     if (title.Length > 0)
                     {
                         result.Add(new JsonSection(title, null, null));
@@ -369,8 +369,12 @@ public static partial class DocumentLoader
 
                     break;
                 case JsonValueKind.Object:
-                    var t = item.TryGetProperty("title", out var tEl) ? tEl.GetString() ?? "" : "";
-                    if (t.Length == 0) continue;
+                    string t = item.TryGetProperty("title", out var tEl) ? tEl.GetString() ?? "" : "";
+                    if (t.Length == 0)
+                    {
+                        continue;
+                    }
+
                     int? page = item.TryGetProperty("page", out var pEl) && pEl.ValueKind == JsonValueKind.Number
                         ? pEl.GetInt32()
                         : null;

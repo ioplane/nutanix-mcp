@@ -56,10 +56,10 @@ public sealed class XlmRobertaTokenizer
             considerPreTokenization: true,
             considerNormalization: true);
 
-        var result = new int[spIds.Count];
-        for (var i = 0; i < spIds.Count; i++)
+        int[] result = new int[spIds.Count];
+        for (int i = 0; i < spIds.Count; i++)
         {
-            var sp = spIds[i];
+            int sp = spIds[i];
             result[i] = sp == 0 ? UnkTokenId : sp + FairseqOffset;
         }
 
@@ -76,19 +76,19 @@ public sealed class XlmRobertaTokenizer
         ArgumentNullException.ThrowIfNull(texts);
 
         var encoded = new List<int[]>(texts.Count);
-        var maxLen = 0;
+        int maxLen = 0;
 
-        foreach (var t in texts)
+        foreach (string t in texts)
         {
-            var bare = EncodeBare(t);
+            int[] bare = EncodeBare(t);
             // Reserve 2 tokens for <s> and </s> when truncating.
-            var contentMax = Math.Max(0, maxSeqLen - 2);
+            int contentMax = Math.Max(0, maxSeqLen - 2);
             if (bare.Length > contentMax)
             {
                 bare = bare[..contentMax];
             }
 
-            var withSpecials = new int[bare.Length + 2];
+            int[] withSpecials = new int[bare.Length + 2];
             withSpecials[0] = BosTokenId;
             Array.Copy(bare, 0, withSpecials, 1, bare.Length);
             withSpecials[^1] = EosTokenId;
@@ -97,15 +97,15 @@ public sealed class XlmRobertaTokenizer
             maxLen = Math.Max(maxLen, withSpecials.Length);
         }
 
-        var seqLen = Math.Max(maxLen, 1);
-        var input = new long[texts.Count * seqLen];
-        var mask = new long[texts.Count * seqLen];
+        int seqLen = Math.Max(maxLen, 1);
+        long[] input = new long[texts.Count * seqLen];
+        long[] mask = new long[texts.Count * seqLen];
 
-        for (var b = 0; b < texts.Count; b++)
+        for (int b = 0; b < texts.Count; b++)
         {
-            var ids = encoded[b];
-            var rowStart = b * seqLen;
-            for (var i = 0; i < seqLen; i++)
+            int[] ids = encoded[b];
+            int rowStart = b * seqLen;
+            for (int i = 0; i < seqLen; i++)
             {
                 if (i < ids.Length)
                 {

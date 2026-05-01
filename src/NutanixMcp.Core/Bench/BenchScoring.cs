@@ -17,7 +17,7 @@ public static class BenchScoring
         }
 
         var lookup = new HashSet<long>(expected);
-        for (var i = 0; i < chunkIds.Count; i++)
+        for (int i = 0; i < chunkIds.Count; i++)
         {
             if (lookup.Contains(chunkIds[i]))
             {

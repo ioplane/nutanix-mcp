@@ -54,8 +54,8 @@ public sealed class QueryEmbeddingCache
     {
         var snapshot = _map.ToArray();
         Array.Sort(snapshot, static (a, b) => a.Value.LastAccess.CompareTo(b.Value.LastAccess));
-        var evictCount = snapshot.Length - (_capacity / 2);
-        for (var i = 0; i < evictCount; i++)
+        int evictCount = snapshot.Length - (_capacity / 2);
+        for (int i = 0; i < evictCount; i++)
         {
             _map.TryRemove(snapshot[i].Key, out _);
         }

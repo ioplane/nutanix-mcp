@@ -10,7 +10,7 @@ public class BenchQueryParserTest
     [Fact]
     public async Task ParsesValidFile()
     {
-        var path = WriteFixture("""
+        string path = WriteFixture("""
             {
               "schema_version": 2,
               "queries": [
@@ -42,7 +42,7 @@ public class BenchQueryParserTest
     [Fact]
     public async Task RejectsEmptyExpectChunkIds()
     {
-        var path = WriteFixture("""
+        string path = WriteFixture("""
             {"queries": [{"query_id": "x", "query": "q", "expect_chunk_ids": []}]}
             """);
         try
@@ -60,7 +60,7 @@ public class BenchQueryParserTest
     [Fact]
     public async Task RejectsDuplicateQueryId()
     {
-        var path = WriteFixture("""
+        string path = WriteFixture("""
             {
               "queries": [
                 {"query_id": "x", "query": "q1", "expect_chunk_ids": [1]},
@@ -83,7 +83,7 @@ public class BenchQueryParserTest
     [Fact]
     public async Task RejectsEmptyQueriesArray()
     {
-        var path = WriteFixture("""{"queries": []}""");
+        string path = WriteFixture("""{"queries": []}""");
         try
         {
             var act = async () => await BenchQueryParser.LoadAsync(path, CancellationToken.None);
@@ -98,7 +98,7 @@ public class BenchQueryParserTest
 
     private static string WriteFixture(string content)
     {
-        var path = Path.Combine(Path.GetTempPath(), $"bench-fixture-{Guid.NewGuid()}.json");
+        string path = Path.Combine(Path.GetTempPath(), $"bench-fixture-{Guid.NewGuid()}.json");
         File.WriteAllText(path, content);
         return path;
     }

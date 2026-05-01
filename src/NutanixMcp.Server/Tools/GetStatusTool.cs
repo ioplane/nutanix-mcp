@@ -13,8 +13,8 @@ public sealed class GetStatusTool(NutanixDbContext db, IIngestRunRepository runR
     [Description("Health and store stats: document/chunk counts, last ingest run, extension versions.")]
     public async Task<object> GetAsync(CancellationToken ct = default)
     {
-        var docCount = await db.Documents.CountAsync(ct).ConfigureAwait(false);
-        var chunkCount = await db.Chunks.CountAsync(ct).ConfigureAwait(false);
+        int docCount = await db.Documents.CountAsync(ct).ConfigureAwait(false);
+        int chunkCount = await db.Chunks.CountAsync(ct).ConfigureAwait(false);
         var lastRun = await runRepo.GetLastAsync(ct).ConfigureAwait(false);
 
         return new

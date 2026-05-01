@@ -13,7 +13,7 @@ internal static class ModelPaths
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
-            var candidate = Path.Combine(dir.FullName, "models");
+            string candidate = Path.Combine(dir.FullName, "models");
             if (Directory.Exists(candidate)
                 && File.Exists(Path.Combine(candidate, "embedder", "model.onnx")))
             {
@@ -28,14 +28,14 @@ internal static class ModelPaths
 
     public static (string ModelPath, string VocabPath)? Embedder()
     {
-        var root = FindModelsRoot();
+        string? root = FindModelsRoot();
         if (root is null)
         {
             return null;
         }
 
-        var model = Path.Combine(root, "embedder", "model.onnx");
-        var vocab = Path.Combine(root, "embedder", "sentencepiece.bpe.model");
+        string model = Path.Combine(root, "embedder", "model.onnx");
+        string vocab = Path.Combine(root, "embedder", "sentencepiece.bpe.model");
         if (!File.Exists(model) || !File.Exists(vocab))
         {
             return null;
@@ -46,14 +46,14 @@ internal static class ModelPaths
 
     public static (string ModelPath, string VocabPath)? Reranker()
     {
-        var root = FindModelsRoot();
+        string? root = FindModelsRoot();
         if (root is null)
         {
             return null;
         }
 
-        var model = Path.Combine(root, "reranker", "model.onnx");
-        var vocab = Path.Combine(root, "reranker", "sentencepiece.bpe.model");
+        string model = Path.Combine(root, "reranker", "model.onnx");
+        string vocab = Path.Combine(root, "reranker", "sentencepiece.bpe.model");
         if (!File.Exists(model) || !File.Exists(vocab))
         {
             return null;

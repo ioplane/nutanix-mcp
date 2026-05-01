@@ -10,7 +10,7 @@ public class CatalogReaderTest
     [Fact]
     public void EmptyDirectoryYieldsZeroEntries()
     {
-        var dir = Directory.CreateTempSubdirectory("nutanix-catalog-empty-").FullName;
+        string dir = Directory.CreateTempSubdirectory("nutanix-catalog-empty-").FullName;
         try
         {
             Directory.CreateDirectory(Path.Combine(dir, "md"));
@@ -26,7 +26,7 @@ public class CatalogReaderTest
     [Fact]
     public void MdWithoutJsonFallsBackToFilenameHeuristics()
     {
-        var dir = Directory.CreateTempSubdirectory("nutanix-catalog-md-only-").FullName;
+        string dir = Directory.CreateTempSubdirectory("nutanix-catalog-md-only-").FullName;
         try
         {
             Directory.CreateDirectory(Path.Combine(dir, "md"));
@@ -46,7 +46,7 @@ public class CatalogReaderTest
     [Fact]
     public void RichJsonProvidesCategoryAndKbNumber()
     {
-        var dir = Directory.CreateTempSubdirectory("nutanix-catalog-rich-").FullName;
+        string dir = Directory.CreateTempSubdirectory("nutanix-catalog-rich-").FullName;
         try
         {
             Directory.CreateDirectory(Path.Combine(dir, "md"));
@@ -82,7 +82,7 @@ public class CatalogReaderTest
     [Fact]
     public void EntriesAreSortedByIdForDeterministicCatalogSha()
     {
-        var dir = Directory.CreateTempSubdirectory("nutanix-catalog-sort-").FullName;
+        string dir = Directory.CreateTempSubdirectory("nutanix-catalog-sort-").FullName;
         try
         {
             Directory.CreateDirectory(Path.Combine(dir, "md"));

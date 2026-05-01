@@ -19,7 +19,7 @@ public sealed class SearchDocsTool(IHybridRetriever retriever)
         [Description("Drop duplicate chunks from the same document+section, keeping only the top-scoring.")] bool dedupPerSection = false,
         CancellationToken ct = default)
     {
-        var limit = Math.Clamp(topK, 1, 50);
+        int limit = Math.Clamp(topK, 1, 50);
         var opts = new RetrievalOptions
         {
             Limit = limit,

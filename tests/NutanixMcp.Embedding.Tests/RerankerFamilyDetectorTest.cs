@@ -10,7 +10,7 @@ public class RerankerFamilyDetectorTest
     [Fact]
     public void DetectReturnsNoneForMissingDirectory()
     {
-        var dir = Path.Combine(Path.GetTempPath(), "nutanix-mcp-test-missing-" + Guid.NewGuid());
+        string dir = Path.Combine(Path.GetTempPath(), "nutanix-mcp-test-missing-" + Guid.NewGuid());
         var family = RerankerFamilyDetector.Detect(dir);
         family.Should().Be(RerankerFamilyDetector.RerankerFamily.None);
     }
@@ -18,7 +18,7 @@ public class RerankerFamilyDetectorTest
     [Fact]
     public void DetectReturnsNoneForEmptyDirectory()
     {
-        var dir = Directory.CreateTempSubdirectory("nutanix-mcp-empty-").FullName;
+        string dir = Directory.CreateTempSubdirectory("nutanix-mcp-empty-").FullName;
         try
         {
             var family = RerankerFamilyDetector.Detect(dir);
@@ -33,7 +33,7 @@ public class RerankerFamilyDetectorTest
     [Fact]
     public void DetectReturnsXlmRobertaWhenSentencepiecePresent()
     {
-        var dir = Directory.CreateTempSubdirectory("nutanix-mcp-spm-").FullName;
+        string dir = Directory.CreateTempSubdirectory("nutanix-mcp-spm-").FullName;
         try
         {
             File.WriteAllBytes(Path.Combine(dir, "model.onnx"), [0x4F, 0x4E, 0x4E, 0x58]);
@@ -51,7 +51,7 @@ public class RerankerFamilyDetectorTest
     [Fact]
     public void DetectReturnsBertWordPieceWhenVocabTxtPresent()
     {
-        var dir = Directory.CreateTempSubdirectory("nutanix-mcp-bert-").FullName;
+        string dir = Directory.CreateTempSubdirectory("nutanix-mcp-bert-").FullName;
         try
         {
             File.WriteAllBytes(Path.Combine(dir, "model.onnx"), [0x4F, 0x4E, 0x4E, 0x58]);
@@ -69,7 +69,7 @@ public class RerankerFamilyDetectorTest
     [Fact]
     public void BuildFallsBackToNoopWhenAssetsMissing()
     {
-        var dir = Path.Combine(Path.GetTempPath(), "nutanix-mcp-test-missing-" + Guid.NewGuid());
+        string dir = Path.Combine(Path.GetTempPath(), "nutanix-mcp-test-missing-" + Guid.NewGuid());
         using var rr = RerankerFamilyDetector.Build(dir, gpu: false);
         rr.Should().BeOfType<NoopReranker>();
     }

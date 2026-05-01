@@ -130,7 +130,7 @@ public class HybridRetrieverIntegrationTest(PgvectorFixture fx)
         };
         ctx.Documents.Add(doc);
 
-        var emb = await embedder.EmbedAsync([content], isQuery: false, CancellationToken.None);
+        float[][] emb = await embedder.EmbedAsync([content], isQuery: false, CancellationToken.None);
         Half[] halfArr = [.. emb[0].Select(static f => (Half)f)];
 
         ctx.Chunks.Add(new ChunkEntity

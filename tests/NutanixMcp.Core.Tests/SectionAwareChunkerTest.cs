@@ -32,7 +32,7 @@ public class SectionAwareChunkerTest
     [Fact]
     public void SplitsOversizedSectionWithOverlapAndAttachesEachLeafToTheParent()
     {
-        var words = string.Join(' ', Enumerable.Repeat("token", 1000));
+        string words = string.Join(' ', Enumerable.Repeat("token", 1000));
         var chunker = new SectionAwareChunker(new ChunkingOptions
         {
             TargetTokens = 100,
@@ -55,7 +55,7 @@ public class SectionAwareChunkerTest
     [Fact]
     public void TruncatesParentBeyondParentMaxTokens()
     {
-        var words = string.Join(' ', Enumerable.Repeat("word", 5000));
+        string words = string.Join(' ', Enumerable.Repeat("word", 5000));
         var chunker = new SectionAwareChunker(new ChunkingOptions
         {
             TargetTokens = 100,

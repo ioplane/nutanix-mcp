@@ -19,13 +19,13 @@ public class InspectModel(ITestOutputHelper output)
         output.WriteLine("=== embedder inputs ===");
         foreach (var (name, meta) in sess.InputMetadata)
         {
-            output.WriteLine($"  {name}: {meta.ElementType} dims=[{string.Join(",", meta.Dimensions)}]");
+            output.WriteLine($"  {name}: {meta.ElementType} dims=[{string.Join(',', meta.Dimensions)}]");
         }
 
         output.WriteLine("=== embedder outputs ===");
         foreach (var (name, meta) in sess.OutputMetadata)
         {
-            output.WriteLine($"  {name}: {meta.ElementType} dims=[{string.Join(",", meta.Dimensions)}]");
+            output.WriteLine($"  {name}: {meta.ElementType} dims=[{string.Join(',', meta.Dimensions)}]");
         }
     }
 
@@ -39,13 +39,13 @@ public class InspectModel(ITestOutputHelper output)
         output.WriteLine("=== reranker inputs ===");
         foreach (var (name, meta) in sess.InputMetadata)
         {
-            output.WriteLine($"  {name}: {meta.ElementType} dims=[{string.Join(",", meta.Dimensions)}]");
+            output.WriteLine($"  {name}: {meta.ElementType} dims=[{string.Join(',', meta.Dimensions)}]");
         }
 
         output.WriteLine("=== reranker outputs ===");
         foreach (var (name, meta) in sess.OutputMetadata)
         {
-            output.WriteLine($"  {name}: {meta.ElementType} dims=[{string.Join(",", meta.Dimensions)}]");
+            output.WriteLine($"  {name}: {meta.ElementType} dims=[{string.Join(',', meta.Dimensions)}]");
         }
     }
 #pragma warning restore S2699

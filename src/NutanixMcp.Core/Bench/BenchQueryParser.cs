@@ -9,7 +9,7 @@ namespace NutanixMcp.Core.Bench;
 // regressions.
 public static class BenchQueryParser
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    private static readonly JsonSerializerOptions s_jsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
     };
@@ -20,7 +20,7 @@ public static class BenchQueryParser
 
         await using var stream = File.OpenRead(path);
         var file = await JsonSerializer
-            .DeserializeAsync<BenchQueryFile>(stream, JsonOptions, ct)
+            .DeserializeAsync<BenchQueryFile>(stream, s_jsonOptions, ct)
             .ConfigureAwait(false)
             ?? throw new InvalidDataException($"bench query file is empty: {path}");
 
@@ -30,13 +30,22 @@ public static class BenchQueryParser
 
     private static void Validate(BenchQueryFile file)
     {
+        // The repo never wrote a v1 substring-scored fixture and the bench
+        // schema is locked at version two from day one. Refusing v1 loudly
+        // keeps a stray legacy file from silently tanking acceptance.
+        if (file.SchemaVersion != 2)
+        {
+            throw new InvalidDataException(
+                $"unsupported bench schema_version {file.SchemaVersion}; expected 2");
+        }
+
         if (file.Queries.Count == 0)
         {
             throw new InvalidDataException("bench query file contains zero queries");
         }
 
         var seen = new HashSet<string>(StringComparer.Ordinal);
-        for (var i = 0; i < file.Queries.Count; i++)
+        for (int i = 0; i < file.Queries.Count; i++)
         {
             var q = file.Queries[i];
             if (string.IsNullOrWhiteSpace(q.QueryId))

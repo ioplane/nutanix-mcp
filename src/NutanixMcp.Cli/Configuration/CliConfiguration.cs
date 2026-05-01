@@ -12,7 +12,7 @@ public static class CliConfiguration
         var builder = new ConfigurationBuilder()
             .AddEnvironmentVariables(EnvPrefix);
 
-        var cfgFile = Path.Combine(Environment.CurrentDirectory, "nutanix-mcp.json");
+        string cfgFile = Path.Combine(Environment.CurrentDirectory, "nutanix-mcp.json");
         if (File.Exists(cfgFile))
         {
             builder.AddJsonFile(cfgFile, optional: true, reloadOnChange: false);

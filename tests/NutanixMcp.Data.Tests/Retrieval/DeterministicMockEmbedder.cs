@@ -24,8 +24,8 @@ internal sealed class DeterministicMockEmbedder : IEmbedder
     {
         ArgumentNullException.ThrowIfNull(texts);
 
-        var results = new float[texts.Count][];
-        for (var i = 0; i < texts.Count; i++)
+        float[][] results = new float[texts.Count][];
+        for (int i = 0; i < texts.Count; i++)
         {
             results[i] = HashToUnitVector(texts[i]);
         }
@@ -39,7 +39,7 @@ internal sealed class DeterministicMockEmbedder : IEmbedder
 
     private static float[] HashToUnitVector(string text)
     {
-        var vec = new float[1024];
+        float[] vec = new float[1024];
 
         // FNV-1a 64-bit, two-stream so adjacent dimensions differ enough to
         // give cosine similarity a meaningful spread between similar/different
@@ -47,11 +47,11 @@ internal sealed class DeterministicMockEmbedder : IEmbedder
         const ulong FnvOffset = 14695981039346656037UL;
         const ulong FnvPrime = 1099511628211UL;
 
-        var bytes = System.Text.Encoding.UTF8.GetBytes(text);
+        byte[] bytes = System.Text.Encoding.UTF8.GetBytes(text);
 
         ulong h1 = FnvOffset;
         ulong h2 = FnvOffset ^ 0xDEADBEEFUL;
-        foreach (var b in bytes)
+        foreach (byte b in bytes)
         {
             h1 ^= b;
             h1 *= FnvPrime;
@@ -59,7 +59,7 @@ internal sealed class DeterministicMockEmbedder : IEmbedder
             h2 *= FnvPrime;
         }
 
-        for (var d = 0; d < 1024; d++)
+        for (int d = 0; d < 1024; d++)
         {
             // Re-mix the hash by dimension so dim N ≠ dim 0.
             h1 ^= (ulong)d * FnvPrime;
@@ -68,11 +68,11 @@ internal sealed class DeterministicMockEmbedder : IEmbedder
             h2 *= FnvPrime;
 
             // Map to [-1, 1] via low 24 bits of XOR.
-            var raw = (int)((h1 ^ h2) & 0xFFFFFF) - 0x800000;
+            int raw = (int)((h1 ^ h2) & 0xFFFFFF) - 0x800000;
             vec[d] = raw / (float)0x800000;
         }
 
-        var norm = TensorPrimitives.Norm<float>(vec);
+        float norm = TensorPrimitives.Norm<float>(vec);
         if (norm > 1e-9f)
         {
             TensorPrimitives.Divide(vec, norm, vec);

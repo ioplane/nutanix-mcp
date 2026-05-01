@@ -82,18 +82,18 @@ public static class BenchCommand
             noHistory,
         };
 
-        cmd.SetAction(async (ParseResult pr, CancellationToken ct) =>
+        cmd.SetAction(async (pr, ct) =>
         {
             var settings = CliConfiguration.Load();
-            var queriesPath = pr.GetValue(queries) ?? throw new InvalidOperationException("--queries is required");
-            var historyPath = pr.GetValue(history) ?? "tests/fixtures/bench-history.jsonl";
-            var runLabel = pr.GetValue(label) ?? ResolveDefaultLabel();
-            var lim = pr.GetValue(limit);
-            var pool = pr.GetValue(poolSize);
-            var rerankTopN = pr.GetValue(rerankN);
-            var k = pr.GetValue(rrfK);
-            var floor = pr.GetValue(smokeFloor);
-            var skipHistory = pr.GetValue(noHistory);
+            string queriesPath = pr.GetValue(queries) ?? throw new InvalidOperationException("--queries is required");
+            string historyPath = pr.GetValue(history) ?? "tests/fixtures/bench-history.jsonl";
+            string runLabel = pr.GetValue(label) ?? ResolveDefaultLabel();
+            int lim = pr.GetValue(limit);
+            int pool = pr.GetValue(poolSize);
+            int rerankTopN = pr.GetValue(rerankN);
+            int k = pr.GetValue(rrfK);
+            double floor = pr.GetValue(smokeFloor);
+            bool skipHistory = pr.GetValue(noHistory);
 
             await using var dataSource = DataSourceFactory.Build(settings.ConnectionString);
             var dbOpts = new DbContextOptionsBuilder<NutanixDbContext>()
@@ -174,13 +174,19 @@ public static class BenchCommand
             Gpu = settings.Gpu,
         });
 
+    // Lazy-initialised so we don't fork `git` twice when both ResolveDefaultLabel
+    // and the BenchRun.GitSha block ask for the same value.
+    private static readonly Lazy<string?> s_gitShaLazy = new(ReadGitShaOnce);
+
     private static string ResolveDefaultLabel()
     {
-        var sha = ResolveGitSha();
+        string? sha = s_gitShaLazy.Value;
         return string.IsNullOrEmpty(sha) ? "local" : sha;
     }
 
-    private static string? ResolveGitSha()
+    private static string? ResolveGitSha() => s_gitShaLazy.Value;
+
+    private static string? ReadGitShaOnce()
     {
         try
         {
@@ -189,6 +195,7 @@ public static class BenchCommand
                 FileName = "git",
                 Arguments = "rev-parse --short HEAD",
                 RedirectStandardOutput = true,
+                RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
             };
@@ -198,8 +205,30 @@ public static class BenchCommand
                 return null;
             }
 
-            var sha = p.StandardOutput.ReadToEnd().Trim();
-            p.WaitForExit(2000);
+            // `git rev-parse --short HEAD` writes ≤8 bytes to stdout and
+            // never to stderr unless the cwd is not a repo, in which case
+            // the buffer is also tiny. The OS pipe buffer easily holds
+            // both, so a sync ReadToEnd before WaitForExit cannot deadlock
+            // for this command, and that lets us keep the method sync
+            // (Lazy<string?> caller).
+            string sha = p.StandardOutput.ReadToEnd().Trim();
+            _ = p.StandardError.ReadToEnd();
+            if (!p.WaitForExit(2000))
+            {
+                try
+                {
+                    p.Kill(entireProcessTree: true);
+                }
+                catch (Exception killEx) when (killEx is not OperationCanceledException
+                                              and not OutOfMemoryException
+                                              and not StackOverflowException)
+                {
+                    _ = killEx;
+                }
+
+                return null;
+            }
+
             return sha.Length == 0 ? null : sha;
         }
         catch (Exception ex) when (ex is not OperationCanceledException

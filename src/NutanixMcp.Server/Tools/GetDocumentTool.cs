@@ -25,12 +25,12 @@ public sealed class GetDocumentTool(NutanixDbContext db)
             return new { found = false, document_id = documentId };
         }
 
-        var chunkCount = await db.Chunks
+        int chunkCount = await db.Chunks
             .AsNoTracking()
             .CountAsync(c => c.DocumentId == documentId, ct)
             .ConfigureAwait(false);
 
-        var tags = JsonSerializer.Deserialize<string[]>(doc.TagsJson) ?? [];
+        string[] tags = JsonSerializer.Deserialize<string[]>(doc.TagsJson) ?? [];
 
         return new
         {

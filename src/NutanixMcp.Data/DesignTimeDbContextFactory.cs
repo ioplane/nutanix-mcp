@@ -7,7 +7,7 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<NutanixDbC
 {
     public NutanixDbContext CreateDbContext(string[] args)
     {
-        var cs = Environment.GetEnvironmentVariable("NUTANIX_MCP_CS")
+        string cs = Environment.GetEnvironmentVariable("NUTANIX_MCP_CS")
             ?? "Host=localhost;Port=5435;Database=nutanix;Username=nutanix;Password=nutanix";
         var ds = DataSourceFactory.Build(cs);
         var opt = new DbContextOptionsBuilder<NutanixDbContext>()

@@ -35,19 +35,19 @@ public static class RerankerFamilyDetector
             return RerankerFamily.None;
         }
 
-        var hasOnnx = File.Exists(Path.Combine(rerankerDir, "model.onnx"));
+        bool hasOnnx = File.Exists(Path.Combine(rerankerDir, "model.onnx"));
         if (!hasOnnx)
         {
             return RerankerFamily.None;
         }
 
-        var hasSpm = File.Exists(Path.Combine(rerankerDir, "sentencepiece.bpe.model"));
+        bool hasSpm = File.Exists(Path.Combine(rerankerDir, "sentencepiece.bpe.model"));
         if (hasSpm)
         {
             return RerankerFamily.XlmRoberta;
         }
 
-        var hasVocab = File.Exists(Path.Combine(rerankerDir, "vocab.txt"));
+        bool hasVocab = File.Exists(Path.Combine(rerankerDir, "vocab.txt"));
         if (hasVocab)
         {
             return RerankerFamily.BertWordPiece;

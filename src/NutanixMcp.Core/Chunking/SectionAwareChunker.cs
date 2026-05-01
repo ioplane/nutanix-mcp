@@ -33,24 +33,24 @@ public sealed class SectionAwareChunker(ChunkingOptions opt) : IChunker
 
         foreach (var section in sections)
         {
-            var body = (section.Content ?? "").Trim();
+            string body = (section.Content ?? "").Trim();
             if (body.Length == 0)
             {
                 continue;
             }
 
             // Parent — full section body, truncated head plus tail when over budget.
-            var parentBody = TruncateForParent(body);
-            var parentTokens = ApproxTokens(parentBody.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length);
-            var parentIndex = parents.Count;
+            string parentBody = TruncateForParent(body);
+            int parentTokens = ApproxTokens(parentBody.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length);
+            int parentIndex = parents.Count;
             parents.Add(BuildDraft(documentTitle, section, parentBody, parentTokens, ChunkKind.Parent, parentIndex: null));
 
             // Leaves — same logic as the legacy single-pass chunker, with the
             // parent index threaded through so the ingest step can patch
             // `parent_chunk_id` to a real DB id after parents land.
-            var sectionLeavesStart = leaves.Count;
-            var words = body.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var approxTokens = ApproxTokens(words.Length);
+            int sectionLeavesStart = leaves.Count;
+            string[] words = body.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            int approxTokens = ApproxTokens(words.Length);
 
             if (approxTokens <= _opt.MaxTokens)
             {
@@ -71,15 +71,15 @@ public sealed class SectionAwareChunker(ChunkingOptions opt) : IChunker
 
     private string TruncateForParent(string body)
     {
-        var words = body.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var approxTokens = ApproxTokens(words.Length);
+        string[] words = body.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        int approxTokens = ApproxTokens(words.Length);
         if (approxTokens <= _opt.ParentMaxTokens)
         {
             return body;
         }
 
-        var headWords = (int)(_opt.ParentHeadTokens / WordsToTokens);
-        var tailWords = (int)(_opt.ParentTailTokens / WordsToTokens);
+        int headWords = (int)(_opt.ParentHeadTokens / WordsToTokens);
+        int tailWords = (int)(_opt.ParentTailTokens / WordsToTokens);
 
         if (headWords + tailWords >= words.Length)
         {
@@ -88,8 +88,8 @@ public sealed class SectionAwareChunker(ChunkingOptions opt) : IChunker
             return body;
         }
 
-        var head = string.Join(' ', words, 0, headWords);
-        var tail = string.Join(' ', words, words.Length - tailWords, tailWords);
+        string head = string.Join(' ', words, 0, headWords);
+        string tail = string.Join(' ', words, words.Length - tailWords, tailWords);
         return $"{head}\n\n[…section continues…]\n\n{tail}";
     }
 
@@ -97,15 +97,15 @@ public sealed class SectionAwareChunker(ChunkingOptions opt) : IChunker
         string documentTitle, Section section, string[] words,
         List<ChunkDraft> leaves, int parentIndex)
     {
-        var targetWords = (int)(_opt.TargetTokens / WordsToTokens);
-        var overlapWords = (int)(_opt.OverlapTokens / WordsToTokens);
-        var step = Math.Max(1, targetWords - overlapWords);
+        int targetWords = (int)(_opt.TargetTokens / WordsToTokens);
+        int overlapWords = (int)(_opt.OverlapTokens / WordsToTokens);
+        int step = Math.Max(1, targetWords - overlapWords);
 
-        for (var start = 0; start < words.Length; start += step)
+        for (int start = 0; start < words.Length; start += step)
         {
-            var end = Math.Min(words.Length, start + targetWords);
-            var slice = string.Join(' ', words, start, end - start);
-            var tokens = ApproxTokens(end - start);
+            int end = Math.Min(words.Length, start + targetWords);
+            string slice = string.Join(' ', words, start, end - start);
+            int tokens = ApproxTokens(end - start);
             leaves.Add(BuildDraft(documentTitle, section, slice, tokens, ChunkKind.Leaf, parentIndex));
 
             if (end == words.Length)
@@ -119,7 +119,7 @@ public sealed class SectionAwareChunker(ChunkingOptions opt) : IChunker
         string documentTitle, Section section, string body, int tokens,
         ChunkKind kind, int? parentIndex)
     {
-        var prefixed = $"{documentTitle} > {section.Title}\n\n{body}";
+        string prefixed = $"{documentTitle} > {section.Title}\n\n{body}";
         return new ChunkDraft
         {
             Content = prefixed,
@@ -146,12 +146,12 @@ public sealed class SectionAwareChunker(ChunkingOptions opt) : IChunker
 
         var merged = new List<ChunkDraft>(leaves.Count - start) { leaves[start] };
 
-        for (var i = start + 1; i < leaves.Count; i++)
+        for (int i = start + 1; i < leaves.Count; i++)
         {
             var cur = leaves[i];
             var prev = merged[^1];
 
-            var sameSection = string.Equals(cur.SectionTitle, prev.SectionTitle, StringComparison.Ordinal);
+            bool sameSection = string.Equals(cur.SectionTitle, prev.SectionTitle, StringComparison.Ordinal);
             if (cur.TokenCount < _opt.MinTokens && sameSection)
             {
                 merged[^1] = prev with

@@ -35,9 +35,9 @@ public sealed class ListCategoriesTool(NutanixDbContext db)
             .OrderBy(x => x.category, StringComparer.Ordinal)
             .Select(x => new
             {
-                category = x.category,
-                documents = x.documents,
-                chunks = byCat.TryGetValue(x.category, out var c) ? c : 0,
+                x.category,
+                x.documents,
+                chunks = byCat.TryGetValue(x.category, out int c) ? c : 0,
             })
             .ToList();
 

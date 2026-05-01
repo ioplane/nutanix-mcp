@@ -17,7 +17,7 @@ public sealed class GetKbArticleTool(NutanixDbContext db)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(kbNumber);
 
-        var trimmed = kbNumber.Trim();
+        string trimmed = kbNumber.Trim();
         if (trimmed.StartsWith("KB-", StringComparison.OrdinalIgnoreCase))
         {
             trimmed = trimmed[3..];
@@ -28,7 +28,7 @@ public sealed class GetKbArticleTool(NutanixDbContext db)
         }
 
         if (!int.TryParse(trimmed, System.Globalization.NumberStyles.Integer,
-                System.Globalization.CultureInfo.InvariantCulture, out var kb))
+                System.Globalization.CultureInfo.InvariantCulture, out int kb))
         {
             return new { found = false, message = $"could not parse KB number from '{kbNumber}'" };
         }
@@ -51,7 +51,7 @@ public sealed class GetKbArticleTool(NutanixDbContext db)
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
-        var tags = JsonSerializer.Deserialize<string[]>(doc.TagsJson) ?? [];
+        string[] tags = JsonSerializer.Deserialize<string[]>(doc.TagsJson) ?? [];
 
         return new
         {

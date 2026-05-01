@@ -23,6 +23,10 @@ TestResults/
 coverage.xml
 analyzers.sarif
 
+# PVS-Studio artifacts (run via scripts/pvs-studio-scan.ps1)
+*.plog
+pvs-report/
+
 # OS
 .DS_Store
 Thumbs.db

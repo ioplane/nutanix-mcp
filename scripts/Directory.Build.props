@@ -1,0 +1,10 @@
+﻿<Project>
+  <!--
+    The repo root Directory.Build.props sets TreatWarningsAsErrors plus the
+    full analyzer suite (Meziantou, Roslynator, Sonar, AsyncFixer,
+    BannedApiAnalyzers). MSBuild walks parent directories to find props files,
+    so this file just imports the root one explicitly to make the inheritance
+    obvious for anyone reading scripts/.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)..\'))" />
+</Project>
