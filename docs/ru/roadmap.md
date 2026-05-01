@@ -18,8 +18,8 @@ gantt
   Sprint 003.5 — INT8 reranker       :         s0035, after s003, 2d
   Sprint 004 — Hybrid retriever      :done, s004, 2026-05-01, 1d
   section Ingest и бенч
-  Sprint 005 — Cli + ingest          :         s005, after s004, 3d
-  Sprint 006 — Bench v2 first cut    :         s006, after s005, 2d
+  Sprint 005 — Cli + ingest          :done, s005, 2026-05-01, 1d
+  Sprint 006 — Bench v2 first cut    :active, s006, 2026-05-01, 2d
   section Hardening
   Sprint 007 — Semgrep + PVS gate    :         s007, after s006, 2d
   Sprint 008 — HNSW + BM25 sweeps    :         s008, after s006, 3d
@@ -38,8 +38,8 @@ gantt
 | 003 | DONE | bge-m3 эмбеддер, bge-reranker-v2-m3 реранкер, `RerankerFamilyDetector`, скрипт скачивания моделей. 15/15 Embedding-тестов. |
 | 003.5 | Queued | INT8-реранкер через Optimum O4. Merge gate — не более 1 п.п. регрессии top-1 против FP32. |
 | 004 | DONE | `HybridRetriever`, 7 MCP-инструментов, stdio + HTTP хосты, CLI-глагол `serve`. 37/37 тестов плюс live HTTP smoke. |
-| 005 | Pending | CLI-глаголы `ingest`, `bench`, `validate`, `curate-triples`, `migrate-from-python`. Section-aware чанкер. Catalog reader. |
-| 006 | Pending | Bench v2 100-q first cut. `bench-history.jsonl`. CI-smoke-гейт top-10 ≥ 0.80. |
+| 005 | DONE | `CatalogReader`, `DocumentLoader` (CRLF/marker/TOC strip, MD↔JSON pair), `SectionAwareChunker`, `IngestService`, CLI-глагол `ingest`. 52/52 тестов; live ingest + MCP search верифицированы. |
+| 006 | In progress | Bench v2 100-q first cut. `bench-history.jsonl`. CI-smoke-гейт top-10 ≥ 0.80. |
 | 007 | Pending | Semgrep job, PVS-Studio job, `markdownlint-cli2` job. Pre-commit `dotnet format`. |
 | 008 | Pending | Свипы HNSW и BM25 в `bench-history.jsonl`. |
 | 009 | Pending | Single-file publish для Windows, Linux, macOS на amd64 и arm64. Шаблоны systemd-юнита и Windows-сервиса. |

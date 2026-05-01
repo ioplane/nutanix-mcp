@@ -8,6 +8,53 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 
 ## [Unreleased]
 
+### Added (Sprint 006 — bench v2 harness scaffold)
+
+- Sprint plan in `docs/en/sprints/sprint-006.md` and `docs/ru/sprints/`
+  with the chunk-ID-keyed v2 schema, 16-category coverage target,
+  difficulty mix (50 % easy / 30 % medium / 20 % hard), append-only
+  history schema, and the 80 % top-10 smoke gate.
+- `NutanixMcp.Core.Bench`:
+  - `BenchQuery`, `BenchQueryFile` — JSON fixture row + envelope.
+  - `BenchScoring.FirstHitRank` (1-based, accepts a union of
+    acceptable chunk ids) and `BenchScoring.IsHit`.
+  - `BenchRun`, `BenchCategoryStats` — append-only history record.
+  - `BenchQueryParser` — strict validation; rejects empty
+    `expect_chunk_ids`, duplicate `query_id`, empty queries arrays.
+    Loud-fail by design (silent drop is what hid arista's three v1
+    regressions).
+  - `BenchHistoryWriter` — append-only JSONL writer; auto-creates
+    parent directories.
+- `NutanixMcp.Cli.Bench`:
+  - `BenchHarness` — drives `IHybridRetriever`, scores against
+    `expect_chunk_ids`, computes `top_1`/`top_5`/`top_10` plus p50/p95
+    latency (linear interpolation, matches NumPy `linear` method).
+  - `IBenchProgress` + `NullBenchProgress` + `SpectreBenchProgress`.
+- `NutanixMcp.Cli.Commands.BenchCommand`:
+  - `bench` verb with `--queries --history --label --limit`,
+    `--candidate-pool-size --rerank-top-n --rrf-k`,
+    `--smoke-top10-floor --no-history`. Auto-resolves the run label
+    from the short git SHA when one is reachable.
+  - Exit code: `0` on smoke-gate pass, `1` otherwise.
+- Tests in `NutanixMcp.Core.Tests`: `BenchScoringTest` (7),
+  `BenchQueryParserTest` (4), `BenchHistoryWriterTest` (2).
+- Documentation lessons from arista-mcp folded into
+  `docs/en/training-rag.md` (and Russian copy):
+  reingest invalidates chunk_ids, top-1 saturates before top-10, CPU
+  ingest cost on the Nutanix corpus is ~2 hours and motivates a
+  GPU-build production path.
+
+### Pending (Sprint 006 — runtime gate)
+
+- Full-corpus ingest of 7343 documents into the local `nutanix`
+  database (in flight on the developer machine; CPU-only,
+  ~2 hour wall-clock).
+- Authoring of the 100-query bench v2 fixture against the populated
+  corpus.
+- First `bench-history.jsonl` row.
+- `validate-bench-queries` verb (Sprint 006.5) to re-pin chunk_ids
+  via `(expect_doc, expect_section)` after a reingest.
+
 ### Added (Sprint 005 — Cli + ingest pipeline)
 
 - Corpus audit of the local 7343-document snapshot at

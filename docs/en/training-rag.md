@@ -125,6 +125,29 @@ about one sigma. Declaring a sub-3-pp win significant requires
 saturation; the upstream bench saw the wall at 99.10 percent on 588
 queries.
 
+## Operational notes from arista-mcp
+
+The upstream `arista-mcp` line ran a similar bench-then-tune loop on a
+much smaller corpus (~159 documents). Three lessons we are inheriting
+directly:
+
+1. **Reingest invalidates the bench.** Every full reingest reassigns
+   `chunks.id`, so any chunk-pinned bench fixture drifts. Author the
+   bench against a stable corpus snapshot, re-pin via
+   `validate-bench-queries` after each reingest, and never run a sprint
+   acceptance gate immediately after a reingest without first
+   re-running the bench.
+2. **Top-1 plateaus before top-10 does.** Five levers in the upstream
+   line converged at 72-74 % top-1 and 99.10 % top-10 on a 570-query
+   bench. Once top-10 saturates, every later sprint must expand the
+   bench before adding more levers.
+3. **CPU-only ingest is expensive at scale.** Arista's full-corpus run
+   was about 25 minutes on CPU for 159 documents — Nutanix's 7343 docs
+   take roughly two hours on the same hardware path. The GPU build
+   (`-p:UseGpuOnnx=true`) brings that under 15 minutes on a 4070.
+   Document ingest cost in every sprint that re-ingests so reviewers
+   can plan the bench window.
+
 ## CI gating
 
 | Job | Trigger | Behaviour |

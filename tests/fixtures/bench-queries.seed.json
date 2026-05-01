@@ -1,0 +1,26 @@
+{
+  "schema_version": 2,
+  "comment": "Seed bench fixture authored against the local ingest snapshot. expect_chunk_ids are pinned to the chunk_ids assigned at ingest time and will drift on every full reingest. Re-pin via the validate-bench-queries verb after a reingest. The expect_doc + expect_section hints are the stable anchor for re-pinning.",
+  "queries": [
+    {
+      "query_id": "ahv-vlan-001",
+      "query": "How do I configure VLAN tagging on the AHV virtual switch?",
+      "expect_chunk_ids": [],
+      "expect_doc": "AHV-Admin-Guide-v11_0",
+      "expect_section": "VLAN Configuration",
+      "expect_product": "ahv",
+      "category": "ahv",
+      "difficulty": "easy"
+    },
+    {
+      "query_id": "ahv-storage-001",
+      "query": "What is the storage architecture in AHV?",
+      "expect_chunk_ids": [],
+      "expect_doc": "AHV-Admin-Guide-v11_0",
+      "expect_section": "Storage Overview",
+      "expect_product": "ahv",
+      "category": "ahv",
+      "difficulty": "easy"
+    }
+  ]
+}

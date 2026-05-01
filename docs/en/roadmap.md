@@ -18,8 +18,8 @@ gantt
   Sprint 003.5 — INT8 reranker       :         s0035, after s003, 2d
   Sprint 004 — Hybrid retriever      :done, s004, 2026-05-01, 1d
   section Ingest and bench
-  Sprint 005 — Cli + ingest          :         s005, after s004, 3d
-  Sprint 006 — Bench v2 first cut    :         s006, after s005, 2d
+  Sprint 005 — Cli + ingest          :done, s005, 2026-05-01, 1d
+  Sprint 006 — Bench v2 first cut    :active, s006, 2026-05-01, 2d
   section Hardening
   Sprint 007 — Semgrep + PVS gate    :         s007, after s006, 2d
   Sprint 008 — HNSW + BM25 sweeps    :         s008, after s006, 3d
@@ -38,8 +38,8 @@ gantt
 | 003 | DONE | bge-m3 embedder, bge-reranker-v2-m3 reranker, `RerankerFamilyDetector`, model fetch script. 15/15 Embedding tests green. |
 | 003.5 | Queued | INT8 reranker via Optimum O4. Merge gate: at most 1 pp top-1 regression versus FP32. |
 | 004 | DONE | `HybridRetriever`, 7 MCP tools, stdio + HTTP hosts, `serve` Cli verb. 37/37 tests green plus live HTTP smoke. |
-| 005 | Pending | `ingest`, `bench`, `validate`, `curate-triples`, `migrate-from-python` Cli verbs. Section-aware chunker. Catalog reader. |
-| 006 | Pending | Bench v2 100-query first cut. `bench-history.jsonl`. CI smoke gate at top-10 ≥ 0.80. |
+| 005 | DONE | `CatalogReader`, `DocumentLoader` (CRLF/marker/TOC strip, MD↔JSON pair), `SectionAwareChunker`, `IngestService`, `ingest` Cli verb. 52/52 tests green; live ingest + MCP search verified. |
+| 006 | In progress | Bench v2 100-query first cut. `bench-history.jsonl`. CI smoke gate at top-10 ≥ 0.80. |
 | 007 | Pending | Semgrep job, PVS-Studio job, `markdownlint-cli2` job. Pre-commit `dotnet format`. |
 | 008 | Pending | HNSW and BM25 sweeps recorded in `bench-history.jsonl`. |
 | 009 | Pending | Single-file publish for Windows, Linux, macOS on amd64 and arm64. Systemd unit and Windows service templates. |
