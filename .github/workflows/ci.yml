@@ -88,3 +88,84 @@ jobs:
         run: npm install --global markdownlint-cli2
       - name: Lint Markdown
         run: markdownlint-cli2 '**/*.md' '#node_modules' '#bin' '#obj'
+
+  semgrep:
+    name: semgrep
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Semgrep scan (auto rules, fail on blocking)
+        run: |
+          semgrep scan \
+            --config=auto \
+            --error \
+            --no-git-ignore \
+            --include='*.cs' \
+            --exclude='**/obj/**' \
+            --exclude='**/bin/**' \
+            --exclude='**/Migrations/*.Designer.cs' \
+            src/
+
+  pvs-studio:
+    name: pvs-studio (C#)
+    runs-on: ubuntu-latest
+    # Skip in forks/PRs that lack the license. Maintainer pushes to main
+    # and dispatched runs see the secret and run the full scan.
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Skip if license missing
+        id: precheck
+        env:
+          PVS_USER: ${{ secrets.PVS_USER }}
+          PVS_KEY: ${{ secrets.PVS_KEY }}
+        run: |
+          if [ -z "$PVS_USER" ] || [ -z "$PVS_KEY" ]; then
+            echo "PVS-Studio license secrets not set — skipping job."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Install PVS-Studio
+        if: steps.precheck.outputs.skip != 'true'
+        run: |
+          wget -q -O- https://files.pvs-studio.com/etc/pubkey.txt | sudo apt-key add -
+          sudo wget -q -O /etc/apt/sources.list.d/viva64.list \
+            https://files.pvs-studio.com/etc/viva64.list
+          sudo apt-get update
+          sudo apt-get install -y pvs-studio-dotnet
+      - name: Configure license
+        if: steps.precheck.outputs.skip != 'true'
+        env:
+          PVS_USER: ${{ secrets.PVS_USER }}
+          PVS_KEY: ${{ secrets.PVS_KEY }}
+        run: pvs-studio-dotnet credentials -u "$PVS_USER" -n "$PVS_KEY"
+      - name: Build
+        if: steps.precheck.outputs.skip != 'true'
+        run: dotnet build nutanix-mcp.slnx --configuration Release
+      - name: Analyze each project
+        if: steps.precheck.outputs.skip != 'true'
+        run: |
+          set -e
+          mkdir -p pvs-out
+          for proj in src/NutanixMcp.*/NutanixMcp.*.csproj; do
+            name=$(basename "$proj" .csproj)
+            pvs-studio-dotnet -t "$proj" -c Release -o "pvs-out/${name}.plog" || code=$?
+            # Bit-mask: 256 = findings, 1024 = license expiring soon — both
+            # tolerated.
+            if [ -n "${code:-}" ] && [ $((code & ~256 & ~1024)) -ne 0 ]; then
+              exit "$code"
+            fi
+            unset code
+          done
+      - name: Upload plog artifacts
+        if: steps.precheck.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pvs-studio-plogs
+          path: pvs-out/

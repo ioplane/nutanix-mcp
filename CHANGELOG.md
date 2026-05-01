@@ -92,6 +92,28 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
   with the char overload (`Replace('\r', '\n')`) per MA0089 to skip
   the StringComparison overhead on the hot path.
 
+### Added (Sprint 006.5 — fixture re-pin verb)
+
+- `validate-bench-queries` CLI verb. Reads `bench-queries.json`, queries
+  the live DB for each `(expect_doc, expect_section)` anchor, and re-pins
+  `expect_chunk_ids` in place. Decouples fixture authoring from chunk-id
+  stability — a full reingest reassigns chunk_ids, but the (doc, section)
+  anchor is stable across reingests.
+  - `--write` persists changes; default is dry-run.
+  - `--fail-on-unresolved` exits non-zero when a query cannot be matched
+    (use in CI to catch a fixture that has drifted past auto-repair).
+
+### Added (Sprint 007 — partial)
+
+- `.github/workflows/ci.yml` gains two jobs:
+  - `semgrep` — runs `semgrep scan --config=auto --error` against the
+    `src/` tree, excluding generated EF Migrations. Local scan of the
+    current main produces 0 findings on 89 files / 220 rules.
+  - `pvs-studio` — gated behind `${{ secrets.PVS_USER }}` and
+    `${{ secrets.PVS_KEY }}`, skipped on PRs from forks. Iterates each
+    `src/*.csproj`, tolerates exit-code bits 256 (findings) and 1024
+    (license expiring soon).
+
 ### Pending (Sprint 006 — runtime gate)
 
 - Full-corpus ingest of 7343 documents into the populated remote
