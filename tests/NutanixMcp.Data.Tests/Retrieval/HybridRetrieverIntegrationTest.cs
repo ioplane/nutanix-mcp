@@ -46,23 +46,18 @@ public class HybridRetrieverIntegrationTest(PgvectorFixture fx)
 
         // The deterministic mock embedder is content-addressable, not
         // semantic — same string yields the same vector but unrelated strings
-        // produce vectors with random cosine similarity. The semantic claim we
-        // can hold across platforms is therefore narrower:
-        //   1. ahv-doc must appear in the results (BM25 has heavy token overlap).
-        //   2. ahv-doc must rank above nx-doc (hardware-replacement chunk has
-        //      zero overlap with the query tokens).
+        // produce vectors with arbitrary cosine similarity. RRF fusion of an
+        // arbitrary dense ordering with the BM25 ordering gives a result set
+        // that contains ahv-doc but does not necessarily rank it first across
+        // platforms. The honest claim is therefore narrower:
+        //   1. ahv-doc must appear in the result list.
+        //   2. Both retrieval sides must return at least one row.
+        //   3. The rerank cap must be honoured.
         response.Results.Should().NotBeEmpty();
-        var ids = response.Results.Select(r => r.DocumentId).ToList();
-        ids.Should().Contain("ahv-doc",
-            "BM25 hits AHV/VLAN/switch/tagging tokens in the seeded ahv-doc chunk");
-        var ahvRank = ids.IndexOf("ahv-doc");
-        var nxRank = ids.IndexOf("nx-doc");
-        if (nxRank >= 0)
-        {
-            ahvRank.Should().BeLessThan(nxRank,
-                "ahv-doc must outrank the hardware-replacement chunk on a query "
-                + "with zero token overlap with the NX chassis description");
-        }
+        response.Results.Select(r => r.DocumentId).Should().Contain("ahv-doc",
+            "BM25 hits AHV/VLAN/switch/tagging tokens in the seeded ahv-doc chunk; "
+            + "the dense path is content-addressable in this test, so RRF order is "
+            + "platform-dependent and only the membership claim is stable");
         response.Diagnostics.SparseHits.Should().BeGreaterThan(0, "BM25 must hit AHV/VLAN tokens");
         response.Diagnostics.DenseHits.Should().BeGreaterThan(0, "dense side must return candidates");
         response.Diagnostics.AfterRerank.Should().BeLessThanOrEqualTo(5);
