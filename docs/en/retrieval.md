@@ -95,9 +95,9 @@ co-hit so the diagnostics report carries through honest per-stage values.
 If the top-5 RRF spread (`top1 - top5`) is at or below 0.02, the
 candidates are too tight for the cross-encoder to differentiate. The
 retriever caps the rerank input at 10 to save roughly 50 ms of
-cross-encoder compute. The threshold is tuned against the upstream
-`arista-mcp` bench v2; the nutanix-specific bench, when it ships, will
-re-confirm or update the constant.
+cross-encoder compute. The threshold was tuned against the upstream
+`arista-mcp` bench v2 and held on the nutanix 509-q bench (Sprint 008
+sweep) — keeping it at 0.02.
 
 ### Parent hydration
 
@@ -112,6 +112,19 @@ The cross-encoder scores `(query, parent_text)` rather than
 `<s> q </s></s> d </s>` and runs the ONNX session with `input_ids` and
 `attention_mask`. Output is `logits [B, 1]` — one raw score per pair,
 higher is better.
+
+The reranker model directory is configurable via the `bench
+--reranker-dir <path>` flag and the equivalent
+`NUTANIX_MCP__RERANKERDIR` environment variable. v0.3.0 ships three
+options:
+
+- `models/reranker/` — stock FP32 (`bge-reranker-v2-m3` Optimum-O4
+  export, ~1.1 GB). Default if no override.
+- `models/reranker-finetuned/` — Sprint 010 fine-tune FP32 ONNX,
+  ~2.3 GB, +1.6 pp top-1 over stock.
+- `models/reranker-finetuned-int8/` — Sprint 003.5 INT8 of the
+  fine-tune, ~1.3 GB, -26 % p50 vs FP32 fine-tune at -0.4 pp top-1.
+  **Recommended production default for CPU-only laptops.**
 
 ### Stable sort and final pruning
 

@@ -94,8 +94,8 @@ co-hit-кандидатов, чтобы диагностика отражала 
 
 Если top-5 RRF spread (`top1 - top5`) ≤ 0.02, кандидаты слишком тесные,
 чтобы cross-encoder их различил. Ретривер режет вход реранкера до 10,
-экономя ~50 мс. Порог откалиброван против upstream-бенча `arista-mcp` v2;
-nutanix-специфичный бенч после ввода уточнит или подтвердит константу.
+экономя ~50 мс. Порог откалиброван против upstream-бенча `arista-mcp` v2
+и удержался на nutanix 509-q бенче (свип Sprint 008) — оставляем 0.02.
 
 ### Гидратация родителей
 
@@ -108,6 +108,18 @@ nutanix-специфичный бенч после ввода уточнит и�
 `XlmRobertaOnnxReranker` собирает каноничную XLM-R пару
 `<s> q </s></s> d </s>` и запускает ONNX-сессию с `input_ids` и
 `attention_mask`. Выход `logits [B, 1]` — сырой скор на пару, больше = лучше.
+
+Директория с моделью реранкера переключается флагом
+`bench --reranker-dir <path>` и эквивалентной env-переменной
+`NUTANIX_MCP__RERANKERDIR`. v0.3.0 шипит три варианта:
+
+- `models/reranker/` — stock FP32 (`bge-reranker-v2-m3` Optimum-O4,
+  ~1.1 GB). Дефолт без override.
+- `models/reranker-finetuned/` — Sprint 010 fine-tune FP32 ONNX,
+  ~2.3 GB, +1.6 п.п. top-1 над stock.
+- `models/reranker-finetuned-int8/` — Sprint 003.5 INT8 fine-tune,
+  ~1.3 GB, -26 % p50 vs FP32 fine-tune при -0.4 п.п. top-1.
+  **Рекомендованный production-дефолт для CPU-only ноутбуков.**
 
 ### Stable sort и финальное обрезание
 
