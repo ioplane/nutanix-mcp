@@ -8,6 +8,34 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 
 ## [Unreleased]
 
+### Added (Sprint 003.5 — INT8 reranker, unblocked, 2026-05-02)
+
+The Sprint 010 fine-tune produced a clean FP32 ONNX export (via
+`optimum.exporters.onnx`), unblocking the dynamic INT8 quantization
+that previously failed on the FP16-source community export.
+
+`scripts/quantize-reranker.py` now runs end-to-end on the fine-tuned
+checkpoint. Production bench numbers:
+
+| Metric | FP32 fine-tune | **INT8 fine-tune** | Δ |
+|---|---:|---:|---:|
+| top-1 | 80.6 % | **80.2 %** | -0.4 pp (within ≤1 pp gate) |
+| top-5 | 99.4 % | 99.6 % | +0.2 pp |
+| top-10 | 100.0 % | 100.0 % | flat |
+| p50 (ms) | 2737 | **2014** | **-26 %** |
+| p95 (ms) | 3915 | **2930** | **-25 %** |
+| Disk | 2.17 GB | **1.30 GB** | **-40 %** |
+
+Acceptance gate (≤1 pp top-1 regression + measurable p95 improvement)
+PASSED. INT8 is the recommended production deployment for CPU-only
+laptops (AVX-VNNI lights up at session-init) — smaller download,
+faster inference, near-equivalent quality.
+
+The INT8 model lives at `data/reranker-finetuned-int8/` (gitignored,
+~1.3 GB). Released artefact will ship a pointer + shell snippet to
+fetch it from a release attachment, similar to the existing
+`fetch-models.ps1` pattern for the upstream stock weights.
+
 ### Added (Sprint 010 — reranker fine-tune iter 1, 2026-05-02)
 
 End-to-end cross-encoder fine-tune on the 509-q v0.2.0 LLM bench

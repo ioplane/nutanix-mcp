@@ -36,7 +36,7 @@ gantt
 | 001 | DONE | Скелет solution, package pinning, docker stack, init.sql с `english_analyzer`. |
 | 002 | DONE | EF entities, репозитории, `PgvectorFixture`, миграции `Initial` и `AddBm25Column`. 9/9 Data-тестов. |
 | 003 | DONE | bge-m3 эмбеддер, bge-reranker-v2-m3 реранкер, `RerankerFamilyDetector`, скрипт скачивания моделей. 15/15 Embedding-тестов. |
-| 003.5 | Queued | INT8-реранкер через Optimum O4. Merge gate — не более 1 п.п. регрессии top-1 против FP32. |
+| 003.5 | DONE (v0.3.0) | INT8 dynamic quantization fine-tuned FP32 ONNX. 2.17 GB → 1.30 GB (1.67× компрессия). Продакшен bench: top-1 80.2 % (-0.4 п.п. vs FP32, в пределах гейта ≤1 п.п.), p50 -26 %, p95 -25 %. Acceptance PASSED. |
 | 004 | DONE | `HybridRetriever`, 7 MCP-инструментов, stdio + HTTP хосты, CLI-глагол `serve`. 37/37 тестов плюс live HTTP smoke. |
 | 005 | DONE | `CatalogReader`, `DocumentLoader` (CRLF/marker/TOC strip, MD↔JSON pair), `SectionAwareChunker`, `IngestService`, CLI-глагол `ingest`. 52/52 тестов; live ingest + MCP search верифицированы. |
 | 006 | DONE | Bench v2 harness + история приземлены. Quality-стек ntx-mcp принят. Правки code-review влиты. Throughput 3 платформ (1.7/13.7/634 chunks/s). Удалённый ingest 7343 документов завершён (2026-05-01). First-cut: 38-вопросный эвристический fixture, top-10 = 81.6 %. **Extension (2026-05-02)**: arista-mcp pipeline портирован. **509-вопросный LLM-fixture (canonical baseline)**: top-1 = 79.0 %, top-5 = 99.0 %, top-10 = 100.0 %, p50 = 2.6 с, p95 = 3.7 с. |

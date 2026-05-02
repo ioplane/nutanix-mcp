@@ -36,7 +36,7 @@ gantt
 | 001 | DONE | Solution skeleton, package pinning, docker stack, init.sql with `english_analyzer`. |
 | 002 | DONE | EF entities, repositories, `PgvectorFixture`, `Initial` and `AddBm25Column` migrations. 9/9 Data tests green. |
 | 003 | DONE | bge-m3 embedder, bge-reranker-v2-m3 reranker, `RerankerFamilyDetector`, model fetch script. 15/15 Embedding tests green. |
-| 003.5 | Queued | INT8 reranker via Optimum O4. Merge gate: at most 1 pp top-1 regression versus FP32. |
+| 003.5 | DONE (v0.3.0) | INT8 dynamic quantization of the fine-tuned reranker FP32 ONNX. 2.17 GB → 1.30 GB (1.67× compression). Production bench: top-1 80.2 % (-0.4 pp vs FP32, within ≤1 pp gate), p50 -26 %, p95 -25 %. Acceptance PASSED. |
 | 004 | DONE | `HybridRetriever`, 7 MCP tools, stdio + HTTP hosts, `serve` Cli verb. 37/37 tests green plus live HTTP smoke. |
 | 005 | DONE | `CatalogReader`, `DocumentLoader` (CRLF/marker/TOC strip, MD↔JSON pair), `SectionAwareChunker`, `IngestService`, `ingest` Cli verb. 52/52 tests green; live ingest + MCP search verified. |
 | 006 | DONE | Bench v2 harness + history. ntx-mcp quality stack adopted. Code-review fixes merged. 3-platform throughput study (1.7/13.7/634 chunks/s). Remote ingest of 7343 documents complete (2026-05-01). First-cut: 38-query heuristic fixture, top-10 = 81.6 %. **Extension (2026-05-02)**: arista-mcp pipeline ported. **509-query LLM fixture (canonical baseline)**: top-1 = 79.0 %, top-5 = 99.0 %, top-10 = 100.0 %, p50 = 2.6 s, p95 = 3.7 s. |

@@ -1,31 +1,25 @@
 """Sprint 003.5 — INT8 dynamic quantization of bge-reranker-v2-m3.
 
-STATUS: blocked on the FP16 source export. The
-`hooman650/bge-reranker-v2-m3-onnx-o4` ONNX export ships with FP16
-weights and FP16 activations (Optimum-O4 mixed-precision). ORT's
-`DynamicQuantizeLinear` operator (injected in front of every MatMul by
-`quantize_dynamic`) only accepts FP32 inputs — loading the resulting
-INT8 model fails with:
+UNBLOCKED in v0.3.0 (2026-05-02): the original blocker was the FP16
+source export shipping with `optimum.exporters.onnx --library-name
+transformers --task text-classification` produces a clean FP32 ONNX
+that quantizes to INT8 without the DynamicQuantizeLinear-on-FP16
+issue.
 
-    Type Error: Type 'tensor(float16)' of input parameter
-    (...Reshape_3_output_0) of operator (DynamicQuantizeLinear)
+Production v0.3.0 acceptance run (Sprint 003.5):
 
-Two paths forward (both heavier than this script):
+  Source:  fine-tuned XLM-R 568M (Sprint 010 checkpoint)
+  Output:  INT8 weights via `quantize_dynamic` on MatMul ops
+  Size:    2.17 GB FP32 → 1.30 GB INT8 (1.67x compression)
+  Bench:   top-1 80.2 % (vs 80.6 % FP32, -0.4 pp — within the
+           ≤ 1 pp acceptance gate)
+  Latency: p50 2014 ms (vs 2737 ms FP32, -26 %)
+           p95 2930 ms (vs 3915 ms FP32, -25 %)
 
- 1. Convert the FP16 ONNX to FP32 first (walk every Initializer +
-    ValueInfoProto, cast FP16 → FP32, add Cast nodes at FP16 op
-    boundaries). Then dynamic-quantize the FP32 model.
- 2. Skip ONNX-level quantization. Quantize the PyTorch model
-    (BAAI/bge-reranker-v2-m3) via Optimum's NNCF integration or
-    PyTorch's `torch.ao.quantization`, then re-export ONNX with INT8
-    weights baked in.
-
-For now the script produces an INT8 model that fails to load. Useful
-as scaffolding for the FP32-conversion follow-up.
-
-Reads models/reranker/model.onnx (FP16 XLM-R cross-encoder, ~568M
-params, external-data layout) and writes models/reranker-int8/model.onnx
-with INT8 weights for MatMul ops.
+Reads <src>/model.onnx (XLM-R cross-encoder, FP32, external-data
+layout) and writes <dst>/model.onnx with INT8 weights for MatMul ops.
+Skips Gather (used to fail on FP16 dequant scales — not relevant for
+the FP32 source but kept skipped for forward-compat).
 
 Dynamic quantization is the right pick for transformer cross-encoders here:
 
