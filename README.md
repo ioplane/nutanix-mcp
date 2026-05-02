@@ -11,8 +11,14 @@ Runtime.
 The server combines a dense vector search over `bge-m3` embeddings with
 a sparse BM25 path through `vchord_bm25`, fuses results via Reciprocal
 Rank Fusion, hydrates parent context, and reranks with
-`bge-reranker-v2-m3`. Seven MCP tools expose search, lookup, listing,
-and health-reporting over either stdio or streamable HTTP.
+`bge-reranker-v2-m3` (FP32 stock or v0.3.0 fine-tuned INT8 — see
+[`training-rag.md`](./docs/en/training-rag.md)). Seven MCP tools expose
+search, lookup, listing, and health-reporting over either stdio or
+streamable HTTP.
+
+Current production baseline (v0.3.0, 509-query LLM bench fixture):
+**top-1 = 80.2 %, top-5 = 99.6 %, top-10 = 100.0 %, p50 = 2.0 s, p95 = 2.9 s**
+on a CPU-only laptop reaching the local-host PG.
 
 ## Quick start
 

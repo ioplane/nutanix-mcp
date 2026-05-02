@@ -10,9 +10,14 @@ MCP-сервер с гибридным поиском по корпусу док
 Сервер сочетает плотный векторный поиск по эмбеддингам `bge-m3` и
 разреженный BM25-путь через `vchord_bm25`, сливает результаты через
 Reciprocal Rank Fusion, гидратирует родительский контекст и
-реранкирует `bge-reranker-v2-m3`. Семь MCP-инструментов отдают поиск,
-просмотр секций, листинги и health-репорт по транспорту stdio или
-streamable HTTP.
+реранкирует `bge-reranker-v2-m3` (stock FP32 или v0.3.0 fine-tuned
+INT8 — см. [`training-rag.md`](./docs/ru/training-rag.md)). Семь
+MCP-инструментов отдают поиск, просмотр секций, листинги и
+health-репорт по транспорту stdio или streamable HTTP.
+
+Текущий production baseline (v0.3.0, 509-вопросный LLM bench fixture):
+**top-1 = 80.2 %, top-5 = 99.6 %, top-10 = 100.0 %, p50 = 2.0 с, p95 = 2.9 с**
+на CPU-only ноутбуке против locahost-PG.
 
 ## Быстрый старт
 
