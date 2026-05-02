@@ -1,0 +1,69 @@
+[Unit]
+# nutanix-mcp — hybrid-retrieval MCP server for Nutanix documentation.
+# Lightweight systemd unit: HTTP transport on a dedicated localhost port,
+# behind a reverse proxy if you need TLS / external exposure.
+#
+# Install:
+#   sudo cp deploy/systemd/nutanix-mcp.service /etc/systemd/system/
+#   sudo cp deploy/systemd/nutanix-mcp.env.example /etc/nutanix-mcp.env
+#   sudo $EDITOR /etc/nutanix-mcp.env       # set DB conn-string + models dir
+#   sudo useradd --system --no-create-home --shell /usr/sbin/nologin nutanix-mcp
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now nutanix-mcp
+#
+# Logs:
+#   journalctl -u nutanix-mcp -f
+Description=nutanix-mcp hybrid-retrieval MCP server
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nutanix-mcp
+Group=nutanix-mcp
+
+# EnvironmentFile holds NUTANIX_MCP__CONNECTIONSTRING, NUTANIX_MCP__MODELSDIR,
+# NUTANIX_MCP__RERANKERDIR, etc. — see nutanix-mcp.env.example.
+EnvironmentFile=/etc/nutanix-mcp.env
+
+# Single-file self-contained binary from the GitHub release tarball.
+# Adjust the path if you install elsewhere.
+ExecStart=/usr/local/bin/nutanix-mcp serve --transport http --port 7456
+
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=20s
+
+# Hardening — minimal attack surface, read-only system, no NEW priv.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+# ^ ONNX Runtime JITs kernels at session-init; MemoryDenyWriteExecute=true
+#   would crash the embedder load. Keep it off.
+
+# Network: allow local + outbound for HTTP transport. If the server is local
+# only, add IPAddressDeny=any plus IPAddressAllow=localhost link-local.
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+# Models + state are inside the user's home or shared dir (default
+# /var/lib/nutanix-mcp). The unit refuses to write outside.
+StateDirectory=nutanix-mcp
+WorkingDirectory=/var/lib/nutanix-mcp
+
+# Resource limits — tune to match your bench workload.
+LimitNOFILE=8192
+LimitNPROC=512
+
+# Health: systemd restarts on non-zero exit. For active health-check use
+# /v1/healthz exposed by the HTTP transport (see docs/en/operations.md).
+
+[Install]
+WantedBy=multi-user.target

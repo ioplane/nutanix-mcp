@@ -8,6 +8,25 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 
 ## [Unreleased]
 
+### Added (Sprint 009 — deploy templates, 2026-05-02)
+
+- `deploy/systemd/nutanix-mcp.service` — hardened systemd unit
+  (`ProtectSystem=strict`, `NoNewPrivileges`, `PrivateTmp`,
+  `ProtectKernelTunables`, `RestrictNamespaces`, `RestrictSUIDSGID`).
+  `MemoryDenyWriteExecute=false` because ONNX Runtime JITs kernels
+  at session-init.
+- `deploy/systemd/nutanix-mcp.env.example` — sample env-file with
+  `NUTANIX_MCP__CONNECTIONSTRING`, `NUTANIX_MCP__MODELSDIR`,
+  optional `NUTANIX_MCP__RERANKERDIR` (Sprint 003.5/010 fine-tune
+  variants), GPU toggle, OTEL endpoint.
+- `deploy/windows/Install-NutanixMcpService.ps1` — elevated PowerShell
+  installer using `New-Service` (no NSSM dependency). Configures the
+  service registry env-block and auto-restart-on-failure, then starts.
+- `deploy/README.md` — install / uninstall / verify steps for both
+  platforms, plus reverse-proxy notes.
+
+macOS launchd plist + container image queued for v0.4.0.
+
 ### Added (Sprint 003.5 — INT8 reranker, unblocked, 2026-05-02)
 
 The Sprint 010 fine-tune produced a clean FP32 ONNX export (via
