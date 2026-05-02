@@ -44,6 +44,51 @@ public class BenchHistoryWriterTest
         }
     }
 
+    [Fact]
+    public async Task SerialisesSweepFieldsWhenSet()
+    {
+        string dir = Directory.CreateTempSubdirectory("nutanix-bench-history-").FullName;
+        string path = Path.Combine(dir, "bench-history.jsonl");
+        try
+        {
+            BenchRun run = MakeRun("sweep") with
+            {
+                EfSearch = 200,
+                IterativeScan = "strict_order",
+                RerankerDir = "models/reranker-finetuned",
+            };
+            await BenchHistoryWriter.AppendAsync(path, run, CancellationToken.None);
+
+            string line = (await File.ReadAllLinesAsync(path))[0];
+            line.Should().Contain("\"ef_search\":200");
+            line.Should().Contain("\"iterative_scan\":\"strict_order\"");
+            line.Should().Contain("\"reranker_dir\":\"models/reranker-finetuned\"");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task OmitsSweepFieldsWhenUnset()
+    {
+        string dir = Directory.CreateTempSubdirectory("nutanix-bench-history-").FullName;
+        string path = Path.Combine(dir, "bench-history.jsonl");
+        try
+        {
+            await BenchHistoryWriter.AppendAsync(path, MakeRun("default"), CancellationToken.None);
+            string line = (await File.ReadAllLinesAsync(path))[0];
+            line.Should().NotContain("ef_search");
+            line.Should().NotContain("iterative_scan");
+            line.Should().NotContain("reranker_dir");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
     private static BenchRun MakeRun(string label) => new()
     {
         Timestamp = new DateTimeOffset(2026, 5, 1, 10, 0, 0, TimeSpan.Zero),

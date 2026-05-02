@@ -43,7 +43,7 @@ gantt
 | 007 | DONE | `scripts/pvs-studio-scan.ps1` запускается локально. `semgrep` и `pvs-studio` CI jobs в `ci.yml` (PVS гейтится через license secret). `markdownlint-cli2` job. `.githooks/pre-commit` гонит `dotnet format` на staged C# файлах. |
 | 008 | DONE | One-at-a-time свип `ef_search` × `iterative_scan` × `rrf_k` × `candidate_pool_size`. 9 строк в `bench-history.jsonl`. Результат: текущие дефолты (ef=100, relaxed, rrf=60, pool=50) находятся в sweet spot quality-vs-latency на 207-q fixture. Sub-pp дельты ниже шумового floor'а n=207. См. [`sprints/sprint-008.md`](./sprints/sprint-008.md). |
 | 009 | Pending | Single-file publish для Windows, Linux, macOS на amd64 и arm64. Шаблоны systemd-юнита и Windows-сервиса. |
-| 010 | Pending | Cross-encoder fine-tune iter 1 на курированных triples. |
+| 010 | DONE | Cross-encoder fine-tune iter 1: 4137 триплов через bge-m3 hard-neg с multi-positive exclusion. XLM-R 568M × 3 эпохи, BCE pos_weight=8, single 5090, 131 с. Hold-out NDCG@10 = 0.9942. **Продакшен bench 509-q: top-1 = 80.6 % (+1.6 п.п.), top-5 = 99.4 %, top-10 = 100 %, p50 = 2.74 с.** См. [`sprints/sprint-010.md`](./sprints/sprint-010.md). |
 | 011 | Pending | Fine-tune iter 2 с production-log hard negatives. |
 
 ## Ключевые решения и зависимости

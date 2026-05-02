@@ -31,3 +31,6 @@ pvs-report/
 .DS_Store
 Thumbs.db
 scripts/__pycache__/
+
+# v0.3.0 release prep
+publish-test/

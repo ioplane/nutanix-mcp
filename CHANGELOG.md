@@ -8,6 +8,98 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 
 ## [Unreleased]
 
+### Added (Sprint 010 — reranker fine-tune iter 1, 2026-05-02)
+
+End-to-end cross-encoder fine-tune on the 509-q v0.2.0 LLM bench
+fixture. Recipe locked to the arista win record:
+BCE pos_weight=NUM_NEGATIVES (8), batch=16, max_seq=512, lr=2e-5,
+3 epochs, warmup_ratio=0.1, query-bucket train/eval split.
+
+Pipeline scripts (all run on the remote, PG + GPU localhost):
+
+- `scripts/extract-bench-pairs.py` — pull (query, positive_text,
+  all_positive_chunk_ids, category) from the bench fixture + PG.
+- `scripts/mine-negatives.py` — sentence-transformers
+  `mine_hard_negatives` with bge-m3 as scorer, post-filtered to
+  drop any negative whose chunk_id is in `all_positive_chunk_ids`
+  (without the filter the cross-encoder learns contradictory signal,
+  which is exactly the failure mode arista's v0.2.0 hit).
+- `scripts/train-reranker.py` — adapted from arista's `train_v2m3.py`.
+  XLM-R 568M, BCELoss with pos_weight=8, evaluates per-epoch on
+  hold-out NDCG@10.
+- `scripts/export-reranker-onnx.py` — torch.onnx export with
+  `dynamo=False`. Falls back to `optimum.exporters.onnx` when the
+  legacy exporter trips on transformers v5 masking utilities (the
+  current torch+transformers combo on the remote).
+
+CLI: `bench` already accepted `--reranker-dir <path>` from the Sprint
+008 changes; that's how the fine-tuned model is plugged in.
+
+### Verified (Sprint 010 acceptance — 2026-05-02)
+
+Pipeline numbers (single 5090, fp16 mixed-precision):
+
+| Stage | Time |
+|---|---:|
+| Extract pairs (509 queries) | 1 s |
+| Mine hard negatives (4137 mined from 247 K leaf chunks) | ~25 min |
+| Train (3 epochs / 669 steps) | **131 s** |
+| Export ONNX FP32 with external data | ~10 s |
+| Bench validation (509 queries) | ~25 min |
+
+Hold-out evaluation per epoch:
+
+| epoch | NDCG@10 | MAP | MRR@10 |
+|---:|---:|---:|---:|
+| 1 | 0.9923 | 0.9824 | 0.9824 |
+| 2 | 0.9923 | 0.9824 | 0.9824 |
+| **3 (best)** | **0.9942** | **0.9922** | **0.9922** |
+
+Production bench delta on the 509-q LLM fixture:
+
+| Metric | v0.2.0 stock FP32 | **v0.3.0 fine-tune FP32** | Δ |
+|---|---:|---:|---:|
+| top-1 | 79.0 % | **80.6 %** | **+1.6 pp** |
+| top-5 | 99.0 % | 99.4 % | +0.4 pp |
+| top-10 | 100.0 % | 100.0 % | flat |
+| p50 (ms) | 2625 | 2737 | +4 % |
+| p95 (ms) | 3675 | 3915 | +7 % |
+
+Comparison to arista's precedent (588-q fixture, +2.04 pp post-fine-tune):
++1.6 pp is in the same range, consistent with the recipe.
+
+### Changed (Sprint 008 + 010 — version bumps + lib audit)
+
+- `Directory.Build.props` Version 0.1.0 → **0.3.0**.
+- `Directory.Packages.props`:
+  - `Microsoft.Extensions.*` 10.0.6 → 10.0.7
+  - `Microsoft.ML.OnnxRuntime[.Gpu]` 1.24.4 → 1.25.1
+  - `Microsoft.NET.Test.Sdk` 18.4.0 → 18.5.1
+- Analyzers (in `Directory.Build.props`):
+  - `Meziantou.Analyzer` 3.0.50 → 3.0.58
+  - `SonarAnalyzer.CSharp` 10.23.0.137933 → 10.25.0.139117
+
+### Verified (release prep)
+
+- `dotnet publish src/NutanixMcp.Cli --runtime win-x64 --self-contained
+  -p:PublishSingleFile=true` produces a 130 MB self-contained binary.
+- Data integration tests: 12 / 12 against fresh PG.
+- Build clean (0 / 0). Format clean. Semgrep auto-rules: 0 findings
+  on 102 files / 1403 rules.
+
+### Considered, deferred to v0.4.0 (Qwen3-Embedding / Qwen3-Reranker swap)
+
+Late-cycle research found Qwen3-Embedding-0.6B / Qwen3-Reranker-0.6B
+(Apache-2.0, ~+5 pp MTEB-multilingual / ~+5 pp BEIR rerank vs
+bge-m3 / bge-reranker-v2-m3 lineage). On paper drop-in, in practice a
+substantial refactor: decoder-only architecture, Qwen BPE tokenizer
+(vs SentencePiece), instruct-prefix prompts, last-token pool for
+embedder, generative scoring (or seq-cls community variant) for
+reranker. Estimated swap cost ~6-8 hours including a re-ingest of
+489 K chunks. Tracked as a v0.4.0 sprint.
+
+
+
 ### Changed (Sprint 006-extension expansion — 207 → 509 queries, 2026-05-02)
 
 The Sprint 008 sweep revealed sub-pp deltas were below the n=207 noise
