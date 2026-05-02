@@ -8,6 +8,44 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 
 ## [Unreleased]
 
+### Changed (Sprint 006-extension expansion — 207 → 509 queries, 2026-05-02)
+
+The Sprint 008 sweep revealed sub-pp deltas were below the n=207 noise
+floor, so the bench was expanded at the same generation recipe.
+
+Pipeline numbers:
+
+| Stage | In | Out | Time |
+|---|---|---|---|
+| Sample 500 chunks | DB | `bench-seed-chunks-500.jsonl` | 1 s |
+| LLM-generate queries | 500 chunks | 934 raw queries (8 skipped) | 174 s |
+| Fairness-filter (top-K=20) | 934 candidates | **509 survived (54.5 %)** | 38 min |
+| Multi-positive annotate | 509 queries | 509 labelled | 183 s |
+
+Bench acceptance run (entirely on the remote — no SSH tunnel):
+
+| Metric | n=207 (was) | **n=509 (now)** | Δ |
+|---|---:|---:|---:|
+| top-1 | 82.6 % | **79.0 %** | -3.6 pp |
+| top-5 | 98.6 % | **99.0 %** | +0.4 pp |
+| top-10 | 100.0 % | **100.0 %** | flat |
+| p50 (ms) | 2529 | **2625** | +4 % |
+| p95 (ms) | 3384 | **3675** | +9 % |
+
+The top-1 drop is real, not noise: the 207-query fixture skewed easy
+because the LLM happened to generate well-distinguishable questions
+on the smaller seed sample. **509-q is the canonical v0.2.0 baseline.**
+Top-10 still saturates at 100 %; breaking that ceiling is queued for
+v0.3.x (harder LLM prompts or rare-term targeting).
+
+### Added (Sprint 007 — pre-commit hook)
+
+- `.githooks/pre-commit` — bash hook that runs `dotnet format
+  --verify-no-changes` against staged `.cs` files. Fast (only staged
+  files, not the whole solution) and skip-able in emergencies via
+  `SKIP_FORMAT=1`. Enable per clone: `git config core.hooksPath
+  .githooks`. Documented in `CONTRIBUTING.md`.
+
 ### Added (Sprint 006 — bench v2 harness scaffold)
 
 - Sprint plan in `docs/en/sprints/sprint-006.md` and `docs/ru/sprints/`

@@ -19,10 +19,10 @@ gantt
   Sprint 004 — Hybrid retriever      :done, s004, 2026-05-01, 1d
   section Ingest и бенч
   Sprint 005 — Cli + ingest          :done, s005, 2026-05-01, 1d
-  Sprint 006 — Bench v2 first cut    :active, s006, 2026-05-01, 2d
+  Sprint 006 — Bench v2 first cut    :done, s006, 2026-05-01, 2d
   section Hardening
-  Sprint 007 — Semgrep + PVS gate    :         s007, after s006, 2d
-  Sprint 008 — HNSW + BM25 sweeps    :         s008, after s006, 3d
+  Sprint 007 — Semgrep + PVS gate    :done, s007, 2026-05-01, 1d
+  Sprint 008 — HNSW + BM25 sweeps    :done, s008, 2026-05-02, 1d
   section Production
   Sprint 009 — Deploy                :         s009, after s008, 2d
   Sprint 010 — Reranker fine-tune    :         s010, after s009, 5d
@@ -39,8 +39,8 @@ gantt
 | 003.5 | Queued | INT8-реранкер через Optimum O4. Merge gate — не более 1 п.п. регрессии top-1 против FP32. |
 | 004 | DONE | `HybridRetriever`, 7 MCP-инструментов, stdio + HTTP хосты, CLI-глагол `serve`. 37/37 тестов плюс live HTTP smoke. |
 | 005 | DONE | `CatalogReader`, `DocumentLoader` (CRLF/marker/TOC strip, MD↔JSON pair), `SectionAwareChunker`, `IngestService`, CLI-глагол `ingest`. 52/52 тестов; live ingest + MCP search верифицированы. |
-| 006 | DONE | Bench v2 harness + история приземлены. Quality-стек ntx-mcp принят. Правки code-review влиты. Throughput 3 платформ (1.7/13.7/634 chunks/s). Удалённый ingest 7343 документов завершён (2026-05-01). First-cut: 38-вопросный эвристический fixture, top-10 = 81.6 %. **Extension (2026-05-02)**: arista-mcp pipeline портирован (sample → Qwen2.5-3B-генерация → fairness-filter → multi-positive разметка). 207-вопросный LLM-fixture. **top-1 = 82.6 %, top-10 = 100.0 %**. |
-| 007 | Partially landed | `scripts/pvs-studio-scan.ps1` запускается локально (slnx не поддерживается, обходим csproj). Pending: Semgrep job и CI-job для PVS-Studio. `markdownlint-cli2` job уже живёт в `ci.yml`. |
+| 006 | DONE | Bench v2 harness + история приземлены. Quality-стек ntx-mcp принят. Правки code-review влиты. Throughput 3 платформ (1.7/13.7/634 chunks/s). Удалённый ingest 7343 документов завершён (2026-05-01). First-cut: 38-вопросный эвристический fixture, top-10 = 81.6 %. **Extension (2026-05-02)**: arista-mcp pipeline портирован. **509-вопросный LLM-fixture (canonical baseline)**: top-1 = 79.0 %, top-5 = 99.0 %, top-10 = 100.0 %, p50 = 2.6 с, p95 = 3.7 с. |
+| 007 | DONE | `scripts/pvs-studio-scan.ps1` запускается локально. `semgrep` и `pvs-studio` CI jobs в `ci.yml` (PVS гейтится через license secret). `markdownlint-cli2` job. `.githooks/pre-commit` гонит `dotnet format` на staged C# файлах. |
 | 008 | DONE | One-at-a-time свип `ef_search` × `iterative_scan` × `rrf_k` × `candidate_pool_size`. 9 строк в `bench-history.jsonl`. Результат: текущие дефолты (ef=100, relaxed, rrf=60, pool=50) находятся в sweet spot quality-vs-latency на 207-q fixture. Sub-pp дельты ниже шумового floor'а n=207. См. [`sprints/sprint-008.md`](./sprints/sprint-008.md). |
 | 009 | Pending | Single-file publish для Windows, Linux, macOS на amd64 и arm64. Шаблоны systemd-юнита и Windows-сервиса. |
 | 010 | Pending | Cross-encoder fine-tune iter 1 на курированных triples. |

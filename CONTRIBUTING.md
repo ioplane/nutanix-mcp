@@ -65,3 +65,15 @@ fails on any violation.
 ## Code quality gate
 
 See [`docs/en/quality-gate.md`](./docs/en/quality-gate.md).
+
+## Pre-commit hook
+
+The repo ships a bash pre-commit hook at `.githooks/pre-commit` that runs
+`dotnet format --verify-no-changes` against staged C# files. Enable it
+once per clone:
+
+    git config core.hooksPath .githooks
+
+Skip in emergencies (CI will still catch the issue):
+
+    SKIP_FORMAT=1 git commit ...

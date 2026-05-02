@@ -264,6 +264,45 @@ Latency floor (p95 ~8.5 s) is high because the bench drives the
 local-laptop CPU embedder over an SSH tunnel to remote PG. Production
 serve on the GPU host will drop that by an order of magnitude.
 
+## Sprint 006-extension expansion (2026-05-02) — 207 → 509 queries
+
+Same pipeline, larger seed (200 → 500 chunks). The 207-query fixture
+was hitting the n=207 noise floor on Sprint 008 sweeps (sub-pp deltas
+indistinguishable). Bench expansion at the same generation recipe.
+
+| Stage | In | Out | Time |
+|---|---|---|---|
+| Sample 500 chunks | DB | `bench-seed-chunks-500.jsonl` | 1 s |
+| LLM-generate queries | 500 chunks | 934 queries (8 skipped) | 174 s |
+| Fairness-filter (top-20) | 934 queries | **509 survived (54.5 %)** | 38 m |
+| Multi-positive annotate | 509 queries | 509 labelled | 183 s |
+
+Bench acceptance run (entirely on the remote — no SSH tunnel):
+
+| Metric | n=207 (was) | **n=509 (now)** | Δ |
+|---|---:|---:|---:|
+| top-1 | 82.6 % | **79.0 %** | -3.6 pp |
+| top-5 | 98.6 % | **99.0 %** | +0.4 pp |
+| top-10 | 100.0 % | **100.0 %** | flat |
+| p50 (ms) | 2529 | **2625** | +4 % |
+| p95 (ms) | 3384 | **3675** | +9 % |
+
+The top-1 drop is real, not noise: the 207-query fixture skewed easy
+because the LLM happened to generate well-distinguishable questions
+on the smaller seed sample. 509-q is the more honest baseline. Top-5
+holds at 99 %; top-10 still saturates at 100 % — the measurement
+ceiling persists.
+
+The 509-query bench is now the canonical v0.2.0 baseline. The 207-q
+fixture is retired (bench-history rows kept for trail).
+
+Outstanding observation: top-10 = 100 % even at n=509 means the
+retrieval pipeline finds the gold chunk every time on this fixture
+distribution. To break that ceiling we'd need either: (a) harder
+queries (LLM prompt that explicitly asks for paraphrase / cross-doc
+queries), or (b) a fixture targeting unique-rare-term docs that
+might miss in retrieval. Tracked for v0.3.x.
+
 ## Significance footnote
 
 At `n = 100`, a 5 percentage-point delta is roughly one sigma. Sub-3-pp

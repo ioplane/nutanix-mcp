@@ -19,10 +19,10 @@ gantt
   Sprint 004 — Hybrid retriever      :done, s004, 2026-05-01, 1d
   section Ingest and bench
   Sprint 005 — Cli + ingest          :done, s005, 2026-05-01, 1d
-  Sprint 006 — Bench v2 first cut    :active, s006, 2026-05-01, 2d
+  Sprint 006 — Bench v2 first cut    :done, s006, 2026-05-01, 2d
   section Hardening
-  Sprint 007 — Semgrep + PVS gate    :         s007, after s006, 2d
-  Sprint 008 — HNSW + BM25 sweeps    :         s008, after s006, 3d
+  Sprint 007 — Semgrep + PVS gate    :done, s007, 2026-05-01, 1d
+  Sprint 008 — HNSW + BM25 sweeps    :done, s008, 2026-05-02, 1d
   section Production
   Sprint 009 — Deploy                :         s009, after s008, 2d
   Sprint 010 — Reranker fine-tune    :         s010, after s009, 5d
@@ -39,8 +39,8 @@ gantt
 | 003.5 | Queued | INT8 reranker via Optimum O4. Merge gate: at most 1 pp top-1 regression versus FP32. |
 | 004 | DONE | `HybridRetriever`, 7 MCP tools, stdio + HTTP hosts, `serve` Cli verb. 37/37 tests green plus live HTTP smoke. |
 | 005 | DONE | `CatalogReader`, `DocumentLoader` (CRLF/marker/TOC strip, MD↔JSON pair), `SectionAwareChunker`, `IngestService`, `ingest` Cli verb. 52/52 tests green; live ingest + MCP search verified. |
-| 006 | DONE | Bench v2 harness + history. ntx-mcp quality stack adopted. Code-review fixes merged. 3-platform throughput study (1.7/13.7/634 chunks/s). Remote ingest of 7343 documents complete (2026-05-01). First-cut: 38-query heuristic fixture, top-10 = 81.6 %. **Extension (2026-05-02)**: arista-mcp pipeline ported (sample → LLM-generate via Qwen2.5-3B → fairness-filter → annotate multi-positives). 207-query LLM fixture. **top-1 = 82.6 %, top-10 = 100.0 %**. |
-| 007 | Partially landed | `scripts/pvs-studio-scan.ps1` runs locally (slnx unsupported, iterates csproj). Pending: Semgrep job and PVS-Studio CI job. `markdownlint-cli2` job already lives in `ci.yml`. |
+| 006 | DONE | Bench v2 harness + history. ntx-mcp quality stack adopted. Code-review fixes merged. 3-platform throughput study (1.7/13.7/634 chunks/s). Remote ingest of 7343 documents complete (2026-05-01). First-cut: 38-query heuristic fixture, top-10 = 81.6 %. **Extension (2026-05-02)**: arista-mcp pipeline ported. **509-query LLM fixture (canonical baseline)**: top-1 = 79.0 %, top-5 = 99.0 %, top-10 = 100.0 %, p50 = 2.6 s, p95 = 3.7 s. |
+| 007 | DONE | `scripts/pvs-studio-scan.ps1` runs locally. `semgrep` and `pvs-studio` CI jobs in `ci.yml` (PVS gated behind a license secret). `markdownlint-cli2` job. `.githooks/pre-commit` runs `dotnet format` against staged C# files. |
 | 008 | DONE | One-at-a-time sweep across `ef_search` × `iterative_scan` × `rrf_k` × `candidate_pool_size`. 9 rows in `bench-history.jsonl`. Result: current defaults (ef=100, relaxed, rrf=60, pool=50) are at the quality-vs-latency sweet spot on the 207-q fixture. Sub-pp deltas below n=207 noise floor. See [`sprints/sprint-008.md`](./sprints/sprint-008.md). |
 | 009 | Pending | Single-file publish for Windows, Linux, macOS on amd64 and arm64. Systemd unit and Windows service templates. |
 | 010 | Pending | Cross-encoder fine-tune iteration 1 against curated triples. |
