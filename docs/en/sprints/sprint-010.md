@@ -25,7 +25,7 @@ lr=2e-5, 3 epochs, warmup ratio 0.1.
 
 ## Recipe summary
 
-```
+```text
 base model:   BAAI/bge-reranker-v2-m3 (XLM-R, 568M, FP32)
 triples:      4137 (q, passage, label) — derived from 509-q LLM bench
               fixture + bge-m3 hard-neg mining with multi-positive guard

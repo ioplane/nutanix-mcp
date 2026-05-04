@@ -24,7 +24,7 @@ BCE pos_weight=8, batch=16, max_seq=512, lr=2e-5, 3 эпохи, warmup 0.1.
 
 ## Sumарика рецепта
 
-```
+```text
 base model:   BAAI/bge-reranker-v2-m3 (XLM-R, 568M, FP32)
 triples:      4137 (q, passage, label) — 509-q LLM fixture +
               bge-m3 hard-neg mining с multi-positive guard

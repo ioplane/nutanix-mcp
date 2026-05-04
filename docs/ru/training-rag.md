@@ -126,7 +126,7 @@ MTEB-multilingual / +5 п.п. BEIR-rerank vs bge-линия) — кандида�
 Bench v2 ключуется на chunk-ID gold labels с первого дня. Fixture
 LLM-сгенерирован, не вручную:
 
-```
+```text
 семпл 500 чанков
   → LLM-генерация 1-2 вопросов на чанк (Qwen2.5-3B)
   → fairness filter через live retriever (top-K=20)

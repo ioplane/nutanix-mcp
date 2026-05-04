@@ -1,0 +1,28 @@
+# Default: treat as text, normalise to LF in the index, check out LF on
+# every platform. CI runs on Linux; .editorconfig advertises LF; staying
+# consistent stops `dotnet format --verify-no-changes` from failing on
+# every line whenever a Windows checkout introduces CRLF.
+* text=auto eol=lf
+
+# Binary assets — never touched by line-ending normalisation.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.zip  binary
+*.gz   binary
+*.tgz  binary
+*.tar  binary
+*.7z   binary
+*.dump binary
+*.onnx binary
+*.bin  binary
+*.dll  binary
+*.exe  binary
+*.so   binary
+*.dylib binary
+
+# Force LF on shell scripts even if a Windows tool tries to touch them.
+*.sh   text eol=lf

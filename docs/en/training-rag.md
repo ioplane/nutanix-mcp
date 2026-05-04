@@ -133,7 +133,7 @@ Bench v2 keys on chunk-ID gold labels from day one. The fixture is
 LLM-generated rather than hand-curated — see
 [`sprints/sprint-006.md`](./sprints/sprint-006.md) for the pipeline:
 
-```
+```text
 sample 500 chunks
   → LLM-generate 1-2 questions per chunk (Qwen2.5-3B)
   → fairness filter via the live retriever (top-K=20)

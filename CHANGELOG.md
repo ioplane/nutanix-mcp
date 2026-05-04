@@ -193,8 +193,6 @@ embedder, generative scoring (or seq-cls community variant) for
 reranker. Estimated swap cost ~6-8 hours including a re-ingest of
 489 K chunks. Tracked as a v0.4.0 sprint.
 
-
-
 ### Changed (Sprint 006-extension expansion — 207 → 509 queries, 2026-05-02)
 
 The Sprint 008 sweep revealed sub-pp deltas were below the n=207 noise
