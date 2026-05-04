@@ -7,11 +7,15 @@ namespace NutanixMcp.Server;
 public static class HttpHost
 {
     public static Task RunAsync(NutanixMcpSettings settings, int port, CancellationToken ct)
+        => RunAsync(settings, "127.0.0.1", port, ct);
+
+    public static Task RunAsync(NutanixMcpSettings settings, string bindAddress, int port, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(settings);
+        ArgumentException.ThrowIfNullOrWhiteSpace(bindAddress);
 
         var builder = WebApplication.CreateBuilder();
-        builder.WebHost.UseUrls($"http://127.0.0.1:{port}");
+        builder.WebHost.UseUrls($"http://{bindAddress}:{port}");
 
         builder.Services.AddNutanixMcpServices(settings);
 

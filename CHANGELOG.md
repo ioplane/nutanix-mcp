@@ -22,7 +22,7 @@ modeled on the gobfd pattern, with cosign keyless signatures, syft
 CycloneDX SBOMs per artefact, OpenSSF Scorecard, and CodeQL/Semgrep
 on a weekly cron.
 
-### Added (Sprint 011 — Podman Quadlet + bootstrap verb, 2026-05-04)
+### Added (Sprint 011 — Podman Quadlet + bootstrap verb + container image, 2026-05-04)
 
 - `deploy/quadlet/nutanix-mcp.network`,
   `nutanix-mcp-postgres.volume`,
@@ -34,6 +34,17 @@ on a weekly cron.
   `Z` SELinux relabel on bind mounts, `%h` HOME expansion).
 - `deploy/quadlet/README.md` — install guide for rootless and
   rootful Podman, plus `podman-auto-update.timer` wiring.
+- `docker/Containerfile.app` — multi-stage image (Ubuntu Noble SDK
+  build → `runtime-deps:10.0-noble-chiseled-extra` runtime). Builds
+  self-contained single-file binary per `$TARGETARCH` (linux-x64,
+  linux-arm64); chiseled runtime is shell-less, ICU/tzdata-enabled,
+  ships a non-root `app` user. ENTRYPOINT runs `serve --transport
+  http --bind 0.0.0.0 --port 7456`.
+- `serve --bind` — new CLI option (default `127.0.0.1`). Containers
+  pass `0.0.0.0` so Podman's `PublishPort=127.0.0.1:7456:7456` can
+  forward host loopback traffic into the container. Host installs
+  keep loopback-only by default and rely on a reverse proxy for
+  external exposure.
 - `nutanix-mcp bootstrap` — new CLI verb (`BootstrapCommand.cs`)
   that detects the container runtime (podman → docker fallback),
   pulls `tensorchord/vchord-suite:pg18-latest`, runs the container

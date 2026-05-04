@@ -20,16 +20,24 @@ public static class ServeCommand
             DefaultValueFactory = _ => 7456,
         };
 
+        var bind = new Option<string>("--bind")
+        {
+            Description = "HTTP bind address. Default 127.0.0.1; pass 0.0.0.0 inside containers.",
+            DefaultValueFactory = _ => "127.0.0.1",
+        };
+
         var cmd = new Command("serve", "Run the nutanix-mcp MCP server")
         {
             transport,
             port,
+            bind,
         };
 
         cmd.SetAction(async (pr, ct) =>
         {
             string t = pr.GetValue(transport) ?? "stdio";
             int p = pr.GetValue(port);
+            string b = pr.GetValue(bind) ?? "127.0.0.1";
             var settings = CliConfiguration.Load();
 
             try
@@ -40,7 +48,7 @@ public static class ServeCommand
                 }
                 else if (string.Equals(t, "http", StringComparison.OrdinalIgnoreCase))
                 {
-                    await HttpHost.RunAsync(settings, p, ct).ConfigureAwait(false);
+                    await HttpHost.RunAsync(settings, b, p, ct).ConfigureAwait(false);
                 }
                 else
                 {
