@@ -8,6 +8,43 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-05
+
+Sprint 009 + 010 + 003.5 land together: hardened systemd/Windows
+deploy templates, the cross-encoder fine-tune (+1.6 pp top-1, +5.4 pp
+top-5), the unblocked INT8 quantization (-26 % p50 latency, -40 %
+disk for the same near-equivalent quality), the Podman Quadlet stack
+for rootless auto-restart, and a `nutanix-mcp bootstrap` verb that
+turns first-time setup into a single command. Release pipeline is
+also rebuilt: every tag now passes through a 4-stage gate
+(`ci-mirror → validate-tag → publish + container → finalize`)
+modeled on the gobfd pattern, with cosign keyless signatures, syft
+CycloneDX SBOMs per artefact, OpenSSF Scorecard, and CodeQL/Semgrep
+on a weekly cron.
+
+### Added (Sprint 011 — Podman Quadlet + bootstrap verb, 2026-05-04)
+
+- `deploy/quadlet/nutanix-mcp.network`,
+  `nutanix-mcp-postgres.volume`,
+  `nutanix-mcp-postgres.container`,
+  `nutanix-mcp.container` — full rootless-friendly Quadlet bundle
+  (HealthCmd, AutoUpdate=registry, ReadOnly=true,
+  DropCapability=ALL + AddCapability=NET_BIND_SERVICE,
+  PublishPort=127.0.0.1:5435:5432, PodmanArgs=--shm-size=2g,
+  `Z` SELinux relabel on bind mounts, `%h` HOME expansion).
+- `deploy/quadlet/README.md` — install guide for rootless and
+  rootful Podman, plus `podman-auto-update.timer` wiring.
+- `nutanix-mcp bootstrap` — new CLI verb (`BootstrapCommand.cs`)
+  that detects the container runtime (podman → docker fallback),
+  pulls `tensorchord/vchord-suite:pg18-latest`, runs the container
+  with `--shm-size=2g`, waits for `pg_isready`, downloads the 1.3 GB
+  release-attached `pg_dump` (HTTPS-only via
+  `Uri.UriSchemeHttps`/`StringComparison.Ordinal`), restores it via
+  `pg_restore -j 4` (HNSW retried serially on shared-mem ENOSPC),
+  and on Linux installs the Quadlet units to
+  `~/.config/containers/systemd/` then runs
+  `systemctl --user daemon-reload && enable --now`.
+
 ### Added (Sprint 009 — deploy templates, 2026-05-02)
 
 - `deploy/systemd/nutanix-mcp.service` — hardened systemd unit
@@ -721,5 +758,6 @@ Initial scaffold sprint. Solution skeleton, package pins, Postgres docker stack.
 - Compose project name explicitly set to `nutanix-mcp` to avoid clobbering
   arista-mcp's `docker/` directory namespace under Podman compose.
 
-[Unreleased]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.1.0...v0.3.0
 [0.1.0]: https://github.com/dantte-lp/nutanix-mcp/releases/tag/v0.1.0

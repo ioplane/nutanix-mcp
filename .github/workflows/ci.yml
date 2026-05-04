@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  # Reusable from release.yml — every tag push runs the full quality
+  # gate before any artefact is built.
+  workflow_call:
 
 permissions:
   contents: read

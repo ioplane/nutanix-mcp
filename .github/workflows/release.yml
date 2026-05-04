@@ -1,46 +1,70 @@
 name: release
 
+# 4-stage release gate, adapted from gobfd:
+#
+#   1. ci-mirror   — reuses ci.yml in workflow_call mode (build + format
+#                    + unit + integration + docs-lint + semgrep + pvs).
+#                    Fails fast.
+#   2. publish     — matrix x6 RIDs. dotnet publish single-file +
+#                    self-contained. Per-artefact SBOM (CycloneDX JSON
+#                    via syft) + SHA-256 checksum.
+#   3. container   — buildx multi-arch (linux/amd64,arm64). Image SBOM
+#                    via syft. Keyless cosign signature. Push to
+#                    ghcr.io/dantte-lp/nutanix-mcp:<tag> + :latest.
+#   4. finalize    — extracts the [<tag>] block from CHANGELOG.md as
+#                    release notes; updates the GitHub Release.
+#
+# Tag format gate: only `v\d+\.\d+\.\d+(-[A-Za-z0-9.-]+)?` triggers a
+# real release. Anything else fails the validate-tag step before any
+# artefact is built.
+
 on:
   push:
     tags: ["v*.*.*"]
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to release (e.g. v0.1.0)"
+        description: "Tag to release (e.g. v0.3.0)"
         required: true
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  publish:
-    name: publish ${{ matrix.rid }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { os: ubuntu-latest,   rid: linux-x64,   archive: tar.gz }
-          - { os: ubuntu-latest,   rid: linux-arm64, archive: tar.gz }
-          - { os: windows-latest,  rid: win-x64,     archive: zip }
-          - { os: windows-latest,  rid: win-arm64,   archive: zip }
-          - { os: macos-latest,    rid: osx-x64,     archive: tar.gz }
-          - { os: macos-latest,    rid: osx-arm64,   archive: tar.gz }
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          global-json-file: global.json
+  # ──────────────────────────────────────────────────────────────────
+  # GATE 1 — full CI must pass before we build any release artefact.
+  # ──────────────────────────────────────────────────────────────────
+  ci-mirror:
+    name: ci gate
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      security-events: write
 
-      # Resolve the release tag, validate it against a strict semver-ish regex,
-      # and publish the result as a step output. User-controlled input
-      # (`inputs.tag`) is read only via an env-var so it never lands in the
-      # rendered shell text — script-injection-safe per Semgrep p/github.
+  # ──────────────────────────────────────────────────────────────────
+  # Validate the tag format before we burn build minutes.
+  # ──────────────────────────────────────────────────────────────────
+  validate-tag:
+    name: validate tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.tag.outputs.name }}
+      version: ${{ steps.tag.outputs.version }}
+    steps:
       - name: Resolve and validate tag
         id: tag
         env:
@@ -55,11 +79,41 @@ jobs:
               printf 'invalid release tag: %q\n' "$candidate" >&2
               exit 1
           fi
+          version="${candidate#v}"
           printf 'name=%s\n' "$candidate" >> "$GITHUB_OUTPUT"
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+
+  # ──────────────────────────────────────────────────────────────────
+  # GATE 2 — single-file binaries for 6 RIDs. SBOM + checksums per
+  # archive. Uploads to the GitHub Release.
+  # ──────────────────────────────────────────────────────────────────
+  publish:
+    name: publish ${{ matrix.rid }}
+    needs: [ci-mirror, validate-tag]
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest,  rid: linux-x64,   archive: tar.gz }
+          - { os: ubuntu-latest,  rid: linux-arm64, archive: tar.gz }
+          - { os: windows-latest, rid: win-x64,     archive: zip }
+          - { os: windows-latest, rid: win-arm64,   archive: zip }
+          - { os: macos-latest,   rid: osx-x64,     archive: tar.gz }
+          - { os: macos-latest,   rid: osx-arm64,   archive: tar.gz }
+    runs-on: ${{ matrix.os }}
+    env:
+      TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
+      RID: ${{ matrix.rid }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
 
       - name: Publish single-file
-        env:
-          RID: ${{ matrix.rid }}
         shell: bash
         run: |
           set -euo pipefail
@@ -70,41 +124,47 @@ jobs:
             -p:PublishSingleFile=true \
             -p:IncludeNativeLibrariesForSelfExtract=true \
             -p:PublishTrimmed=false \
+            -p:Version="${TAG_NAME#v}" \
             --output "publish/$RID"
 
       - name: Stage release artefacts
-        env:
-          TAG_NAME: ${{ steps.tag.outputs.name }}
-          RID: ${{ matrix.rid }}
         shell: bash
         run: |
           set -euo pipefail
           stage="stage/nutanix-mcp-$TAG_NAME-$RID"
           mkdir -p "$stage"
           cp -r "publish/$RID/." "$stage/"
-          cp README.md LICENSE CHANGELOG.md "$stage/" 2>/dev/null || true
-          mkdir -p "$stage/docs"
+          cp README.md README.ru.md LICENSE CHANGELOG.md "$stage/" 2>/dev/null || true
+          mkdir -p "$stage/docs" "$stage/deploy" "$stage/scripts"
           cp -r docs/. "$stage/docs/" 2>/dev/null || true
+          cp -r deploy/. "$stage/deploy/" 2>/dev/null || true
+          # Only ship cross-platform helper scripts in the bundle.
+          cp scripts/fetch-models.ps1 "$stage/scripts/" 2>/dev/null || true
+
+      # ── SBOM (CycloneDX JSON) for the staged artefact ──
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0
+        with:
+          syft-version: v1.43.0
+
+      - name: Generate SBOM
+        shell: bash
+        run: |
+          set -euo pipefail
+          syft "stage/nutanix-mcp-$TAG_NAME-$RID" \
+            --output "cyclonedx-json=nutanix-mcp-$TAG_NAME-$RID.sbom.json"
 
       - name: Archive (tar.gz)
         if: matrix.archive == 'tar.gz'
-        env:
-          TAG_NAME: ${{ steps.tag.outputs.name }}
-          RID: ${{ matrix.rid }}
         shell: bash
         run: |
           set -euo pipefail
           archive="nutanix-mcp-$TAG_NAME-$RID.tar.gz"
-          cd stage
-          tar -czf "../$archive" "nutanix-mcp-$TAG_NAME-$RID"
-          cd ..
+          (cd stage && tar -czf "../$archive" "nutanix-mcp-$TAG_NAME-$RID")
           sha256sum "$archive" > "$archive.sha256"
 
       - name: Archive (zip)
         if: matrix.archive == 'zip'
-        env:
-          TAG_NAME: ${{ steps.tag.outputs.name }}
-          RID: ${{ matrix.rid }}
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -118,12 +178,157 @@ jobs:
       - name: Upload to release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.tag.outputs.name }}
-          name: ${{ steps.tag.outputs.name }}
+          tag_name: ${{ env.TAG_NAME }}
+          name: ${{ env.TAG_NAME }}
           draft: false
-          prerelease: ${{ contains(steps.tag.outputs.name, '-') }}
+          prerelease: ${{ contains(env.TAG_NAME, '-') }}
           files: |
             nutanix-mcp-*.tar.gz
             nutanix-mcp-*.tar.gz.sha256
             nutanix-mcp-*.zip
             nutanix-mcp-*.zip.sha256
+            nutanix-mcp-*.sbom.json
+
+  # ──────────────────────────────────────────────────────────────────
+  # GATE 3 — multi-arch container image, signed with cosign keyless,
+  # pushed to GHCR. Image SBOM attached.
+  # ──────────────────────────────────────────────────────────────────
+  container:
+    name: container
+    needs: [ci-mirror, validate-tag]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    env:
+      TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
+      VERSION: ${{ needs.validate-tag.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Skip if Containerfile missing
+        id: precheck
+        shell: bash
+        run: |
+          if [ ! -f docker/Containerfile.app ]; then
+            echo "Containerfile.app not present yet — skipping container build."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: docker/setup-qemu-action@v3
+        if: steps.precheck.outputs.skip != 'true'
+
+      - uses: docker/setup-buildx-action@v3
+        if: steps.precheck.outputs.skip != 'true'
+
+      - name: Log in to GHCR
+        if: steps.precheck.outputs.skip != 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Container metadata
+        if: steps.precheck.outputs.skip != 'true'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ env.VERSION }}
+            type=raw,value=${{ env.TAG_NAME }}
+            type=raw,value=latest,enable=${{ !contains(env.TAG_NAME, '-') }}
+
+      - name: Build and push
+        if: steps.precheck.outputs.skip != 'true'
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Containerfile.app
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: true
+          sbom: true
+          build-args: |
+            VERSION=${{ env.VERSION }}
+            COMMIT=${{ github.sha }}
+
+      - name: Install cosign
+        if: steps.precheck.outputs.skip != 'true'
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign image (keyless)
+        if: steps.precheck.outputs.skip != 'true'
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+        run: cosign sign --yes "$IMAGE"
+
+      - name: Generate image SBOM
+        if: steps.precheck.outputs.skip != 'true'
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+        run: |
+          syft "$IMAGE" --output "cyclonedx-json=image-sbom.json"
+
+      - name: Upload image SBOM to release
+        if: steps.precheck.outputs.skip != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          files: image-sbom.json
+
+  # ──────────────────────────────────────────────────────────────────
+  # Extract the [<tag>] block from CHANGELOG.md as release notes.
+  # Runs last so it overwrites whatever softprops/action-gh-release
+  # auto-generated.
+  # ──────────────────────────────────────────────────────────────────
+  finalize:
+    name: finalize release notes
+    needs: [publish, container, validate-tag]
+    if: always() && needs.publish.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
+      VERSION: ${{ needs.validate-tag.outputs.version }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract release notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          # awk: collect lines between `## [<version>]` and the next
+          # `## [` heading (or the link-reference block at file end).
+          awk -v ver="$VERSION" '
+            /^## \[/ {
+              if (found) exit
+              if ($0 ~ "\\[" ver "\\]") found=1
+              next
+            }
+            /^\[.+\]:/ && found { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+
+          if [ ! -s release-notes.md ]; then
+            {
+              echo "## What's Changed"
+              echo
+              echo "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details."
+            } > release-notes.md
+          fi
+          echo "── release notes ──"
+          cat release-notes.md
+          echo "──────────────────"
+
+      - name: Update release
+        run: gh release edit "$TAG_NAME" --notes-file release-notes.md

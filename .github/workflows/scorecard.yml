@@ -1,0 +1,61 @@
+name: scorecard
+
+# OpenSSF Scorecard — supply-chain-security posture audit. Runs weekly
+# (Tuesday 07:30 UTC) and on every push to main; results surface in the
+# repo's Security tab and on https://securityscorecards.dev/ for the
+# public badge.
+#
+# Why a separate workflow: Scorecard wants its own permissions block
+# (id-token: write for the public badge, security-events: write for SARIF)
+# and a clean trigger surface so weekly runs don't fight CI concurrency.
+
+on:
+  branch_protection_rule:
+  schedule:
+    - cron: "30 7 * * 2"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: read-all
+
+concurrency:
+  group: scorecard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      id-token: write
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Run analysis
+        uses: ossf/scorecard-action@v2
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          # publish_results=true requires a public repo; the action
+          # gracefully no-ops on private repos, so it's safe to leave on.
+          publish_results: true
+
+      - name: Upload artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scorecard-results
+          path: results.sarif
+          retention-days: 14
+
+      - name: Upload SARIF to code-scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+          category: scorecard
