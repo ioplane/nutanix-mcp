@@ -7,11 +7,7 @@
   "plugins": [
     {
       "name": "nutanix-mcp",
-      "source": {
-        "type": "github",
-        "repo": "dantte-lp/nutanix-mcp",
-        "path": "plugin"
-      },
+      "source": "./plugin",
       "description": "Hybrid retrieval over the Nutanix documentation corpus via the nutanix-mcp MCP server.",
       "version": "0.1.0"
     }
