@@ -198,7 +198,7 @@ jobs:
     needs: [ci-mirror, validate-tag]
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write   # required so softprops/action-gh-release can attach the image SBOM
       packages: write
       id-token: write
     env:
