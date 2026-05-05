@@ -264,6 +264,12 @@ jobs:
         if: steps.precheck.outputs.skip != 'true'
         uses: sigstore/cosign-installer@v3
 
+      - name: Install Syft
+        if: steps.precheck.outputs.skip != 'true'
+        uses: anchore/sbom-action/download-syft@v0
+        with:
+          syft-version: v1.43.0
+
       - name: Sign image (keyless)
         if: steps.precheck.outputs.skip != 'true'
         env:
