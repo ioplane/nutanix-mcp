@@ -9,7 +9,11 @@ ContainerName=nutanix-mcp-postgres
 Image=docker.io/tensorchord/vchord-suite:pg18-latest
 
 # Mount data on a named volume, declared in the sibling .volume file.
-Volume=nutanix-mcp-postgres.volume:/var/lib/postgresql/data:Z
+# pg18 images (tensorchord/vchord-suite, docker-library/postgres) place data
+# under /var/lib/postgresql/<major>/data and refuse to start if a mount lands
+# on the legacy /var/lib/postgresql/data path. Match docker/compose.yaml.
+Volume=nutanix-mcp-postgres.volume:/var/lib/postgresql/18/data:Z
+Environment=PGDATA=/var/lib/postgresql/18/data
 
 # Internal network so the server can reach `nutanix-mcp-postgres:5432`
 # without going through the host. Declared in the sibling .network file.
@@ -25,7 +29,9 @@ PublishPort=127.0.0.1:5435:5432
 Environment=POSTGRES_DB=nutanix
 Environment=POSTGRES_USER=nutanix
 Environment=POSTGRES_PASSWORD=nutanix
-Environment=POSTGRES_INITDB_ARGS=--data-checksums --encoding=UTF-8 --locale=C.UTF-8
+# Quote the value: quadlet-generator splits unquoted whitespace-separated
+# Environment= values into multiple --env flags, breaking the initdb invocation.
+Environment="POSTGRES_INITDB_ARGS=--data-checksums --encoding=UTF-8 --locale=C.UTF-8"
 
 # Mount our init.sql so vchord/vchord_bm25/pg_tokenizer are bootstrapped
 # on first start (the image only fires /docker-entrypoint-initdb.d/*.sql
