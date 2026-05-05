@@ -47,12 +47,12 @@ RUN case "${TARGETARCH}" in \
         *) echo "unsupported TARGETARCH=${TARGETARCH}" >&2; exit 1 ;; \
     esac
 
-RUN --mount=type=cache,target=/root/.nuget/packages \
+RUN --mount=type=cache,target=/root/.nuget/packages,sharing=locked \
     RID="$(cat /tmp/rid)" \
     && dotnet restore src/NutanixMcp.Cli/NutanixMcp.Cli.csproj \
         --runtime "$RID"
 
-RUN --mount=type=cache,target=/root/.nuget/packages \
+RUN --mount=type=cache,target=/root/.nuget/packages,sharing=locked \
     RID="$(cat /tmp/rid)" \
     && dotnet publish src/NutanixMcp.Cli/NutanixMcp.Cli.csproj \
         --configuration Release \
