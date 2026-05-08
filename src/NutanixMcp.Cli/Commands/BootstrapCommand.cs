@@ -40,11 +40,18 @@ public static class BootstrapCommand
 #pragma warning restore S2068
     private const int DefaultHostPort = 5435;
 
-    // Release-attachment URL pattern. Tag is interpolated; the asset
-    // is the dump produced by the release pipeline.
-    private static readonly System.Text.CompositeFormat s_releaseDumpAssetTemplate =
-        System.Text.CompositeFormat.Parse(
-            "https://github.com/dantte-lp/nutanix-mcp/releases/download/{0}/nutanix-corpus-{1}.dump");
+    // Release-attachment naming. Asset name follows the
+    // `nutanix-corpus-<tag>.dump` convention used by the release
+    // pipeline (matches the `v` prefix every other release artefact
+    // carries: nutanix-mcp-<tag>-<rid>.tar.gz, etc.). The actual
+    // download flow goes through the GitHub REST API rather than the
+    // browser-style html URL because private repositories do not
+    // serve `releases/download/...` paths even with a Bearer token —
+    // see https://docs.github.com/en/rest/releases/assets.
+    private const string ReleaseRepoOwner = "dantte-lp";
+    private const string ReleaseRepoName = "nutanix-mcp";
+    private static readonly System.Text.CompositeFormat s_releaseDumpAssetName =
+        System.Text.CompositeFormat.Parse("nutanix-corpus-{0}.dump");
 
     public static Command Build()
     {
@@ -306,16 +313,13 @@ public static class BootstrapCommand
         }
 
         string tag = args.Release;
-        string version = tag.StartsWith('v') ? tag[1..] : tag;
-        string url = string.Format(CultureInfo.InvariantCulture, s_releaseDumpAssetTemplate, tag, version);
-        // The URL is built from a fixed CompositeFormat with our own
-        // tag/version inputs, so it cannot escape https://github.com/.
+        string assetName = string.Format(CultureInfo.InvariantCulture, s_releaseDumpAssetName, tag);
 
         console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
-            $"  corpus   downloading [green]{url}[/]");
+            $"  corpus   resolving asset [green]{assetName}[/] in [green]{ReleaseRepoOwner}/{ReleaseRepoName}@{tag}[/]");
 
-        string tmpHostPath = Path.Combine(Path.GetTempPath(), $"nutanix-corpus-{version}.dump");
-        await DownloadFileAsync(url, tmpHostPath, console, ct).ConfigureAwait(false);
+        string tmpHostPath = Path.Combine(Path.GetTempPath(), $"nutanix-corpus-{tag}.dump");
+        await DownloadReleaseAssetAsync(tag, assetName, tmpHostPath, console, ct).ConfigureAwait(false);
 
         // Copy into the container.
         await RunStreamingAsync(runtime, $"cp \"{tmpHostPath}\" \"{args.ContainerName}:/tmp/nutanix-corpus.dump\"",
@@ -348,6 +352,21 @@ public static class BootstrapCommand
                 $"psql -U {DefaultUser} -d {DefaultDatabase} -c \"{hnswSql}\"",
                 console, ct).ConfigureAwait(false);
 #pragma warning restore S2068
+        }
+
+        // pg_tokenizer's tokenizer/model/text_analyzer registry tables are
+        // extension-owned (deptype='e') and pg_dump skips their contents by
+        // default — only `pg_extension_config_dump()` opt-in (called from
+        // CREATE EXTENSION script, which we don't control) would dump them.
+        // After pg_restore the chunks_tokenizer/chunks_model/english_analyzer
+        // entries are gone, so HybridRetriever.RunSparseAsync throws
+        // "Tokenizer not found: chunks_tokenizer". Replay init.sql + the
+        // bm25 migration's tokenizer setup, then re-tokenize all chunks so
+        // the bm25v column is consistent with the freshly built vocab.
+        int rebuildRc = await RebuildTokenizerStateAsync(runtime, args, console, ct).ConfigureAwait(false);
+        if (rebuildRc != 0)
+        {
+            return rebuildRc;
         }
 
         // Cleanup.
@@ -425,14 +444,23 @@ public static class BootstrapCommand
         return null;
     }
 
-    private static async Task DownloadFileAsync(string url, string destination, IAnsiConsole console, CancellationToken ct)
+    // Resolve the release-asset id by name, then download via the GitHub
+    // REST API endpoint with `Accept: application/octet-stream`. Required
+    // for private repos: `https://github.com/.../releases/download/...`
+    // returns 404 even with a Bearer token; only the API path
+    // (`/releases/assets/{id}`) issues the 302 to objects.githubusercontent.com
+    // (or release-assets.githubusercontent.com).
+    //
+    // SocketsHttpHandler strips the Authorization header on cross-origin
+    // redirects by default (per Microsoft docs), so the token does not leak
+    // across the api.github.com → release-assets.githubusercontent.com hop.
+    private static async Task DownloadReleaseAssetAsync(
+        string tag, string assetName, string destination,
+        IAnsiConsole console, CancellationToken ct)
     {
-        // Validate scheme defensively — only allow https.
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)
-            || !string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.Ordinal))
-        {
-            throw new InvalidOperationException($"refusing to download from non-https URL: {url}");
-        }
+        string? token = Environment.GetEnvironmentVariable("GH_TOKEN")
+                        ?? Environment.GetEnvironmentVariable("GITHUB_TOKEN");
+
         using var http = new HttpClient
         {
             Timeout = TimeSpan.FromMinutes(30),
@@ -440,53 +468,191 @@ public static class BootstrapCommand
         };
         http.DefaultRequestHeaders.UserAgent.ParseAdd(
             $"nutanix-mcp/{Assembly.GetExecutingAssembly().GetName().Version}");
-        // Private-repo release attachments require auth. SocketsHttpHandler
-        // strips the Authorization header on cross-origin redirects by
-        // default (github.com → objects.githubusercontent.com), so it's
-        // safe to set a Bearer token here without leaking it to S3.
-        // Honour either GH_TOKEN (gh CLI convention) or GITHUB_TOKEN
-        // (Actions / native GH convention).
-        string? token = Environment.GetEnvironmentVariable("GH_TOKEN")
-                        ?? Environment.GetEnvironmentVariable("GITHUB_TOKEN");
+        http.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
         if (!string.IsNullOrEmpty(token))
         {
             http.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
         }
-        using var resp = await http.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
-        if (resp.StatusCode == System.Net.HttpStatusCode.NotFound && string.IsNullOrEmpty(token))
+
+        // Step 1: GET /repos/{owner}/{repo}/releases/tags/{tag} → find asset id.
+        string releaseUrl = $"https://api.github.com/repos/{ReleaseRepoOwner}/{ReleaseRepoName}/releases/tags/{Uri.EscapeDataString(tag)}";
+        using (var releaseReq = new HttpRequestMessage(HttpMethod.Get, releaseUrl))
         {
-            throw new InvalidOperationException(
-                "release asset 404 — if the source repo is private, set GH_TOKEN or GITHUB_TOKEN to a token with `repo` read scope");
-        }
-        resp.EnsureSuccessStatusCode();
-        long? total = resp.Content.Headers.ContentLength;
-        await using var input = await resp.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
-        await using var output = File.Create(destination);
-        var buf = new byte[256 * 1024];
-        long copied = 0;
-        long lastReport = 0;
-        int n;
-        while ((n = await input.ReadAsync(buf, ct).ConfigureAwait(false)) > 0)
-        {
-            await output.WriteAsync(buf.AsMemory(0, n), ct).ConfigureAwait(false);
-            copied += n;
-            if (copied - lastReport > 50 * 1024 * 1024 || (total.HasValue && copied == total))
+            releaseReq.Headers.Accept.ParseAdd("application/vnd.github+json");
+            using var releaseResp = await http.SendAsync(releaseReq, HttpCompletionOption.ResponseContentRead, ct).ConfigureAwait(false);
+            if (releaseResp.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                lastReport = copied;
-                if (total.HasValue)
+                throw new InvalidOperationException(
+                    $"release {tag} not found at {ReleaseRepoOwner}/{ReleaseRepoName}"
+                    + (string.IsNullOrEmpty(token)
+                        ? " — set GH_TOKEN or GITHUB_TOKEN if the source repo is private"
+                        : " — verify the tag exists and the token has `repo` read scope"));
+            }
+            releaseResp.EnsureSuccessStatusCode();
+
+            await using var stream = await releaseResp.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
+            using var doc = await System.Text.Json.JsonDocument.ParseAsync(stream, default, ct).ConfigureAwait(false);
+
+            long? assetId = null;
+            foreach (var asset in doc.RootElement.GetProperty("assets").EnumerateArray())
+            {
+                if (string.Equals(asset.GetProperty("name").GetString(),
+                                  assetName, StringComparison.Ordinal))
                 {
-                    double pct = copied * 100.0 / total.Value;
-                    console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
-                        $"           {copied / 1024 / 1024} / {total / 1024 / 1024} MB ({pct:F1}%)");
+                    assetId = asset.GetProperty("id").GetInt64();
+                    break;
                 }
-                else
+            }
+            if (assetId is null)
+            {
+                throw new InvalidOperationException(
+                    $"release {tag} has no asset named {assetName}");
+            }
+
+            // Step 2: GET /repos/{owner}/{repo}/releases/assets/{id} with
+            // Accept: application/octet-stream. GitHub returns 302 → S3
+            // (release-assets.githubusercontent.com); HttpClient follows
+            // automatically, dropping our Authorization header before the
+            // S3 hop (GETs to S3 with the GitHub bearer would 401).
+            string assetUrl = $"https://api.github.com/repos/{ReleaseRepoOwner}/{ReleaseRepoName}/releases/assets/{assetId}";
+            using var assetReq = new HttpRequestMessage(HttpMethod.Get, assetUrl);
+            assetReq.Headers.Accept.ParseAdd("application/octet-stream");
+            using var assetResp = await http.SendAsync(assetReq, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+            assetResp.EnsureSuccessStatusCode();
+
+            console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
+                $"  corpus   downloading [green]{assetName}[/] (asset id {assetId})");
+
+            long? total = assetResp.Content.Headers.ContentLength;
+            await using var input = await assetResp.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
+            await using var output = File.Create(destination);
+            var buf = new byte[256 * 1024];
+            long copied = 0;
+            long lastReport = 0;
+            int n;
+            while ((n = await input.ReadAsync(buf, ct).ConfigureAwait(false)) > 0)
+            {
+                await output.WriteAsync(buf.AsMemory(0, n), ct).ConfigureAwait(false);
+                copied += n;
+                if (copied - lastReport > 50 * 1024 * 1024 || (total.HasValue && copied == total))
                 {
-                    console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
-                        $"           {copied / 1024 / 1024} MB");
+                    lastReport = copied;
+                    if (total.HasValue)
+                    {
+                        double pct = copied * 100.0 / total.Value;
+                        console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
+                            $"           {copied / 1024 / 1024} / {total / 1024 / 1024} MB ({pct:F1}%)");
+                    }
+                    else
+                    {
+                        console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
+                            $"           {copied / 1024 / 1024} MB");
+                    }
                 }
             }
         }
+    }
+
+    // Restore the pg_tokenizer registry state that pg_dump skipped. After
+    // pg_restore --clean we have:
+    //   ✅ tokenizer_catalog.model_chunks_model (vocab table + rows)
+    //   ✅ chunks.bm25v column (with bm25vector values)
+    //   ✅ idx_chunks_bm25 BM25 index
+    //   ❌ tokenizer_catalog.{tokenizer,model,text_analyzer} registry rows
+    //   ❌ BEFORE INSERT/UPDATE triggers on chunks
+    // The simplest reliable recovery is to drop the orphan model_chunks_model
+    // (so create_custom_model_tokenizer_and_trigger's CREATE TABLE step does
+    // not collide), re-register, then force a re-tokenize of all rows so
+    // the bm25v values match the freshly built vocab. This is slow on a
+    // 489k-row corpus (~5-15 min) but produces a queryable system.
+    private static async Task<int> RebuildTokenizerStateAsync(
+        string runtime, BootstrapArgs args, IAnsiConsole console, CancellationToken ct)
+    {
+        console.MarkupLine("  tokenizer recreating chunks_tokenizer + model + trigger (pg_dump skips extension-owned registry tables)");
+
+        // Stage init.sql + post-restore SQL inside the container.
+        string? initSql = LocateInitSql();
+        if (initSql is null)
+        {
+            console.MarkupLine("[red]error[/] docker/init.sql not found alongside the binary; cannot rebuild tokenizer state");
+            return 6;
+        }
+
+        await RunStreamingAsync(runtime,
+            $"cp \"{initSql}\" \"{args.ContainerName}:/tmp/init.sql\"",
+            console, ct).ConfigureAwait(false);
+
+        // Step 1: replay init.sql to get english_analyzer back. The
+        // CREATE EXTENSION statements are no-ops on second run.
+#pragma warning disable S2068
+        int initRc = await RunStreamingAsync(runtime,
+            $"exec -e PGPASSWORD={DefaultPgPassword} {args.ContainerName} " +
+            $"psql -U {DefaultUser} -d {DefaultDatabase} -v ON_ERROR_STOP=1 -f /tmp/init.sql",
+            console, ct).ConfigureAwait(false);
+#pragma warning restore S2068
+        if (initRc != 0)
+        {
+            // Hitting "text analyzer already exists" is fine — the registry
+            // can survive between runs. Other errors fall through.
+            console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
+                $"[yellow]warn[/] init.sql replay returned {initRc}; assuming idempotent and continuing");
+        }
+
+        // Step 2: drop the orphan model_chunks_model + triggers that the
+        // restored dump left behind, then re-register via the public
+        // function. Step 3: re-tokenize.
+        string rebuildSql =
+            "DROP TRIGGER IF EXISTS model_chunks_model_trigger ON chunks; " +
+            "DROP TRIGGER IF EXISTS model_chunks_model_trigger_insert ON chunks; " +
+            "DROP TABLE IF EXISTS tokenizer_catalog.model_chunks_model; " +
+            "DELETE FROM tokenizer_catalog.tokenizer WHERE name = 'chunks_tokenizer'; " +
+            "DELETE FROM tokenizer_catalog.model WHERE name = 'chunks_model'; " +
+            "SELECT tokenizer_catalog.create_custom_model_tokenizer_and_trigger(" +
+                "tokenizer_name => 'chunks_tokenizer', " +
+                "model_name => 'chunks_model', " +
+                "text_analyzer_name => 'english_analyzer', " +
+                "table_name => 'chunks', " +
+                "source_column => 'content', " +
+                "target_column => 'bm25v'); " +
+            "SET maintenance_work_mem = '4GB'; " +
+            "SET max_parallel_maintenance_workers = 0;";
+#pragma warning disable S2068
+        int rebuildRc = await RunStreamingAsync(runtime,
+            $"exec -e PGPASSWORD={DefaultPgPassword} {args.ContainerName} " +
+            $"psql -U {DefaultUser} -d {DefaultDatabase} -v ON_ERROR_STOP=1 -c \"{rebuildSql}\"",
+            console, ct).ConfigureAwait(false);
+#pragma warning restore S2068
+        if (rebuildRc != 0)
+        {
+            console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
+                $"[red]error[/] tokenizer rebuild psql exit {rebuildRc}");
+            return rebuildRc;
+        }
+
+        // Step 3: force the trigger to recompute bm25v for every row. On a
+        // 489k-row corpus this is the slow step (5-15 min on Win+podman),
+        // run as a single statement so the user sees one psql line and
+        // the trigger batches efficiently.
+        console.MarkupLine("  tokenizer re-tokenizing all chunks (bm25v rebuild — slow path, ~5-15 min on a 489k-row corpus)");
+        string retokenizeSql = "UPDATE chunks SET content = content; REINDEX INDEX idx_chunks_bm25;";
+#pragma warning disable S2068
+        int retokenizeRc = await RunStreamingAsync(runtime,
+            $"exec -e PGPASSWORD={DefaultPgPassword} {args.ContainerName} " +
+            $"psql -U {DefaultUser} -d {DefaultDatabase} -v ON_ERROR_STOP=1 -c \"{retokenizeSql}\"",
+            console, ct).ConfigureAwait(false);
+#pragma warning restore S2068
+        if (retokenizeRc != 0)
+        {
+            console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
+                $"[red]error[/] re-tokenize psql exit {retokenizeRc}");
+            return retokenizeRc;
+        }
+
+        await RunSilentAsync(runtime,
+            $"exec {args.ContainerName} rm -f /tmp/init.sql", ct).ConfigureAwait(false);
+        console.MarkupLine("  tokenizer [green]rebuilt[/]");
+        return 0;
     }
 
     private static async Task<int> RunSilentAsync(string file, string args, CancellationToken ct)

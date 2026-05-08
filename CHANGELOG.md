@@ -8,6 +8,58 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-05-08
+
+Second hot-fix on the bootstrap flow: the v0.3.1 binary still fails
+end-to-end on a fresh install for three more reasons surfaced by
+the post-release smoke test. Private-repo release attachments
+return 404 even with a Bearer token on the html download URL —
+GitHub only serves them through the REST API endpoint. The asset
+filename pattern in the binary (`nutanix-corpus-{version}.dump`)
+diverges from what the release pipeline actually uploads
+(`nutanix-corpus-v{version}.dump`). And the dump itself is missing
+the `tokenizer_catalog.{tokenizer,model,text_analyzer}` registry
+rows because pg_dump skips extension-owned tables by default —
+without them the post-restore corpus throws "Tokenizer not found:
+chunks_tokenizer" on every BM25 query.
+
+### Fixed (Sprint 011.2 — bootstrap hot-fix #2, 2026-05-08)
+
+- `BootstrapCommand.DownloadReleaseAssetAsync` (replaces
+  `DownloadFileAsync`) — switch from the html `releases/download/{tag}/{asset}`
+  URL to the `api.github.com/repos/{owner}/{repo}/releases/tags/{tag}`
+  → `releases/assets/{id}` flow with `Accept: application/octet-stream`.
+  Private repos refuse the html URL with 404 even when a valid
+  Bearer token is presented; only the API endpoint serves the 302
+  redirect to release-assets.githubusercontent.com. SocketsHttpHandler
+  drops the Authorization header on the cross-origin redirect (per
+  Microsoft docs) so the GitHub token doesn't leak to S3.
+- `BootstrapCommand.s_releaseDumpAssetName` — align the asset
+  filename pattern with the release pipeline. The dump now uploads
+  and resolves as `nutanix-corpus-v{version}.dump` (matching
+  `nutanix-mcp-v{version}-{rid}.tar.gz` and the rest of the
+  release artefacts); previously bootstrap looked for
+  `nutanix-corpus-{version}.dump` (no `v`) and 404'd even after
+  the URL fix.
+- `BootstrapCommand.RebuildTokenizerStateAsync` (new) — runs after
+  `pg_restore` and rebuilds the pg_tokenizer registry that pg_dump
+  skipped. Replays `docker/init.sql` (re-creates `english_analyzer`),
+  drops the orphan `tokenizer_catalog.model_chunks_model` plus the
+  `model_chunks_model_trigger{,_insert}` triggers, deletes any stale
+  registry rows, then calls
+  `tokenizer_catalog.create_custom_model_tokenizer_and_trigger(...)`
+  to re-register `chunks_tokenizer` + `chunks_model`. Forces a full
+  re-tokenize via `UPDATE chunks SET content = content` followed by
+  `REINDEX INDEX idx_chunks_bm25` so `chunks.bm25v` matches the
+  freshly-built vocab. Slow on a 489k-row corpus (~5–15 min on
+  Win + Podman 5.6) but produces a queryable system end-to-end.
+  Without this step `HybridRetriever.RunSparseAsync` throws
+  `XX000: Tokenizer not found: chunks_tokenizer` on every search.
+  Verified against the Nutanix corpus: a query for "AHV virtual
+  switch VLAN configuration" returns the expected best-practice
+  guide and AHV admin guide chunks (BP-2071-AHV-Networking,
+  AHV-Admin-Guide-v10_3, AHV-Admin-Guide-v6_10) at scores ≥ 4.9.
+
 ## [0.3.1] - 2026-05-08
 
 Hot-fix on top of v0.3.0: the bootstrap verb fails to bring up
@@ -818,7 +870,8 @@ Initial scaffold sprint. Solution skeleton, package pins, Postgres docker stack.
 - Compose project name explicitly set to `nutanix-mcp` to avoid clobbering
   arista-mcp's `docker/` directory namespace under Podman compose.
 
-[Unreleased]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.1.0...v0.3.0
 [0.1.0]: https://github.com/dantte-lp/nutanix-mcp/releases/tag/v0.1.0
