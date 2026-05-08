@@ -242,16 +242,29 @@ public static class BootstrapCommand
             : $" -v \"{initSql}:/docker-entrypoint-initdb.d/01-init.sql:ro\"";
 
 #pragma warning disable S2068 // Const credential — see DefaultPgPassword docstring.
+        // pg18 images use major-version-specific data dirs and refuse to
+        // start when the volume lands on the legacy /var/lib/postgresql/data.
+        // Mount on /var/lib/postgresql/18/data and pin PGDATA to the same
+        // path — same approach as docker/compose.yaml and the Quadlet
+        // template (deploy/quadlet/nutanix-mcp-postgres.container). Keeping
+        // all three in sync is a hard requirement: the bench/ingest paths
+        // assume the dump restored on the bootstrap PG matches the schema
+        // produced by the compose stack.
+        // --shm-size=2g matches docker/compose.yaml: HNSW index build and
+        // pg_restore -j 4 burn shared-memory; the default 64 MB triggers
+        // ENOSPC on /dev/shm.
         string runArgs = string.Join(' ',
             "run -d",
             $"--name {args.ContainerName}",
             "--restart unless-stopped",
+            "--shm-size=2g",
             $"-p 127.0.0.1:{args.HostPort.ToString(CultureInfo.InvariantCulture)}:5432",
             $"-e POSTGRES_DB={DefaultDatabase}",
             $"-e POSTGRES_USER={DefaultUser}",
             $"-e POSTGRES_PASSWORD={DefaultPgPassword}",
+            "-e PGDATA=/var/lib/postgresql/18/data",
             "-e POSTGRES_INITDB_ARGS=\"--data-checksums --encoding=UTF-8 --locale=C.UTF-8\"",
-            $"-v {args.ContainerName}-data:/var/lib/postgresql/data",
+            $"-v {args.ContainerName}-data:/var/lib/postgresql/18/data",
             initMount,
             args.PgImage);
 #pragma warning restore S2068
@@ -264,8 +277,11 @@ public static class BootstrapCommand
             return code;
         }
 
-        // Wait for pg_isready.
-        for (int attempt = 1; attempt <= 30; attempt++)
+        // Wait for pg_isready. First boot runs initdb + the init.sql path
+        // (CREATE EXTENSION vchord/vchord_bm25/pg_tokenizer + analyzer
+        // build) which together can take ~90s on cold storage; allow up to
+        // 180s before failing.
+        for (int attempt = 1; attempt <= 60; attempt++)
         {
             int rc = await RunSilentAsync(runtime,
                 $"exec {args.ContainerName} pg_isready -U {DefaultUser} -d {DefaultDatabase}",
@@ -275,9 +291,9 @@ public static class BootstrapCommand
                 console.MarkupLine("  pg       [green]ready[/]");
                 return 0;
             }
-            await Task.Delay(2000, ct).ConfigureAwait(false);
+            await Task.Delay(3000, ct).ConfigureAwait(false);
         }
-        console.MarkupLine("[red]error[/] postgres did not become ready in 60 s");
+        console.MarkupLine("[red]error[/] postgres did not become ready in 180 s");
         return 3;
     }
 
@@ -344,6 +360,18 @@ public static class BootstrapCommand
 
     private static async Task<int> InstallQuadletAsync(IAnsiConsole console, CancellationToken ct)
     {
+        // Quadlet's systemd generator (podman-system-generator) ships with
+        // Podman 4.4+. Without it, `.container/.network/.volume` files in
+        // ~/.config/containers/systemd/ are inert — daemon-reload won't
+        // synthesize services and `enable --now` fails with 'unit not
+        // found'. Refuse early with a useful message.
+        int podmanCheck = await RunSilentAsync("podman", "--version", ct).ConfigureAwait(false);
+        if (podmanCheck != 0)
+        {
+            console.MarkupLine("[red]error[/] --quadlet requires Podman 4.4+; not found in PATH (install with `dnf/apt install podman`)");
+            return 5;
+        }
+
         string home = Environment.GetEnvironmentVariable("HOME")
                       ?? throw new InvalidOperationException("HOME unset");
         string quadletDir = Path.Combine(home, ".config", "containers", "systemd");
@@ -412,7 +440,25 @@ public static class BootstrapCommand
         };
         http.DefaultRequestHeaders.UserAgent.ParseAdd(
             $"nutanix-mcp/{Assembly.GetExecutingAssembly().GetName().Version}");
+        // Private-repo release attachments require auth. SocketsHttpHandler
+        // strips the Authorization header on cross-origin redirects by
+        // default (github.com → objects.githubusercontent.com), so it's
+        // safe to set a Bearer token here without leaking it to S3.
+        // Honour either GH_TOKEN (gh CLI convention) or GITHUB_TOKEN
+        // (Actions / native GH convention).
+        string? token = Environment.GetEnvironmentVariable("GH_TOKEN")
+                        ?? Environment.GetEnvironmentVariable("GITHUB_TOKEN");
+        if (!string.IsNullOrEmpty(token))
+        {
+            http.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        }
         using var resp = await http.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+        if (resp.StatusCode == System.Net.HttpStatusCode.NotFound && string.IsNullOrEmpty(token))
+        {
+            throw new InvalidOperationException(
+                "release asset 404 — if the source repo is private, set GH_TOKEN or GITHUB_TOKEN to a token with `repo` read scope");
+        }
         resp.EnsureSuccessStatusCode();
         long? total = resp.Content.Headers.ContentLength;
         await using var input = await resp.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);

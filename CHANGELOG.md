@@ -8,6 +8,57 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-05-08
+
+Hot-fix on top of v0.3.0: the bootstrap verb fails to bring up
+PostgreSQL on a clean host because the volume is mounted at the
+legacy `/var/lib/postgresql/data` path — postgres:18 moved its
+PGDATA to `/var/lib/postgresql/18/docker` and its `VOLUME` to the
+parent dir. Also fixes private-repo dump downloads (no auth header
+on the GitHub release fetch → 404), missing `init.sql` in the
+release tarball (broken `--skip-restore` path), and a silent
+no-op when `--quadlet` is requested without Podman.
+
+### Fixed (Sprint 011.1 — bootstrap hot-fix, 2026-05-08)
+
+- `BootstrapCommand.EnsurePostgresAsync` — mount the named PG
+  volume at `/var/lib/postgresql/18/data` and pin
+  `PGDATA=/var/lib/postgresql/18/data` instead of mounting on the
+  legacy `/var/lib/postgresql/data`. pg18 images (vchord-suite,
+  docker-library/postgres) refuse to start on the legacy path
+  (*"Counter to that, there appears to be PostgreSQL data in:
+  /var/lib/postgresql/data (unused mount/volume)"*) — matches
+  `docker/compose.yaml` and the Quadlet template, keeping all three
+  install surfaces wire-compatible with the same dump.
+- `BootstrapCommand.EnsurePostgresAsync` — add `--shm-size=2g` to
+  the `podman/docker run` line so HNSW index build and
+  `pg_restore -j 4` don't hit `/dev/shm` ENOSPC under default
+  64 MB.
+- `BootstrapCommand.EnsurePostgresAsync` — bump pg_isready
+  readiness loop from 60 s (30×2 s) to 180 s (60×3 s); first boot
+  with `init.sql` running CREATE EXTENSION
+  vchord/vchord_bm25/pg_tokenizer + analyzer build can take ~90 s
+  on cold storage.
+- `BootstrapCommand.DownloadFileAsync` — read `GH_TOKEN` /
+  `GITHUB_TOKEN` env var and set `Authorization: Bearer …` on the
+  release-asset request. Required for private repos (GitHub returns
+  404 to unauthenticated requests). `SocketsHttpHandler` strips the
+  `Authorization` header on auto-redirects, so the token is not
+  leaked across the github.com → objects.githubusercontent.com hop.
+  404 with no token in scope now surfaces an explicit error
+  message.
+- `BootstrapCommand.InstallQuadletAsync` — gate `--quadlet` on
+  `podman --version`. Without Podman 4.4+ the
+  `podman-system-generator` is missing, the `.container` files
+  remain inert, and `systemctl --user enable --now` fails with
+  *unit not found*. We now refuse early with a remediation hint.
+- `deploy/quadlet/nutanix-mcp-postgres.container` — same volume
+  mount fix (`/var/lib/postgresql/data` → `/var/lib/postgresql`).
+- `.github/workflows/release.yml` — copy `docker/init.sql` into
+  every per-RID staged tarball so `LocateInitSql` can find it
+  alongside the binary; required for the
+  `bootstrap --skip-restore` (manual ingest) path.
+
 ## [0.3.0] - 2026-05-05
 
 Sprint 009 + 010 + 003.5 land together: hardened systemd/Windows
@@ -767,6 +818,7 @@ Initial scaffold sprint. Solution skeleton, package pins, Postgres docker stack.
 - Compose project name explicitly set to `nutanix-mcp` to avoid clobbering
   arista-mcp's `docker/` directory namespace under Podman compose.
 
-[Unreleased]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.1.0...v0.3.0
 [0.1.0]: https://github.com/dantte-lp/nutanix-mcp/releases/tag/v0.1.0

@@ -1,6 +1,6 @@
 {
   "name": "nutanix-mcp",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Hybrid retrieval over the Nutanix documentation corpus via the nutanix-mcp MCP server (dense bge-m3 + BM25 + cross-encoder rerank).",
   "author": {
     "name": "dantte-lp",

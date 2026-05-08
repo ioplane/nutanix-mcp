@@ -135,9 +135,13 @@ jobs:
           mkdir -p "$stage"
           cp -r "publish/$RID/." "$stage/"
           cp README.md README.ru.md LICENSE CHANGELOG.md "$stage/" 2>/dev/null || true
-          mkdir -p "$stage/docs" "$stage/deploy" "$stage/scripts"
+          mkdir -p "$stage/docs" "$stage/deploy" "$stage/scripts" "$stage/docker"
           cp -r docs/. "$stage/docs/" 2>/dev/null || true
           cp -r deploy/. "$stage/deploy/" 2>/dev/null || true
+          # init.sql is needed by `nutanix-mcp bootstrap --skip-restore`
+          # (manual ingest path, no dump). LocateInitSql walks up from the
+          # binary so docker/init.sql alongside the staged tree is found.
+          cp docker/init.sql "$stage/docker/" 2>/dev/null || true
           # Only ship cross-platform helper scripts in the bundle.
           cp scripts/fetch-models.ps1 "$stage/scripts/" 2>/dev/null || true
 
