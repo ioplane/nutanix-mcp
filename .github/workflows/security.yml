@@ -1,8 +1,17 @@
 name: security
 
-# CodeQL + Semgrep + dependency review for the .NET tree.
+# CodeQL + Semgrep for the .NET tree.
 # Runs on every push/PR to main and on a weekly schedule (Monday 06:00 UTC)
 # so a freshly-published CVE is caught even when the codebase is quiet.
+#
+# Dependency scanning of NuGet deps is covered by the inline `NuGetAudit`
+# in Directory.Build.props (Mode=all, Level=moderate) which fires on every
+# build — including in this workflow's CodeQL Autobuild stage. The previous
+# `dependency-review` job using `actions/dependency-review-action@v4` was
+# removed because the action requires GitHub's Dependency Graph feature,
+# which is not available for this personal-account repository — it always
+# returned "Dependency review is not supported on this repository" with
+# exit 1, blocking every PR.
 
 on:
   push:
@@ -101,18 +110,3 @@ jobs:
           name: semgrep-sarif
           path: semgrep.sarif
           retention-days: 14
-
-  dependency-review:
-    name: Dependency review
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Review dependencies
-        uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: moderate
-          comment-summary-in-pr: true
