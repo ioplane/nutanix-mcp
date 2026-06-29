@@ -8,7 +8,7 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 
 ## [Unreleased]
 
-_(no entries yet)_
+Nothing here yet.
 
 ## [0.3.3] — 2026-06-30
 
@@ -201,8 +201,8 @@ no-op when `--quadlet` is requested without Podman.
   `PGDATA=/var/lib/postgresql/18/data` instead of mounting on the
   legacy `/var/lib/postgresql/data`. pg18 images (vchord-suite,
   docker-library/postgres) refuse to start on the legacy path
-  (*"Counter to that, there appears to be PostgreSQL data in:
-  /var/lib/postgresql/data (unused mount/volume)"*) — matches
+  (_"Counter to that, there appears to be PostgreSQL data in:
+  /var/lib/postgresql/data (unused mount/volume)"_) — matches
   `docker/compose.yaml` and the Quadlet template, keeping all three
   install surfaces wire-compatible with the same dump.
 - `BootstrapCommand.EnsurePostgresAsync` — add `--shm-size=2g` to
@@ -226,7 +226,7 @@ no-op when `--quadlet` is requested without Podman.
   `podman --version`. Without Podman 4.4+ the
   `podman-system-generator` is missing, the `.container` files
   remain inert, and `systemctl --user enable --now` fails with
-  *unit not found*. We now refuse early with a remediation hint.
+  _unit not found_. We now refuse early with a remediation hint.
 - `deploy/quadlet/nutanix-mcp-postgres.container` — same volume
   mount fix (`/var/lib/postgresql/data` → `/var/lib/postgresql`).
 - `.github/workflows/release.yml` — copy `docker/init.sql` into
