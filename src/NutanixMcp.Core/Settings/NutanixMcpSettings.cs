@@ -14,6 +14,12 @@ public sealed class NutanixMcpSettings
 
     public string ModelsDir { get; set; } = "models";
 
+    // Override for the reranker model directory. Falls back to {ModelsDir}/reranker
+    // when null. Production override for the INT8 fine-tuned variant:
+    //   NUTANIX_MCP__RerankerDir=/var/lib/nutanix-mcp/models/reranker-finetuned-int8
+    // See deploy/systemd/nutanix-mcp.env.example.
+    public string? RerankerDir { get; set; }
+
     // Default embedder is bge-m3 — multilingual XLM-R, 1024-dim, no query prefix.
     public string EmbeddingModel { get; set; } = "bge-m3";
     public int EmbeddingDim { get; set; } = 1024;
@@ -26,7 +32,6 @@ public sealed class NutanixMcpSettings
     public int HttpPort { get; set; } = 7456;
 
     public int IngestBatchSize { get; set; } = 32;
-    public int IngestParallelism { get; set; } = 4;
 
     // Chunking thresholds — see docs/plans/chunking-strategy.md § 4.2.
     public int ChunkMaxTokens { get; set; } = 1200;

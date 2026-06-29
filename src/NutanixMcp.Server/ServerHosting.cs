@@ -35,8 +35,14 @@ public static class ServerHosting
         });
 
         services.AddSingleton<IEmbedder>(_ => BuildAndWarmEmbedder(settings));
-        services.AddSingleton<IReranker>(_ => RerankerFamilyDetector.Build(
-            ModelPaths.RerankerDir(settings.ModelsDir), settings.Gpu));
+        // `RerankerDir` overrides `{ModelsDir}/reranker` so production deployments
+        // can point at the INT8 fine-tune (e.g. /var/lib/nutanix-mcp/models/
+        // reranker-finetuned-int8) without re-laying out the on-disk model tree.
+        // See deploy/systemd/nutanix-mcp.env.example.
+        string rerankerDir = !string.IsNullOrWhiteSpace(settings.RerankerDir)
+            ? settings.RerankerDir
+            : ModelPaths.RerankerDir(settings.ModelsDir);
+        services.AddSingleton<IReranker>(_ => RerankerFamilyDetector.Build(rerankerDir, settings.Gpu));
 
         services.AddScoped<IDocumentRepository, DocumentRepository>();
         services.AddScoped<IChunkRepository>(sp => new ChunkRepository(
