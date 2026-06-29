@@ -8,6 +8,23 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 
 ## [Unreleased]
 
+_(no entries yet)_
+
+## [0.3.3] — 2026-06-30
+
+Maintenance release: closes the install-readiness gaps surfaced by the
+independent code-review pass against v0.3.2, lifts the dependency set
+to the current minor/patch, and ships a new `Cli.Tests` regression
+guard for the most-impacted invariants. No retrieval or schema
+changes; bootstrap and serve are wire-compatible with v0.3.2 stores.
+
+Notable behavioural change: `CliConfiguration` now correctly ranks
+`NUTANIX_MCP__*` environment variables above any local
+`nutanix-mcp.json`, matching the 12-factor convention. Operators who
+relied on the inverted precedence to override env vars with a local
+JSON file should switch to using a non-CWD JSON file or unset the
+env var.
+
 ### Added
 
 - **`/v1/healthz`** liveness endpoint on the Streamable-HTTP transport
@@ -976,7 +993,8 @@ Initial scaffold sprint. Solution skeleton, package pins, Postgres docker stack.
 - Compose project name explicitly set to `nutanix-mcp` to avoid clobbering
   arista-mcp's `docker/` directory namespace under Podman compose.
 
-[Unreleased]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.3.3...HEAD
+[0.3.3]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.1.0...v0.3.0
