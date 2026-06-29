@@ -8,6 +8,43 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 
 ## [Unreleased]
 
+### Changed
+
+- **.NET SDK** bumped to `10.0.301` (was `10.0.201`). `global.json`
+  still uses `rollForward: latestFeature` so any 10.0.3xx SDK satisfies
+  the pin on hosted runners.
+- **Package set lifted to the current minor/patch** (verified against
+  NuGet on 2026-06-29):
+  - `ModelContextProtocol` + `.AspNetCore` 1.2.0 → 1.4.0
+  - `Microsoft.Extensions.AI` 10.5.0 → 10.7.0
+  - `Microsoft.Extensions.{Hosting,Configuration*,Options}` 10.0.7 → 10.0.9
+  - `Microsoft.EntityFrameworkCore{,.Design,.Relational}` 9.0.15 → 9.0.17
+    (still held at 9.x because `Pgvector.EntityFrameworkCore 0.3.0` —
+    latest — pins Npgsql.EFCore 9.0.x)
+  - `Microsoft.ML.OnnxRuntime{,.Gpu}` 1.25.1 → 1.27.0
+  - `System.CommandLine` 2.0.6 → 2.0.9
+  - `Spectre.Console` 0.55.2 → 0.57.1
+  - `Testcontainers.PostgreSql` 4.11.0 → 4.12.0
+  - `Microsoft.NET.Test.Sdk` 18.5.1 → 18.7.0
+  - `FluentAssertions` 8.9.0 → 8.10.0
+  - `Microsoft.Extensions.TimeProvider.Testing` 10.5.0 → 10.7.0
+  - `System.Security.Cryptography.Xml` 10.0.7 → 10.0.9
+  - `OpenTelemetry{,.Extensions.Hosting,.Exporter.OpenTelemetryProtocol}` 1.15.3 → 1.16.0
+- **Analyzers** bumped: `Meziantou.Analyzer` 3.0.58 → 3.0.117,
+  `SonarAnalyzer.CSharp` 10.25.0 → 10.27.0. `Roslynator.Analyzers`
+  4.15.0 and `AsyncFixer` 2.1.0 stay (latest).
+
+### Notes
+
+- CPU-only ONNX Runtime stays the default. `Microsoft.ML.OnnxRuntime.Gpu`
+  is pinned at the same revision so the optional `-p:UseGpuOnnx=true`
+  switch in `src/NutanixMcp.Embedding/NutanixMcp.Embedding.csproj`
+  restores a matched pair; the GPU code path is opt-in only.
+- Full solution (5 src + 5 tests projects) builds against SDK 10.0.301
+  with **0 warnings / 0 errors** under the full analyzer suite.
+- Self-contained single-file publish for `linux-x64` smoke-tested at
+  ~132 MB; `--help` runs cleanly.
+
 ## [0.3.2] - 2026-05-08
 
 Second hot-fix on the bootstrap flow: the v0.3.1 binary still fails
