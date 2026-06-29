@@ -12,5 +12,6 @@
     <Project Path="tests/NutanixMcp.Data.Tests/NutanixMcp.Data.Tests.csproj" />
     <Project Path="tests/NutanixMcp.Server.Tests/NutanixMcp.Server.Tests.csproj" />
     <Project Path="tests/NutanixMcp.E2E/NutanixMcp.E2E.csproj" />
+    <Project Path="tests/NutanixMcp.Cli.Tests/NutanixMcp.Cli.Tests.csproj" />
   </Folder>
 </Solution>

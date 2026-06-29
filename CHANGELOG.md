@@ -8,8 +8,56 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 
 ## [Unreleased]
 
+### Added
+
+- **`/v1/healthz`** liveness endpoint on the Streamable-HTTP transport
+  (`src/NutanixMcp.Server/HttpHost.cs`, via
+  `Microsoft.AspNetCore.Diagnostics.HealthChecks`). Plain 200 OK
+  process-liveness check that the Quadlet's
+  `HealthCmd=curl --fail --silent http://127.0.0.1:7456/v1/healthz`
+  and the Windows installer's `Invoke-RestMethod` line already
+  referenced — previously these probed a route that didn't exist,
+  leaving the container permanently unhealthy.
+- **`NutanixMcpSettings.RerankerDir`** — the documented production
+  override for the INT8 fine-tuned reranker. Wired into
+  `ServerHosting.AddNutanixMcpServices` so `NUTANIX_MCP__RerankerDir`
+  finally takes effect; previously the env var silently bound to nothing
+  (no property on the settings type) and `serve` / `ingest` always
+  used `{ModelsDir}/reranker`. Regression-guarded by the new
+  `CliConfigurationTests.RerankerDir_env_var_is_bound_to_settings`.
+- **`Exec=postgres -c shared_preload_libraries=…`** in
+  `deploy/quadlet/nutanix-mcp-postgres.container` plus the full memory
+  tuning block from `docker/compose.yaml`. Without this the Quadlet PG
+  pod fails `CREATE EXTENSION vchord` on first start (the
+  `tensorchord/vchord-suite` image bundles the libraries but does NOT
+  preset them; the e2e workflow already added them via `-c` flags).
+- **`NutanixMcp.Cli.Tests`** project — xUnit regression tests for
+  `CliConfiguration` precedence (env > JSON), `RerankerDir` binding,
+  and default fall-through.
+- **`RunSilentReadStdoutAsync`** helper in `BootstrapCommand` — portable
+  container-existence check using `ps -aq --filter name=…` which works
+  on both podman and docker.
+
 ### Changed
 
+- **`CliConfiguration.Load()` provider order reversed** —
+  `AddJsonFile` is now registered before `AddEnvironmentVariables`, so
+  `NUTANIX_MCP__*` environment variables correctly override a developer's
+  local `nutanix-mcp.json`. This matches `Microsoft.Extensions.Configuration`'s
+  "last registered wins" semantics and aligns with the ASP.NET Core
+  default (`appsettings.json` → env vars). Regression-guarded by
+  `CliConfigurationTests.EnvironmentVariable_overrides_JsonFile_value`.
+- **`BootstrapCommand.RunSilentAsync` / `RunStreamingAsync`** now kill
+  the child process tree on `OperationCanceledException`. Without this
+  an interrupted `pg_restore` / `podman pull` would keep running in the
+  background past the abandoned bootstrap.
+- **`BootstrapCommand.RestoreCorpusAsync`** wraps the download + restore
+  in a `try/finally` so the host-side and container-side temp dump
+  files are always removed, even when the download or `pg_restore`
+  fails partway. The serial HNSW rebuild fallback now captures and
+  returns the `psql` exit code instead of silently swallowing it
+  (`hnswRc != 0` is fatal — dense search would otherwise return no
+  results).
 - **.NET SDK** bumped to `10.0.301` (was `10.0.201`). `global.json`
   still uses `rollForward: latestFeature` so any 10.0.3xx SDK satisfies
   the pin on hosted runners.
@@ -33,6 +81,27 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 - **Analyzers** bumped: `Meziantou.Analyzer` 3.0.58 → 3.0.117,
   `SonarAnalyzer.CSharp` 10.25.0 → 10.27.0. `Roslynator.Analyzers`
   4.15.0 and `AsyncFixer` 2.1.0 stay (latest).
+
+### Fixed
+
+- **`BootstrapCommand` portability**: replaced the
+  `{runtime} container exists {name}` call (a podman-only subcommand
+  that always exits non-zero under Docker) with the cross-runtime
+  `ps -aq --filter name=^{name}$` check. A second `bootstrap` run on a
+  Docker host no longer fails with "container name already in use".
+- **`BootstrapCommand` config-load side effect**: removed the
+  `_ = CliConfiguration.Load();` hack in `RunStreamingAsync`. The
+  workaround re-read environment vars and JSON file on every subprocess
+  invocation (10-20× per bootstrap) and could mask the actual subprocess
+  error with an unrelated JSON parse exception if the user's
+  `nutanix-mcp.json` was malformed. Root cause was the now-removed
+  dead `IngestParallelism` settings field.
+
+### Removed
+
+- **`NutanixMcpSettings.IngestParallelism`** dead field — declared with
+  a default of 4, never consumed in production code. Setting
+  `NUTANIX_MCP__IngestParallelism` had no effect.
 
 ### Notes
 
