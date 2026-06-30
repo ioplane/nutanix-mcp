@@ -295,13 +295,98 @@ jobs:
           files: image-sbom.json
 
   # ──────────────────────────────────────────────────────────────────
+  # Corpus dump bring-forward.
+  #
+  # The full Nutanix corpus requires a populated PG with the docs
+  # ingested (~25 min, models + source PDFs); we can't regenerate from
+  # CI. Instead, copy the most recent previous release's
+  # nutanix-corpus-*.dump into this release so every tag has a usable
+  # restore asset that `nutanix-mcp bootstrap --release <tag>` can
+  # consume directly.
+  #
+  # Idempotent: skips if the new release already has the asset (e.g.
+  # the operator pre-uploaded a fresh dump from a host where the corpus
+  # was just re-ingested).
+  # ──────────────────────────────────────────────────────────────────
+  corpus-dump:
+    name: corpus dump
+    needs: [validate-tag, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bring-forward last release's corpus dump
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          asset="nutanix-corpus-${TAG_NAME}.dump"
+          repo="${{ github.repository }}"
+          mkdir -p _carry
+
+          # Skip if the new release already has the asset (someone
+          # pre-uploaded a fresh dump before/after tagging).
+          existing="$(gh release view "$TAG_NAME" -R "$repo" \
+            --json assets --jq ".assets[] | select(.name == \"$asset\") | .name" \
+            2>/dev/null || true)"
+          if [ -n "$existing" ]; then
+            echo "release $TAG_NAME already has $asset — nothing to bring forward."
+            exit 0
+          fi
+
+          # Find the most recent release that has any nutanix-corpus-*.dump.
+          # Filter out the current tag so we don't try to copy from itself.
+          src_tag="$(gh release list -R "$repo" --limit 30 \
+            --json tagName --jq '.[].tagName' \
+            | while read -r t; do
+                [ "$t" = "$TAG_NAME" ] && continue
+                has="$(gh release view "$t" -R "$repo" \
+                  --json assets \
+                  --jq '.assets[] | select(.name | startswith("nutanix-corpus-") and endswith(".dump")) | .name' \
+                  2>/dev/null | head -n1 || true)"
+                if [ -n "$has" ]; then
+                  printf '%s\t%s\n' "$t" "$has"
+                  break
+                fi
+              done)"
+
+          if [ -z "$src_tag" ]; then
+            echo "no previous release carries a nutanix-corpus-*.dump — nothing to do."
+            exit 0
+          fi
+
+          src_release="$(printf '%s' "$src_tag" | cut -f1)"
+          src_asset="$(printf '%s' "$src_tag" | cut -f2)"
+          echo "carrying forward $src_asset from $src_release -> $asset on $TAG_NAME"
+
+          gh release download "$src_release" -R "$repo" \
+            -p "$src_asset" -p "${src_asset}.sha256" -D _carry
+
+          mv "_carry/$src_asset" "_carry/$asset"
+          if [ -f "_carry/${src_asset}.sha256" ]; then
+            # Rewrite the filename column inside the sha256 file.
+            old_sha="$(awk '{print $1}' "_carry/${src_asset}.sha256")"
+            printf '%s  %s\n' "$old_sha" "$asset" > "_carry/${asset}.sha256"
+            rm -f "_carry/${src_asset}.sha256"
+          fi
+
+          gh release upload "$TAG_NAME" -R "$repo" --clobber \
+            "_carry/$asset" \
+            $([ -f "_carry/${asset}.sha256" ] && echo "_carry/${asset}.sha256")
+
+  # ──────────────────────────────────────────────────────────────────
   # Extract the [<tag>] block from CHANGELOG.md as release notes.
   # Runs last so it overwrites whatever softprops/action-gh-release
   # auto-generated.
   # ──────────────────────────────────────────────────────────────────
   finalize:
     name: finalize release notes
-    needs: [publish, container, validate-tag]
+    needs: [publish, container, corpus-dump, validate-tag]
     if: always() && needs.publish.result == 'success'
     runs-on: ubuntu-latest
     permissions:
