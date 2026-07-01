@@ -48,7 +48,12 @@ jobs:
   ci-mirror:
     name: ci gate
     uses: ./.github/workflows/ci.yml
-    secrets: inherit
+    # Only pass the secrets ci.yml actually reads (pvs-studio credentials).
+    # `secrets: inherit` handed everything over and violated least-privilege
+    # (semgrep p/security-audit rule secrets-inherit).
+    secrets:
+      PVS_USER: ${{ secrets.PVS_USER }}
+      PVS_KEY: ${{ secrets.PVS_KEY }}
     permissions:
       contents: read
       security-events: write

@@ -9,6 +9,11 @@ on:
   # Reusable from release.yml — every tag push runs the full quality
   # gate before any artefact is built.
   workflow_call:
+    secrets:
+      PVS_USER:
+        required: false
+      PVS_KEY:
+        required: false
 
 permissions:
   contents: read
