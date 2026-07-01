@@ -5,7 +5,8 @@
       "args": ["serve", "--transport", "stdio"],
       "env": {
         "NUTANIX_MCP__ConnectionString": "${NUTANIX_MCP__ConnectionString}",
-        "NUTANIX_MCP__ModelsDir": "${NUTANIX_MCP__ModelsDir}"
+        "NUTANIX_MCP__ModelsDir": "${NUTANIX_MCP__ModelsDir}",
+        "NUTANIX_MCP__RerankerDir": "${NUTANIX_MCP__RerankerDir:-}"
       }
     }
   }

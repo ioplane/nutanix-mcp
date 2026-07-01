@@ -9,7 +9,7 @@
       "name": "nutanix-mcp",
       "source": "./plugin",
       "description": "Hybrid retrieval over the Nutanix documentation corpus via the nutanix-mcp MCP server.",
-      "version": "0.1.0"
+      "version": "0.3.3"
     }
   ]
 }
