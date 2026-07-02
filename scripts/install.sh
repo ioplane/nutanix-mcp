@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
-# One-shot install for arista-mcp — binary, ONNX models, Postgres corpus,
+# One-shot install for nutanix-mcp — binary, ONNX models, Postgres corpus,
 # MCP registration in Claude Code + Codex, and the Claude Code plugin
 # (skills + slash commands). Idempotent — safe to re-run.
 #
 # Two entry points:
 #
 #   A. From a release tarball (recommended):
-#        gh release download vX.Y.Z -R dantte-lp/arista-mcp \
-#          -p 'arista-mcp-vX.Y.Z-linux-x64.tar.gz'
-#        tar -xzf arista-mcp-vX.Y.Z-linux-x64.tar.gz
-#        cd arista-mcp-vX.Y.Z-linux-x64
+#        gh release download vX.Y.Z -R dantte-lp/nutanix-mcp \
+#          -p 'nutanix-mcp-vX.Y.Z-linux-x64.tar.gz'
+#        tar -xzf nutanix-mcp-vX.Y.Z-linux-x64.tar.gz
+#        cd nutanix-mcp-vX.Y.Z-linux-x64
 #        bash scripts/install.sh
 #
 #   B. From a git checkout:
-#        git clone https://github.com/dantte-lp/arista-mcp
-#        cd arista-mcp && bash scripts/install.sh
+#        git clone https://github.com/dantte-lp/nutanix-mcp
+#        cd nutanix-mcp && bash scripts/install.sh
 #
 # The script picks the newest release automatically unless TAG=vX.Y.Z is
 # in the environment. It never overwrites your local settings: existing

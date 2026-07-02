@@ -90,7 +90,34 @@ through unchanged.
 
 ## Container
 
-The repo's `docker/Containerfile` (compose service `app`) is for the
-**Postgres** stack and the dev CLI build, not a production server image.
-Use the single-file binary with systemd or Windows Service for production.
-A first-party container image is queued for v0.4.0.
+The production server image is `ghcr.io/dantte-lp/nutanix-mcp:vX.Y.Z`,
+built from `docker/Containerfile.app` (multi-stage: SDK 10 → chiseled
+`runtime-deps:10.0-noble-chiseled-extra`, non-root `app` user, read-only
+rootfs). It runs `serve --transport http --bind 0.0.0.0 --port 7456` by
+default. The multi-arch manifest covers `linux/amd64` and `linux/arm64`,
+signed with `cosign` keyless-OIDC on every tag by
+`.github/workflows/release.yml`.
+
+```bash
+podman pull ghcr.io/dantte-lp/nutanix-mcp:v0.3.3
+cosign verify ghcr.io/dantte-lp/nutanix-mcp:v0.3.3 \
+  --certificate-identity-regexp \
+    '^https://github\.com/dantte-lp/nutanix-mcp/\.github/workflows/release\.yml@refs/tags/.+' \
+  --certificate-oidc-issuer-regexp \
+    '^https://token\.actions\.githubusercontent\.com$'
+```
+
+Point the container at an externally-managed Postgres via
+`NUTANIX_MCP__ConnectionString`, or use the `deploy/quadlet/` stack
+(bundles PG + server as coupled `.container` units on Podman + systemd).
+
+**Package visibility note:** the GHCR package inherits the
+personal-account default of `private` on first push. External pulls
+require the package owner to flip visibility in the GitHub UI
+(`Packages → nutanix-mcp → Package settings → Danger Zone → Change
+visibility → Public`). Until then, use a Personal Access Token with
+`read:packages` scope for `podman login ghcr.io`.
+
+The legacy `docker/Containerfile` (compose service `app`) is still
+the way to bring up the Postgres side of the stack for local
+development — it is not a production server image.

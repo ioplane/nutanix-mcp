@@ -134,11 +134,14 @@ LLM-сгенерирован, не вручную:
   → финальный 509-q fixture
 ```
 
-Live-категории в fixture: `kb`, `hardware-replacement`, `other`,
-`prism-central`, `prism-element`, `ahv`, `aos`, `bible`,
-`api`, `files`, `ports`. 16 категорий из изначального плана включали
-6, которых в живом корпусе нет — fixture следует реальной форме
-корпуса.
+Распределение категорий в fixture совпадает с шестнадцатью
+категориями, которые `list_categories` возвращает на хранилище
+v0.3.3: `ahv`, `aos`, `kb`, `files`, `ndb`, `kubernetes`, `flow`,
+`prism-central`, `prism-element`, `move`, `disaster-recovery`,
+`cloud-clusters`, `nki`, `pulse`, `lcm`, `hardware-replacement`.
+Одна только `kb` даёт ~75 % объёма сырого корпуса; чтобы бенч не
+выродился в KB-lookup, её долю понижают стратифицированными квотами
+до ~14 % seed-запросов.
 
 Каждая строка:
 

@@ -22,6 +22,32 @@ on a CPU-only laptop reaching the local-host PG.
 
 ## Quick start
 
+### Zero-to-search from a release tarball (recommended)
+
+```bash
+TAG=v0.3.3
+RID=linux-x64
+gh release download "$TAG" -R dantte-lp/nutanix-mcp \
+  -p "nutanix-mcp-${TAG}-${RID}.tar.gz"
+tar -xzf "nutanix-mcp-${TAG}-${RID}.tar.gz"
+cd "nutanix-mcp-${TAG}-${RID}"
+sudo bash scripts/install.sh
+```
+
+`scripts/install.sh` stages the binary under
+`/opt/apps/nutanix-mcp-${TAG}-linux-x64/`, symlinks `/usr/local/bin/nutanix-mcp`,
+fetches ONNX models into `/var/lib/nutanix-mcp/models`, runs
+`nutanix-mcp bootstrap --release "$TAG"` (Postgres container + corpus
+restore + tokenizer rebuild), registers the MCP server in
+`~/.claude.json` and via `codex mcp add`, and links the Claude Code
+plugin marketplace. Idempotent. Env-var overrides: `TAG=vX.Y.Z`,
+`MODELS_DIR=…`, `CONN_STRING=…`, `SKIP_BOOTSTRAP=1`.
+
+If you already have the binary on `PATH`, `nutanix-mcp bootstrap --release v0.3.3`
+handles just the PG + corpus phase.
+
+### Developer workflow (from source)
+
 ```bash
 podman compose -f docker/compose.yaml up -d postgres
 dotnet ef database update --project src/NutanixMcp.Data
