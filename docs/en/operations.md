@@ -26,6 +26,22 @@
 read the two tables. It does not validate model availability or HNSW
 recall. Treat the metric as a liveness probe.
 
+### HTTP liveness endpoint
+
+When the server is running with `--transport http`, a plain
+`GET /v1/healthz` endpoint is available for external monitors:
+
+```bash
+curl -fsS http://127.0.0.1:7456/v1/healthz
+# {"status":"ok"}
+```
+
+The endpoint returns `200 OK` with `{"status":"ok"}` when the embedder,
+reranker, and PostgreSQL connection pool are all reachable. It returns
+`503 Service Unavailable` on any of those checks failing. It is a bare
+HTTP endpoint — no MCP framing, no authentication — safe to poll from
+`kube-probe`, `wget --spider`, or a systemd `ExecStartPre`.
+
 ## Ingest cadence
 
 The `ingest` verb (introduced in Sprint 005) drives ingestion. Two
