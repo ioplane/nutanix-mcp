@@ -1,18 +1,68 @@
 # Быстрый старт
 
-## Требования
+## Установка пользователем (release-тарбол)
 
-- .NET 10 SDK 10.0.201 (управляется через [`global.json`](../../global.json)).
+```bash
+TAG=v0.3.3
+RID=linux-x64      # или linux-arm64, win-x64, win-arm64, osx-x64, osx-arm64
+gh release download "$TAG" -R dantte-lp/nutanix-mcp \
+  -p "nutanix-mcp-${TAG}-${RID}.tar.gz"
+tar -xzf "nutanix-mcp-${TAG}-${RID}.tar.gz"
+cd "nutanix-mcp-${TAG}-${RID}"
+sudo bash scripts/install.sh
+```
+
+Восемь фаз, которые выполняет `scripts/install.sh`:
+
+1. Раскладывает бинарник в `/opt/apps/nutanix-mcp-${TAG}-linux-x64/`,
+   ставит симлинки `/opt/apps/nutanix-mcp-current` и
+   `/usr/local/bin/nutanix-mcp`.
+2. Тянет ONNX-модели в `${MODELS_DIR:-/var/lib/nutanix-mcp/models}`
+   (пропускается, если `embedder/model.onnx` уже на месте).
+3. Дёргает `nutanix-mcp bootstrap --release "$TAG"` — поднимает
+   Podman-контейнер с Postgres, качает дамп корпуса из релизного
+   attachment через GitHub API, накатывает `pg_restore --clean
+   --if-exists -j 4` и восстанавливает реестр `pg_tokenizer`.
+4. Регистрирует `mcpServers.nutanix-mcp` в `~/.claude.json` (через `jq`).
+5. Симлинкует `${INSTALL_DIR}` в
+   `~/.claude/plugins/marketplaces/nutanix-mcp/`, чтобы
+   `/plugin install nutanix-mcp` внутри Claude Code активировал
+   слэш-команды и скилл.
+6. `codex mcp add nutanix-mcp -- …` регистрирует MCP-сервер для Codex.
+7. Симлинкует `plugin/skills/*` в `~/.codex/skills/`.
+8. Печатает summary и подсказки по smoke-проверке.
+
+Скрипт идемпотентен. Переменные окружения для переопределения:
+
+- `TAG=vX.Y.Z` — поставить конкретный релиз (по умолчанию — самый
+  свежий).
+- `MODELS_DIR=/custom/path` — направить модели в общее место.
+- `CONN_STRING="Host=…;Port=…;Database=…;Username=…;Password=…"` — для
+  внешнего Postgres; bootstrap-контейнер PG пропускается.
+- `SKIP_BOOTSTRAP=1` — переустановить на хосте, где Postgres уже
+  наполнен (обновить бинарник и конфиги, не трогая БД).
+
+Отдельно вызванный `nutanix-mcp bootstrap --release "$TAG"` выполняет
+только фазу 3 — пропускает шаги регистрации в CLI. Полезно, чтобы
+обновить корпус после смены тега.
+
+## Разработчикам (сборка из исходников)
+
+Требования:
+
+- .NET 10 SDK 10.0.301 (управляется через [`global.json`](../../global.json)).
 - Podman или Docker (Compose v2).
 - PowerShell 7 (скрипт скачивания моделей рассчитан на `pwsh`).
 
-## Поднять PostgreSQL
+### Поднять PostgreSQL
 
 ```bash
 podman compose -f docker/compose.yaml up -d postgres
 ```
 
-Контейнер слушает порт 5435 на хосте. Compose-файл применяет `init.sql`,
+Контейнер слушает порт 5435 на хосте, чтобы уживаться с системным PG
+на 5432. Если бинарник смотрит на внешний PG на 5432, переопределите
+`NUTANIX_MCP__ConnectionString`. Compose-файл применяет `init.sql`,
 который создаёт нужные расширения и анализатор `english_analyzer`.
 
 Проверка:
@@ -24,7 +74,7 @@ podman exec nutanix-mcp-postgres psql -U nutanix -d nutanix -c '\dx'
 В выводе должны быть `vector`, `vchord`, `vchord_bm25`, `pg_tokenizer`,
 `pg_trgm`, `plpgsql`.
 
-## Применить миграции
+### Применить миграции
 
 ```bash
 dotnet ef database update --project src/NutanixMcp.Data
@@ -33,7 +83,7 @@ dotnet ef database update --project src/NutanixMcp.Data
 Это применит миграции `Initial` и `AddBm25Column` к базе `nutanix`.
 Триггер, поддерживающий `chunks.bm25v`, создаётся в `AddBm25Column`.
 
-## Скачать ONNX-модели
+### Скачать ONNX-модели
 
 ```powershell
 pwsh scripts/fetch-models.ps1
@@ -44,7 +94,7 @@ pwsh scripts/fetch-models.ps1
 `models/reranker/`. Идемпотентен, проверяет минимальный размер каждого
 файла.
 
-## Запустить тесты
+### Запустить тесты
 
 ```bash
 dotnet test

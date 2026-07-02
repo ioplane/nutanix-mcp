@@ -120,15 +120,15 @@ sequenceDiagram
 
 | Компонент | Версия | Причина |
 |---|---|---|
-| .NET SDK | 10.0.201 | TFM `net10.0`. |
+| .NET SDK | 10.0.301 | TFM `net10.0`. |
 | EF Core | 9.0.15 | `Pgvector.EntityFrameworkCore` 0.3.0 транзитивно тянет 9.0.1; прямой пин на 9.0.15 побеждает. |
 | Npgsql.EFCore | 9.0.4 | Соответствует EF 9. |
 | pgvector | 0.8.2 | Из `vchord-suite:pg18-latest`. |
 | vchord | 1.1.1 | Из образа. |
 | vchord_bm25 | 0.3.0 | Из образа. |
 | pg_tokenizer | 0.1.1 | Из образа. |
-| ModelContextProtocol | 1.2.0 | MCP SDK. |
-| Microsoft.ML.OnnxRuntime | 1.24.4 | CPU. GPU-сборка переключается на `*.Gpu` через `-p:UseGpuOnnx=true`. |
+| ModelContextProtocol / .AspNetCore | 1.4.0 | MCP SDK. |
+| Microsoft.ML.OnnxRuntime (CPU / .Gpu) | 1.27.0 | По умолчанию CPU; GPU-сборка переключается на `*.Gpu` через `-p:UseGpuOnnx=true`. |
 | Microsoft.ML.Tokenizers | 2.0.0 | Загружает SentencePiece через `SentencePieceTokenizer.Create`. |
 | `bge-m3` | от BAAI на Hugging Face | ONNX-эмбеддер, external-data layout (`model.onnx` + `model.onnx_data`). |
 | `bge-reranker-v2-m3` | из `hooman650/bge-reranker-v2-m3-onnx-o4` | Optimum-O4 ONNX-экспорт, FP32. |
