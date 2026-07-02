@@ -10,6 +10,25 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 
 Nothing here yet.
 
+## [0.3.5] — 2026-07-02
+
+Packaging fix: ship the one-command install script in the release
+tarballs. No code changes.
+
+### Fixed
+
+- **`scripts/install.sh`** is now included in the release tarball's
+  `scripts/` folder (#7). `README.md` and `docs/en/quickstart.md`
+  document `bash scripts/install.sh` as the recommended install path
+  after extracting the tarball, but the v0.3.4 (and earlier) tarballs
+  only shipped `fetch-models.ps1` — the documented path failed with
+  `No such file or directory`.
+- **`install.sh` self-mocking Quick-check line** removed (#7). The
+  script no longer prints `nutanix-mcp get-status || true # not an
+  actual verb` at the end; the hint now points at the actual
+  `get_status` MCP tool and the `/v1/healthz` HTTP endpoint, matching
+  the arista-mcp v0.3.2 refresh.
+
 ## [0.3.4] — 2026-07-02
 
 Documentation-only maintenance release. No behavioural changes; wire-
