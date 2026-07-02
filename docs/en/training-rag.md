@@ -141,15 +141,14 @@ sample 500 chunks
   → final 509-query fixture
 ```
 
-Live category distribution in the fixture: `kb` (~14 % of seed but
-75 % of corpus → over-sampled away from corpus dominance via
-stratified quotas), `hardware-replacement`, `other`, `prism-central`,
-`prism-element`, `ahv`, `aos`, `bible` (Nutanix Bible),
-`api`, `files`, `ports`. The 16 categories the original plan named
-included six (`ndb`, `kubernetes`, `flow`, `move`,
-`disaster-recovery`, `cloud-clusters`, `nki`, `pulse`, `lcm`)
-that the live corpus does not actually contain — the fixture honours
-real corpus shape.
+Live category distribution matches the sixteen categories `list_categories`
+returns on the v0.3.3 store: `ahv`, `aos`, `kb`, `files`, `ndb`,
+`kubernetes`, `flow`, `prism-central`, `prism-element`, `move`,
+`disaster-recovery`, `cloud-clusters`, `nki`, `pulse`, `lcm`,
+`hardware-replacement`. `kb` alone accounts for ~75 % of raw corpus
+volume and is over-sampled away from that dominance via stratified
+quotas in the fixture (~14 % of seed queries) so the bench doesn't
+degenerate into a KB-lookup benchmark.
 
 Each row carries:
 
