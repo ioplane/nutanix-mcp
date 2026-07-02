@@ -43,7 +43,7 @@ The plugin lives inside the `nutanix-mcp` repository. Two paths:
 
 **Marketplace + `/plugin install`** (Claude Code REPL):
 
-```
+```text
 /plugin marketplace add https://github.com/dantte-lp/nutanix-mcp
 /plugin install nutanix-mcp@nutanix-mcp
 ```
