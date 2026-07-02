@@ -10,6 +10,33 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 
 Nothing here yet.
 
+## [0.3.4] — 2026-07-02
+
+Documentation-only maintenance release. No behavioural changes; wire-
+and store-compatible with v0.3.3.
+
+### Changed
+
+- **Docs refresh: install-first, `/v1/healthz`, version pins** (#6).
+  `README.md` now leads with the release-tarball install path;
+  `docs/en/quickstart.md` documents all eight phases of
+  `scripts/install.sh` with the env-var override table and demotes
+  the source-build steps into a "Developer workflow (from source)"
+  subsection. `docs/en/training-rag.md` corrects the category list
+  to the sixteen categories the ingest pipeline actually emits
+  (`ahv`, `aos`, `kb`, `files`, `ndb`, `kubernetes`, `flow`,
+  `prism-central`, `prism-element`, `move`, `disaster-recovery`,
+  `cloud-clusters`, `nki`, `pulse`, `lcm`, `hardware-replacement`)
+  and notes the `kb` over-sampling policy. `docs/en/operations.md`
+  documents the `GET /v1/healthz` liveness endpoint semantics.
+  `docs/en/architecture.md` version-pin table refreshed to match
+  `Directory.Packages.props` (.NET SDK 10.0.301, MCP 1.4.0,
+  ONNX Runtime 1.27.0). `plugin/README.md` adds
+  `NUTANIX_MCP__RerankerDir` with the v0.3.3+ compatibility note;
+  `deploy/README.md` replaces the "queued for v0.4.0" container note
+  with the shipped multi-arch cosign-signed GHCR image + package-
+  visibility gotcha. `docs/ru/` mirror updated in the same PR.
+
 ## [0.3.3] — 2026-06-30
 
 Maintenance release: closes the install-readiness gaps surfaced by the
