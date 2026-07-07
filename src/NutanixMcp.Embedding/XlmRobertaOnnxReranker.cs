@@ -53,6 +53,14 @@ public sealed class XlmRobertaOnnxReranker : IReranker
         }
 
         int[] queryIds = _tok.EncodeBare(query);
+        // Cap the query so the pair <s> q </s></s> d </s> can never exceed MaxSequenceLength, even for
+        // a pathologically long query; reserve at least half the budget for the document.
+        int queryBudget = Math.Max(1, (_opt.MaxSequenceLength - 4) / 2);
+        if (queryIds.Length > queryBudget)
+        {
+            queryIds = queryIds[..queryBudget];
+        }
+
         var results = new RerankResult[candidates.Count];
 
         for (int start = 0; start < candidates.Count; start += _opt.BatchSize)
@@ -138,6 +146,15 @@ public sealed class XlmRobertaOnnxReranker : IReranker
         using var runOpts = new RunOptions();
         using var results = _session.Run(runOpts, feeds, ["logits"]);
         var logits = results[0].GetTensorDataAsSpan<float>();
+
+        // Contract: output is [B, 1] — exactly one score per pair. A model with a multi-logit
+        // classification head ([B, C>1]) would otherwise be read column-major and score every pair
+        // wrong *silently*; fail loudly instead.
+        if (logits.Length != batch.Count)
+        {
+            throw new InvalidOperationException(
+                $"reranker produced {logits.Length} logits for {batch.Count} pairs; expected [B,1]");
+        }
 
         // Output shape [B, 1] — one raw score per pair. Higher = more relevant.
         float[] scores = new float[batch.Count];
