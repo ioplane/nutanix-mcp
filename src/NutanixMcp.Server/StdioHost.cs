@@ -27,10 +27,15 @@ public static class StdioHost
 
         using var host = builder.Build();
 
-        // Eagerly resolve the retriever singleton so the ONNX embedder/reranker
-        // sessions (and the embedder warm-up in ServerHosting) are built now,
-        // during startup, rather than lazily on the first search request.
-        _ = host.Services.GetRequiredService<IHybridRetriever>();
+        // Warm the retriever (ONNX embedder plus reranker load, tens of seconds) in the BACKGROUND so
+        // the MCP initialize handshake is answered immediately. A synchronous resolve here blocks
+        // startup long enough that stdio clients (Claude Code, Codex) time out the handshake and
+        // report a failed connection. DI singleton resolution is thread-safe, so the first
+        // search request shares this warm-up instead of racing a second load. The continuation observes
+        // any load failure so it is not raised as an unobserved-task fault; a genuine model-load
+        // error still resurfaces on the first tool call.
+        _ = Task.Run(() => host.Services.GetRequiredService<IHybridRetriever>(), ct)
+            .ContinueWith(static faulted => faulted.Exception?.Handle(_ => true), TaskScheduler.Default);
 
         await host.RunAsync(ct).ConfigureAwait(false);
     }
