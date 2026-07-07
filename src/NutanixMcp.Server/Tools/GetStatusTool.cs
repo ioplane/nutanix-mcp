@@ -13,13 +13,34 @@ public sealed class GetStatusTool(NutanixDbContext db, IIngestRunRepository runR
     [Description("Health and store stats: document/chunk counts, last ingest run, extension versions.")]
     public async Task<object> GetAsync(CancellationToken ct = default)
     {
-        int docCount = await db.Documents.CountAsync(ct).ConfigureAwait(false);
-        int chunkCount = await db.Chunks.CountAsync(ct).ConfigureAwait(false);
+        // Derive health from whether the store is actually reachable. A failed
+        // count (DB down, schema missing, connection refused) reports
+        // healthy=false with a reason rather than a hardcoded true.
+        int docCount;
+        int chunkCount;
+        try
+        {
+            docCount = await db.Documents.CountAsync(ct).ConfigureAwait(false);
+            chunkCount = await db.Chunks.CountAsync(ct).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return new
+            {
+                healthy = false,
+                reason = ex.Message,
+                documents = (int?)null,
+                chunks = (int?)null,
+                last_run = (object?)null,
+            };
+        }
+
         var lastRun = await runRepo.GetLastAsync(ct).ConfigureAwait(false);
 
         return new
         {
             healthy = true,
+            reason = (string?)null,
             documents = docCount,
             chunks = chunkCount,
             last_run = lastRun is null ? null : new
