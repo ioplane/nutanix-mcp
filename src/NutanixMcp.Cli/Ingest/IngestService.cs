@@ -28,7 +28,8 @@ public sealed class IngestService(
     IEmbedder embedder,
     IDocumentRepository documentRepo,
     IChunkRepository chunkRepo,
-    IIngestRunRepository runRepo)
+    IIngestRunRepository runRepo,
+    IUnitOfWork unitOfWork)
 {
     public async Task<IngestResult> IngestAsync(
         IngestOptions options,
@@ -85,75 +86,113 @@ public sealed class IngestService(
         int chunkTotal = 0;
         string? lastError = null;
 
-        foreach (var entry in entries)
+        try
         {
-            ct.ThrowIfCancellationRequested();
-            try
+            foreach (var entry in entries)
             {
-                string docHash = ComputeDocumentSha(entry);
-                if (!options.Force)
+                ct.ThrowIfCancellationRequested();
+
+                // Keep the change tracker bounded to a single document. Without
+                // this the tracker accumulates one DocumentEntity per document and
+                // every SaveChanges pays an O(N^2) DetectChanges cost.
+                unitOfWork.ClearChangeTracker();
+
+                try
                 {
-                    string? existing = await documentRepo
-                        .GetPdfSha256Async(entry.Id, ct)
+                    string docHash = ComputeDocumentSha(entry);
+                    if (!options.Force)
+                    {
+                        string? existing = await documentRepo
+                            .GetPdfSha256Async(entry.Id, ct)
+                            .ConfigureAwait(false);
+                        if (string.Equals(existing, docHash, StringComparison.Ordinal))
+                        {
+                            skipped++;
+                            progress.Document(entry.Id, "skip", 0);
+                            continue;
+                        }
+                    }
+
+                    var loaded = await DocumentLoader
+                        .LoadAsync(entry, options.CatalogBaseDir, ct)
                         .ConfigureAwait(false);
-                    if (string.Equals(existing, docHash, StringComparison.Ordinal))
+
+                    var chunkSet = chunker.Chunk(loaded.Metadata.Title, loaded.Sections);
+                    if (chunkSet.Leaves.Count == 0)
                     {
                         skipped++;
-                        progress.Document(entry.Id, "skip", 0);
+                        progress.Document(entry.Id, "no-leaves", 0);
                         continue;
                     }
-                }
 
-                var loaded = await DocumentLoader
-                    .LoadAsync(entry, options.CatalogBaseDir, ct)
-                    .ConfigureAwait(false);
+                    if (options.DryRun)
+                    {
+                        upserted++;
+                        chunkTotal += chunkSet.Leaves.Count;
+                        progress.Document(entry.Id, "dry-run", chunkSet.Leaves.Count);
+                        continue;
+                    }
 
-                var chunkSet = chunker.Chunk(loaded.Metadata.Title, loaded.Sections);
-                if (chunkSet.Leaves.Count == 0)
-                {
-                    skipped++;
-                    progress.Document(entry.Id, "no-leaves", 0);
-                    continue;
-                }
+                    // One transaction per document on the shared DbContext
+                    // connection: the doc upsert, chunk delete, and both COPYs
+                    // commit together. If any step throws, the transaction is
+                    // rolled back on dispose so pdf_sha256 is NOT advanced — a
+                    // half-indexed document that re-ingest would skip forever.
+                    await using var tx = await unitOfWork
+                        .BeginTransactionAsync(ct).ConfigureAwait(false);
 
-                if (options.DryRun)
-                {
+                    var docWithHash = loaded.Metadata with { PdfSha256 = docHash };
+                    await documentRepo.UpsertAsync(docWithHash, ct).ConfigureAwait(false);
+
+                    // Replace existing chunks before reinsert. The cascade FK on
+                    // chunks.document_id makes this a single ExecuteDeleteAsync.
+                    await chunkRepo.DeleteByDocumentAsync(entry.Id, ct).ConfigureAwait(false);
+
+                    // Parents first so we can read back their generated bigint ids.
+                    // The readback runs in the same transaction, so it sees the
+                    // as-yet-uncommitted parent rows.
+                    var parentRows = MaterialiseParents(entry.Id, chunkSet);
+                    await chunkRepo.BulkInsertAsync(parentRows, ct).ConfigureAwait(false);
+                    var parentIds = await chunkRepo
+                        .SelectParentIdsAsync(entry.Id, ct)
+                        .ConfigureAwait(false);
+
+                    var leafRows = await MaterialiseLeavesAsync(
+                        entry.Id, chunkSet, parentIds, embedder, ct).ConfigureAwait(false);
+                    await chunkRepo.BulkInsertAsync(leafRows, ct).ConfigureAwait(false);
+
+                    await tx.CommitAsync(ct).ConfigureAwait(false);
+
                     upserted++;
                     chunkTotal += chunkSet.Leaves.Count;
-                    progress.Document(entry.Id, "dry-run", chunkSet.Leaves.Count);
-                    continue;
+                    progress.Document(entry.Id, "ok", chunkSet.Leaves.Count);
                 }
-
-                var docWithHash = loaded.Metadata with { PdfSha256 = docHash };
-                await documentRepo.UpsertAsync(docWithHash, ct).ConfigureAwait(false);
-
-                // Replace existing chunks before reinsert. The cascade FK on
-                // chunks.document_id makes this a single ExecuteDeleteAsync.
-                await chunkRepo.DeleteByDocumentAsync(entry.Id, ct).ConfigureAwait(false);
-
-                // Parents first so we can read back their generated bigint ids.
-                var parentRows = MaterialiseParents(entry.Id, chunkSet);
-                await chunkRepo.BulkInsertAsync(parentRows, ct).ConfigureAwait(false);
-                var parentIds = await chunkRepo
-                    .SelectParentIdsAsync(entry.Id, ct)
-                    .ConfigureAwait(false);
-
-                var leafRows = await MaterialiseLeavesAsync(
-                    entry.Id, chunkSet, parentIds, embedder, ct).ConfigureAwait(false);
-                await chunkRepo.BulkInsertAsync(leafRows, ct).ConfigureAwait(false);
-
-                upserted++;
-                chunkTotal += chunkSet.Leaves.Count;
-                progress.Document(entry.Id, "ok", chunkSet.Leaves.Count);
+                catch (Exception ex) when (ex is not OperationCanceledException
+                                           and not OutOfMemoryException
+                                           and not StackOverflowException)
+                {
+                    failed++;
+                    lastError = ex.Message;
+                    progress.Document(entry.Id, "error: " + ex.GetType().Name, 0);
+                }
             }
-            catch (Exception ex) when (ex is not OperationCanceledException
-                                       and not OutOfMemoryException
-                                       and not StackOverflowException)
-            {
-                failed++;
-                lastError = ex.Message;
-                progress.Document(entry.Id, "error: " + ex.GetType().Name, 0);
-            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Finalize the ingest_runs row even on cancellation so it does not
+            // stay "running" forever. Use CancellationToken.None so the write
+            // itself is not cancelled, then rethrow for the caller's exit code.
+            await runRepo.FinishAsync(
+                run.Id,
+                "cancelled",
+                entries.Count,
+                skipped,
+                upserted,
+                chunkTotal,
+                lastError ?? "ingest cancelled",
+                CancellationToken.None).ConfigureAwait(false);
+            progress.Finish(upserted, skipped, failed);
+            throw;
         }
 
         string status = failed == 0 ? "success" : "partial";

@@ -46,9 +46,9 @@ public static class ServerHosting
 
         services.AddScoped<IDocumentRepository, DocumentRepository>();
         services.AddScoped<IChunkRepository>(sp => new ChunkRepository(
-            sp.GetRequiredService<NpgsqlDataSource>(),
             sp.GetRequiredService<NutanixDbContext>()));
         services.AddScoped<IIngestRunRepository, IngestRunRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         services.AddSingleton<IHybridRetriever>(sp => new HybridRetriever(
             sp.GetRequiredService<IEmbedder>(),
