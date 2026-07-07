@@ -551,9 +551,32 @@ public static class BootstrapCommand
             var buf = new byte[256 * 1024];
             long copied = 0;
             long lastReport = 0;
-            int n;
-            while ((n = await input.ReadAsync(buf, ct).ConfigureAwait(false)) > 0)
+            // With HttpCompletionOption.ResponseHeadersRead, HttpClient.Timeout covers only the header
+            // exchange — the body copy is unbounded. Guard each read with an idle timeout so a stalled
+            // connection (headers received, then no bytes) fails fast instead of hanging.
+            var idleTimeout = TimeSpan.FromSeconds(100);
+            while (true)
             {
+                int n;
+                using (var idle = CancellationTokenSource.CreateLinkedTokenSource(ct))
+                {
+                    idle.CancelAfter(idleTimeout);
+                    try
+                    {
+                        n = await input.ReadAsync(buf, idle.Token).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+                    {
+                        throw new TimeoutException(
+                            $"download stalled: no data received for {idleTimeout.TotalSeconds:F0}s");
+                    }
+                }
+
+                if (n <= 0)
+                {
+                    break;
+                }
+
                 await output.WriteAsync(buf.AsMemory(0, n), ct).ConfigureAwait(false);
                 copied += n;
                 if (copied - lastReport > 50 * 1024 * 1024 || (total.HasValue && copied == total))
