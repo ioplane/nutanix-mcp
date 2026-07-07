@@ -26,7 +26,10 @@ public sealed class XlmRobertaOnnxReranker : IReranker
         _opt = opt;
         _tok = new XlmRobertaTokenizer(opt.VocabPath);
 
-        var so = new SessionOptions
+        // Dispose the SessionOptions once the session is constructed — the
+        // native handle it owns is not needed past InferenceSession creation
+        // (the session retains whatever it needs internally).
+        using var so = new SessionOptions
         {
             GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
             IntraOpNumThreads = Environment.ProcessorCount,

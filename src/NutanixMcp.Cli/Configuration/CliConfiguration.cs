@@ -26,6 +26,8 @@ public static class CliConfiguration
         builder.AddEnvironmentVariables(EnvPrefix);
 
         var root = builder.Build();
-        return root.Get<NutanixMcpSettings>() ?? new NutanixMcpSettings();
+        var settings = root.Get<NutanixMcpSettings>() ?? new NutanixMcpSettings();
+        settings.Validate();
+        return settings;
     }
 }

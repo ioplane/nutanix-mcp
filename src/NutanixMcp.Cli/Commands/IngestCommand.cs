@@ -80,8 +80,9 @@ public static class IngestCommand
             using var embedder = BuildEmbedder(settings);
 
             var documentRepo = new DocumentRepository(db, TimeProvider.System);
-            var chunkRepo = new ChunkRepository(dataSource, db);
+            var chunkRepo = new ChunkRepository(db);
             var runRepo = new IngestRunRepository(db, TimeProvider.System);
+            var unitOfWork = new UnitOfWork(db);
 
             var chunker = new SectionAwareChunker(new ChunkingOptions
             {
@@ -91,7 +92,7 @@ public static class IngestCommand
                 MinTokens = settings.ChunkMinTokens,
             });
 
-            var service = new IngestService(chunker, embedder, documentRepo, chunkRepo, runRepo);
+            var service = new IngestService(chunker, embedder, documentRepo, chunkRepo, runRepo, unitOfWork);
             var progress = new SpectreIngestProgress(AnsiConsole.Console);
 
             try

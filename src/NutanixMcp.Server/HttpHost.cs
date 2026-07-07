@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using NutanixMcp.Core.Settings;
+using NutanixMcp.Server.Retrieval;
 
 namespace NutanixMcp.Server;
 
@@ -35,6 +36,11 @@ public static class HttpHost
             .WithToolsFromAssembly(typeof(HttpHost).Assembly);
 
         await using var app = builder.Build();
+
+        // Eagerly resolve the retriever singleton so the ONNX embedder/reranker
+        // sessions (and the embedder warm-up in ServerHosting) are built now,
+        // during startup, rather than lazily on the first search request.
+        _ = app.Services.GetRequiredService<IHybridRetriever>();
 
         // DNS-rebinding defense (MCP security guidance; cf. CVE-2025-49596): a browser page on a
         // remote origin could otherwise POST to the loopback MCP endpoint. Reject any request that

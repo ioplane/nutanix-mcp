@@ -69,7 +69,9 @@ jobs:
       security-events: write
       contents: read
     container:
-      image: semgrep/semgrep:latest
+      # Digest-pinned semgrep/semgrep:latest (resolved 2026-07). Bump the digest
+      # deliberately rather than tracking a moving :latest tag.
+      image: semgrep/semgrep@sha256:06938c1f365d3f67b8cedd8bc117607ae64253f88a0e768e9da9408548927dd6
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 

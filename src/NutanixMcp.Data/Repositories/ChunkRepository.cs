@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using NpgsqlTypes;
@@ -7,7 +8,7 @@ using Pgvector;
 
 namespace NutanixMcp.Data.Repositories;
 
-public sealed class ChunkRepository(NpgsqlDataSource dataSource, NutanixDbContext db) : IChunkRepository
+public sealed class ChunkRepository(NutanixDbContext db) : IChunkRepository
 {
     public async Task<int> BulkInsertAsync(IReadOnlyList<NutanixChunk> chunks, CancellationToken ct)
     {
@@ -17,7 +18,36 @@ public sealed class ChunkRepository(NpgsqlDataSource dataSource, NutanixDbContex
             return 0;
         }
 
-        await using var conn = await dataSource.OpenConnectionAsync(ct).ConfigureAwait(false);
+        // Run the COPY on the DbContext's own connection so it participates in
+        // whatever transaction the context has open. Opening a separate
+        // datasource connection here — as this used to — put the COPY outside
+        // the per-document ingest transaction, so a mid-document failure could
+        // leave the leaves un-inserted while the document's pdf_sha256 was
+        // already committed. When there is no ambient transaction (e.g. the
+        // bulk-insert perf test) the connection is opened and closed here.
+        var conn = (NpgsqlConnection)db.Database.GetDbConnection();
+        bool openedHere = conn.State != ConnectionState.Open;
+        if (openedHere)
+        {
+            await conn.OpenAsync(ct).ConfigureAwait(false);
+        }
+
+        try
+        {
+            return await CopyChunksAsync(conn, chunks, ct).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (openedHere)
+            {
+                await conn.CloseAsync().ConfigureAwait(false);
+            }
+        }
+    }
+
+    private static async Task<int> CopyChunksAsync(
+        NpgsqlConnection conn, IReadOnlyList<NutanixChunk> chunks, CancellationToken ct)
+    {
         await using var writer = await conn.BeginBinaryImportAsync(
             "COPY chunks (document_id, chunk_index, content, raw_content, "
             + "section_title, section_level, page_start, page_end, token_count, "

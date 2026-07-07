@@ -38,4 +38,54 @@ public sealed class NutanixMcpSettings
     public int ChunkTargetTokens { get; set; } = 512;
     public int ChunkOverlapTokens { get; set; } = 64;
     public int ChunkMinTokens { get; set; } = 40;
+
+    // Fail fast on a misconfigured environment rather than surfacing an opaque
+    // error deep in ingest/serve. Called from CliConfiguration.Load() right
+    // after binding, so a bad NUTANIX_MCP__* value is rejected at startup.
+    public void Validate()
+    {
+        if (string.IsNullOrWhiteSpace(ConnectionString))
+        {
+            throw new InvalidOperationException(
+                "ConnectionString must not be empty (set NUTANIX_MCP__ConnectionString).");
+        }
+
+        if (HttpPort is < 1 or > 65535)
+        {
+            throw new InvalidOperationException(
+                $"HttpPort must be in 1..65535, got {HttpPort}.");
+        }
+
+        if (EmbeddingDim <= 0)
+        {
+            throw new InvalidOperationException(
+                $"EmbeddingDim must be positive, got {EmbeddingDim}.");
+        }
+
+        if (IngestBatchSize <= 0)
+        {
+            throw new InvalidOperationException(
+                $"IngestBatchSize must be positive, got {IngestBatchSize}.");
+        }
+
+        if (ChunkMinTokens <= 0 || ChunkTargetTokens <= 0 || ChunkMaxTokens <= 0)
+        {
+            throw new InvalidOperationException(
+                "Chunk token counts must all be positive "
+                + $"(min={ChunkMinTokens}, target={ChunkTargetTokens}, max={ChunkMaxTokens}).");
+        }
+
+        if (ChunkOverlapTokens < 0)
+        {
+            throw new InvalidOperationException(
+                $"ChunkOverlapTokens must not be negative, got {ChunkOverlapTokens}.");
+        }
+
+        if (!(ChunkMinTokens <= ChunkTargetTokens && ChunkTargetTokens <= ChunkMaxTokens))
+        {
+            throw new InvalidOperationException(
+                "Chunk thresholds must satisfy ChunkMinTokens <= ChunkTargetTokens <= ChunkMaxTokens "
+                + $"(got min={ChunkMinTokens}, target={ChunkTargetTokens}, max={ChunkMaxTokens}).");
+        }
+    }
 }

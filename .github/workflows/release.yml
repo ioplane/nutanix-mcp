@@ -89,12 +89,37 @@ jobs:
           printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
 
   # ──────────────────────────────────────────────────────────────────
+  # Create the GitHub Release once, before any uploader runs.
+  # softprops/action-gh-release both creates and uploads; the `publish`
+  # matrix (6 legs) and the `container` job all target the same tag, so
+  # running them against a not-yet-existing release races on creation.
+  # Create it here first with no files, then let each leg upload to the
+  # now-existing release.
+  # ──────────────────────────────────────────────────────────────────
+  create-release:
+    name: create release
+    needs: [ci-mirror, validate-tag]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
+    steps:
+      - name: Create the release (no assets)
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: ${{ env.TAG_NAME }}
+          draft: false
+          prerelease: ${{ contains(env.TAG_NAME, '-') }}
+
+  # ──────────────────────────────────────────────────────────────────
   # GATE 2 — single-file binaries for 6 RIDs. SBOM + checksums per
   # archive. Uploads to the GitHub Release.
   # ──────────────────────────────────────────────────────────────────
   publish:
     name: publish ${{ matrix.rid }}
-    needs: [ci-mirror, validate-tag]
+    needs: [ci-mirror, validate-tag, create-release]
     permissions:
       contents: write
     strategy:
@@ -210,7 +235,7 @@ jobs:
   # ──────────────────────────────────────────────────────────────────
   container:
     name: container
-    needs: [ci-mirror, validate-tag]
+    needs: [ci-mirror, validate-tag, create-release]
     runs-on: ubuntu-latest
     permissions:
       contents: write   # required so softprops/action-gh-release can attach the image SBOM

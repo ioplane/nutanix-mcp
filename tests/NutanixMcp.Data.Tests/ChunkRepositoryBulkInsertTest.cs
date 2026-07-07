@@ -49,7 +49,7 @@ public class ChunkRepositoryBulkInsertTest(PgvectorFixture fx)
             };
         }).ToList();
 
-        var repo = new ChunkRepository(fx.DataSource, ctx);
+        var repo = new ChunkRepository(ctx);
         var sw = Stopwatch.StartNew();
         int inserted = await repo.BulkInsertAsync(chunks, CancellationToken.None);
         sw.Stop();
@@ -89,7 +89,7 @@ public class ChunkRepositoryBulkInsertTest(PgvectorFixture fx)
             Embedding = [.. Enumerable.Repeat(0.1f, 1024)],
         }).ToList();
 
-        var repo = new ChunkRepository(fx.DataSource, ctx);
+        var repo = new ChunkRepository(ctx);
         await repo.BulkInsertAsync(chunks, CancellationToken.None);
 
         int deleted = await repo.DeleteByDocumentAsync("del-doc", CancellationToken.None);

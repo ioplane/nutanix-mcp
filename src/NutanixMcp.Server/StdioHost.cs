@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NutanixMcp.Core.Settings;
+using NutanixMcp.Server.Retrieval;
 
 namespace NutanixMcp.Server;
 
@@ -25,6 +26,12 @@ public static class StdioHost
             .WithToolsFromAssembly(typeof(StdioHost).Assembly);
 
         using var host = builder.Build();
+
+        // Eagerly resolve the retriever singleton so the ONNX embedder/reranker
+        // sessions (and the embedder warm-up in ServerHosting) are built now,
+        // during startup, rather than lazily on the first search request.
+        _ = host.Services.GetRequiredService<IHybridRetriever>();
+
         await host.RunAsync(ct).ConfigureAwait(false);
     }
 }
