@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: tensorchord/vchord-suite:pg18-latest
+        image: tensorchord/vchord-suite:pg18-latest@sha256:c6e5e77a1180199f91b040b6e85c6d10b0ded6d49fb614dfd2e7272ffb91af08
         env:
           POSTGRES_DB: nutanix
           POSTGRES_USER: nutanix
