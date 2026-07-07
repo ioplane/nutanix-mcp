@@ -292,8 +292,13 @@ public static class BootstrapCommand
         // 180s before failing.
         for (int attempt = 1; attempt <= 60; attempt++)
         {
+            // Probe the TCP listener (-h 127.0.0.1 -p 5432) rather than the
+            // default Unix socket: pg_restore and the app both connect over TCP,
+            // and on first boot the socket accepts connections a moment before
+            // the TCP listener is up. Probing the socket would report "ready"
+            // too early and race the restore.
             int rc = await RunSilentAsync(runtime,
-                $"exec {args.ContainerName} pg_isready -U {DefaultUser} -d {DefaultDatabase}",
+                $"exec {args.ContainerName} pg_isready -h 127.0.0.1 -p 5432 -U {DefaultUser} -d {DefaultDatabase}",
                 ct).ConfigureAwait(false);
             if (rc == 0)
             {
@@ -339,11 +344,22 @@ public static class BootstrapCommand
                 "--no-owner --no-acl --clean --if-exists -j 4",
                 "/tmp/nutanix-corpus.dump");
 #pragma warning restore S2068
-            int code = await RunStreamingAsync(runtime, restoreArgs, console, ct).ConfigureAwait(false);
+            var (code, restoreStderr) = await RunStreamingCaptureAsync(runtime, restoreArgs, console, ct).ConfigureAwait(false);
             if (code != 0)
             {
+                if (!LooksLikeHnswSharedMemExhaustion(restoreStderr))
+                {
+                    // Not the /dev/shm-exhaustion signature the serial rebuild
+                    // fixes — surface the real failure instead of blindly
+                    // assuming ENOSPC and running an HNSW rebuild that would
+                    // mask (or compound) the actual problem.
+                    console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
+                        $"[red]error[/] pg_restore failed (exit {code}); see stderr above. This is not the HNSW shared-memory signature — aborting.");
+                    return code;
+                }
+
                 console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
-                    $"[yellow]warn[/] pg_restore exit {code} — typical for HNSW shared-mem ENOSPC; retrying serially");
+                    $"[yellow]warn[/] pg_restore exit {code} — HNSW shared-mem exhaustion (/dev/shm ENOSPC); retrying the index build serially");
                 // Drop+recreate the HNSW index serially with no parallel
                 // workers (avoids /dev/shm exhaustion on small containers).
                 string hnswSql = "SET maintenance_work_mem = '4GB'; SET max_parallel_maintenance_workers = 0; " +
@@ -389,12 +405,9 @@ public static class BootstrapCommand
             // a cancelled outer operation does not block cleanup itself.
             await RunSilentAsync(runtime,
                 $"exec {args.ContainerName} rm -f /tmp/nutanix-corpus.dump", CancellationToken.None).ConfigureAwait(false);
-            if (File.Exists(tmpHostPath))
-            {
-                try { File.Delete(tmpHostPath); }
-                catch (IOException) { /* best-effort cleanup */ }
-                catch (UnauthorizedAccessException) { /* best-effort cleanup */ }
-            }
+            TryDelete(tmpHostPath);
+            // A failed/aborted download leaves the .part behind; clean it too.
+            TryDelete(tmpHostPath + ".part");
         }
     }
 
@@ -516,13 +529,18 @@ public static class BootstrapCommand
             using var doc = await System.Text.Json.JsonDocument.ParseAsync(stream, default, ct).ConfigureAwait(false);
 
             long? assetId = null;
+            long? sha256AssetId = null;
+            string sha256AssetName = assetName + ".sha256";
             foreach (var asset in doc.RootElement.GetProperty("assets").EnumerateArray())
             {
-                if (string.Equals(asset.GetProperty("name").GetString(),
-                                  assetName, StringComparison.Ordinal))
+                string? name = asset.GetProperty("name").GetString();
+                if (string.Equals(name, assetName, StringComparison.Ordinal))
                 {
                     assetId = asset.GetProperty("id").GetInt64();
-                    break;
+                }
+                else if (string.Equals(name, sha256AssetName, StringComparison.Ordinal))
+                {
+                    sha256AssetId = asset.GetProperty("id").GetInt64();
                 }
             }
             if (assetId is null)
@@ -531,71 +549,152 @@ public static class BootstrapCommand
                     $"release {tag} has no asset named {assetName}");
             }
 
+            // Download to a .part file, verify it, then File.Move into place so a
+            // truncated or corrupt download never lands at `destination` where
+            // pg_restore would consume it.
+            string partPath = destination + ".part";
+            long copied;
+            long? total;
+
             // Step 2: GET /repos/{owner}/{repo}/releases/assets/{id} with
             // Accept: application/octet-stream. GitHub returns 302 → S3
             // (release-assets.githubusercontent.com); HttpClient follows
             // automatically, dropping our Authorization header before the
             // S3 hop (GETs to S3 with the GitHub bearer would 401).
             string assetUrl = $"https://api.github.com/repos/{ReleaseRepoOwner}/{ReleaseRepoName}/releases/assets/{assetId}";
-            using var assetReq = new HttpRequestMessage(HttpMethod.Get, assetUrl);
-            assetReq.Headers.Accept.ParseAdd("application/octet-stream");
-            using var assetResp = await http.SendAsync(assetReq, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
-            assetResp.EnsureSuccessStatusCode();
-
-            console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
-                $"  corpus   downloading [green]{assetName}[/] (asset id {assetId})");
-
-            long? total = assetResp.Content.Headers.ContentLength;
-            await using var input = await assetResp.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
-            await using var output = File.Create(destination);
-            var buf = new byte[256 * 1024];
-            long copied = 0;
-            long lastReport = 0;
-            // With HttpCompletionOption.ResponseHeadersRead, HttpClient.Timeout covers only the header
-            // exchange — the body copy is unbounded. Guard each read with an idle timeout so a stalled
-            // connection (headers received, then no bytes) fails fast instead of hanging.
-            var idleTimeout = TimeSpan.FromSeconds(100);
-            while (true)
+            using (var assetReq = new HttpRequestMessage(HttpMethod.Get, assetUrl))
             {
-                int n;
-                using (var idle = CancellationTokenSource.CreateLinkedTokenSource(ct))
-                {
-                    idle.CancelAfter(idleTimeout);
-                    try
-                    {
-                        n = await input.ReadAsync(buf, idle.Token).ConfigureAwait(false);
-                    }
-                    catch (OperationCanceledException) when (!ct.IsCancellationRequested)
-                    {
-                        throw new TimeoutException(
-                            $"download stalled: no data received for {idleTimeout.TotalSeconds:F0}s");
-                    }
-                }
+                assetReq.Headers.Accept.ParseAdd("application/octet-stream");
+                using var assetResp = await http.SendAsync(assetReq, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+                assetResp.EnsureSuccessStatusCode();
 
-                if (n <= 0)
-                {
-                    break;
-                }
+                console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
+                    $"  corpus   downloading [green]{assetName}[/] (asset id {assetId})");
 
-                await output.WriteAsync(buf.AsMemory(0, n), ct).ConfigureAwait(false);
-                copied += n;
-                if (copied - lastReport > 50 * 1024 * 1024 || (total.HasValue && copied == total))
+                total = assetResp.Content.Headers.ContentLength;
+                await using var input = await assetResp.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
+                await using var output = File.Create(partPath);
+                var buf = new byte[256 * 1024];
+                copied = 0;
+                long lastReport = 0;
+                // With HttpCompletionOption.ResponseHeadersRead, HttpClient.Timeout covers only the header
+                // exchange — the body copy is unbounded. Guard each read with an idle timeout so a stalled
+                // connection (headers received, then no bytes) fails fast instead of hanging.
+                var idleTimeout = TimeSpan.FromSeconds(100);
+                while (true)
                 {
-                    lastReport = copied;
-                    if (total.HasValue)
+                    int n;
+                    using (var idle = CancellationTokenSource.CreateLinkedTokenSource(ct))
                     {
-                        double pct = copied * 100.0 / total.Value;
-                        console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
-                            $"           {copied / 1024 / 1024} / {total / 1024 / 1024} MB ({pct:F1}%)");
+                        idle.CancelAfter(idleTimeout);
+                        try
+                        {
+                            n = await input.ReadAsync(buf, idle.Token).ConfigureAwait(false);
+                        }
+                        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+                        {
+                            throw new TimeoutException(
+                                $"download stalled: no data received for {idleTimeout.TotalSeconds:F0}s");
+                        }
                     }
-                    else
+
+                    if (n <= 0)
                     {
-                        console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
-                            $"           {copied / 1024 / 1024} MB");
+                        break;
+                    }
+
+                    await output.WriteAsync(buf.AsMemory(0, n), ct).ConfigureAwait(false);
+                    copied += n;
+                    if (copied - lastReport > 50 * 1024 * 1024 || (total.HasValue && copied == total))
+                    {
+                        lastReport = copied;
+                        if (total.HasValue)
+                        {
+                            double pct = copied * 100.0 / total.Value;
+                            console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
+                                $"           {copied / 1024 / 1024} / {total / 1024 / 1024} MB ({pct:F1}%)");
+                        }
+                        else
+                        {
+                            console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
+                                $"           {copied / 1024 / 1024} MB");
+                        }
                     }
                 }
             }
+
+            // Length check: a mismatch means a truncated body (proxy cut the
+            // connection after headers, disk full, etc.).
+            if (total.HasValue && copied != total.Value)
+            {
+                TryDelete(partPath);
+                throw new InvalidOperationException(
+                    $"download truncated: wrote {copied} bytes but Content-Length was {total.Value}");
+            }
+
+            // Checksum check against the sibling <asset>.sha256 published by the
+            // release pipeline. Missing sibling → warn but proceed (older
+            // releases predate the checksum asset); mismatch → abort.
+            if (sha256AssetId is not null)
+            {
+                string shaText = await DownloadAssetTextAsync(http, sha256AssetId.Value, ct).ConfigureAwait(false);
+                string expected = ParseSha256Hex(shaText);
+                string actual = await ComputeFileSha256Async(partPath, ct).ConfigureAwait(false);
+                if (!string.Equals(expected, actual, StringComparison.OrdinalIgnoreCase))
+                {
+                    TryDelete(partPath);
+                    throw new InvalidOperationException(
+                        $"checksum mismatch for {assetName}: expected {expected}, computed {actual}");
+                }
+
+                console.MarkupLine("  corpus   [green]checksum verified[/]");
+            }
+            else
+            {
+                console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
+                    $"[yellow]warn[/] release {tag} has no {sha256AssetName}; skipping checksum verification");
+            }
+
+            File.Move(partPath, destination, overwrite: true);
         }
+    }
+
+    // Fetch a small text asset (the sibling .sha256) via the same REST path used
+    // for the dump.
+    private static async Task<string> DownloadAssetTextAsync(
+        HttpClient http, long assetId, CancellationToken ct)
+    {
+        string assetUrl = $"https://api.github.com/repos/{ReleaseRepoOwner}/{ReleaseRepoName}/releases/assets/{assetId}";
+        using var req = new HttpRequestMessage(HttpMethod.Get, assetUrl);
+        req.Headers.Accept.ParseAdd("application/octet-stream");
+        using var resp = await http.SendAsync(req, HttpCompletionOption.ResponseContentRead, ct).ConfigureAwait(false);
+        resp.EnsureSuccessStatusCode();
+        return await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+    }
+
+    // sha256sum format is "<hex>  <filename>"; take the first whitespace-
+    // delimited token.
+    private static string ParseSha256Hex(string shaFileContent)
+    {
+        ArgumentNullException.ThrowIfNull(shaFileContent);
+        string first = shaFileContent
+            .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .FirstOrDefault() ?? string.Empty;
+        return first;
+    }
+
+    private static async Task<string> ComputeFileSha256Async(string path, CancellationToken ct)
+    {
+        await using var fs = File.OpenRead(path);
+        byte[] hash = await System.Security.Cryptography.SHA256.HashDataAsync(fs, ct).ConfigureAwait(false);
+        return Convert.ToHexStringLower(hash);
+    }
+
+    private static void TryDelete(string path)
+    {
+        try { File.Delete(path); }
+        catch (IOException) { /* best-effort */ }
+        catch (UnauthorizedAccessException) { /* best-effort */ }
     }
 
     // Restore the pg_tokenizer registry state that pg_dump skipped. After
@@ -823,5 +922,81 @@ public static class BootstrapCommand
             throw;
         }
         return p.ExitCode;
+    }
+
+    // Like RunStreamingAsync but also captures stderr so the caller can inspect
+    // the failure signature (e.g. distinguish HNSW /dev/shm exhaustion from an
+    // unrelated pg_restore error).
+    private static async Task<(int ExitCode, string Stderr)> RunStreamingCaptureAsync(
+        string file, string args, IAnsiConsole console, CancellationToken ct)
+    {
+        var psi = new ProcessStartInfo(file, args)
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+        using var p = Process.Start(psi)
+            ?? throw new InvalidOperationException($"failed to launch {file}");
+        var stderr = new System.Text.StringBuilder();
+        p.OutputDataReceived += (_, e) =>
+        {
+            if (!string.IsNullOrEmpty(e.Data))
+            {
+                console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
+                    $"           {Markup.Escape(e.Data)}");
+            }
+        };
+        p.ErrorDataReceived += (_, e) =>
+        {
+            if (!string.IsNullOrEmpty(e.Data))
+            {
+                lock (stderr)
+                {
+                    stderr.AppendLine(e.Data);
+                }
+
+                console.MarkupLineInterpolated(CultureInfo.InvariantCulture,
+                    $"           [yellow]{Markup.Escape(e.Data)}[/]");
+            }
+        };
+        p.BeginOutputReadLine();
+        p.BeginErrorReadLine();
+        try
+        {
+            await p.WaitForExitAsync(ct).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            try { p.Kill(entireProcessTree: true); }
+            catch (InvalidOperationException) { /* already exited */ }
+            throw;
+        }
+
+        string captured;
+        lock (stderr)
+        {
+            captured = stderr.ToString();
+        }
+
+        return (p.ExitCode, captured);
+    }
+
+    // pg raises "could not resize shared memory segment ... No space left on
+    // device" (ENOSPC on /dev/shm) when a parallel HNSW build exhausts the
+    // container's shared memory. The serial-rebuild fallback only fixes that
+    // case, so scope it to this signature and surface anything else.
+    private static bool LooksLikeHnswSharedMemExhaustion(string stderr)
+    {
+        if (string.IsNullOrEmpty(stderr))
+        {
+            return false;
+        }
+
+        return stderr.Contains("could not resize shared memory", StringComparison.OrdinalIgnoreCase)
+            || stderr.Contains("No space left on device", StringComparison.OrdinalIgnoreCase)
+            || stderr.Contains("shared memory segment", StringComparison.OrdinalIgnoreCase)
+            || stderr.Contains("ENOSPC", StringComparison.OrdinalIgnoreCase);
     }
 }
