@@ -30,8 +30,29 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
   Microsoft.Extensions.* 10.0.13, Microsoft.Extensions.AI 10.11.0,
   OpenTelemetry 1.19.1, System.CommandLine 2.0.13, Spectre.Console 0.57.2,
   test and analyzer packages. SDK pin 10.0.402.
-- CI: in-major action pin updates, semgrep 1.180.0, Node 24 and a pinned
-  `markdownlint-cli2` for docs lint.
+- Tests move to xUnit v3 (4.0.2) on Microsoft.Testing.Platform: `global.json`
+  selects `test.runner`, test projects are executables, dynamic skips use
+  `Assert.SkipWhen`/`Assert.SkipUnless`, and async test calls pass
+  `TestContext.Current.CancellationToken` (xUnit1051).
+- CI runs on Blacksmith runners (`blacksmith-*-ubuntu-2404`, Windows 2025
+  and macOS for the release matrix), every job starts with
+  `step-security/harden-runner` in audit mode, and checkout no longer
+  persists credentials. All actions move to their current majors on Node 24
+  (checkout v7, setup-dotnet v6, setup-node v7, upload-artifact v7,
+  CodeQL v4, action-gh-release v3, cosign-installer v4 with cosign v3.1.3,
+  docker login/metadata v4/v6); semgrep 1.180.0, syft 1.54.1, Node 24 and a
+  pinned `markdownlint-cli2` for docs lint.
+- The release image builds on the Blacksmith Docker builder without QEMU
+  (no instruction runs under the target architecture). A pull request that
+  touches the release pipeline runs it as a dry run: all six archives and
+  the image are built, nothing is published.
+- Release archives and the image carry SBOMs in both CycloneDX and SPDX.
+- `docker/Containerfile.app` pins the SDK and runtime-deps images by digest,
+  moves to Ubuntu 26.04 (`resolute`), uses Dockerfile frontend 1.28.0 and adds
+  `org.opencontainers.image.base.*` annotations.
+- The repository moved to the `ioplane` GitHub organisation. Images from the
+  next release are pushed to `ghcr.io/ioplane/nutanix-mcp`; images up to
+  v0.3.5 stay at `ghcr.io/dantte-lp/nutanix-mcp`.
 
 ### Fixed
 
@@ -41,10 +62,15 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
   findings are bit 8 and license expiry bit 4, so any finding failed the job.
 - `main` did not build: NU1903 on SSH.NET 2025.1.0 pulled in by
   Testcontainers 4.12.0; Testcontainers 4.16.0 brings SSH.NET 2026.0.0.
+- CodeQL failed with "Could not auto-detect a suitable build method"; it now
+  builds the solution explicitly (`build-mode: manual`).
+- `scripts/EmbedBench` did not build (IDE0011 under `EnforceCodeStyleInBuild`).
 
 ### Removed
 
 - Unused NSubstitute test dependency.
+- `Xunit.SkippableFact` (xUnit v3 skips natively) and the QEMU setup step of
+  the image build.
 
 ### Security
 
@@ -1087,9 +1113,11 @@ Initial scaffold sprint. Solution skeleton, package pins, Postgres docker stack.
 - Compose project name explicitly set to `nutanix-mcp` to avoid clobbering
   arista-mcp's `docker/` directory namespace under Podman compose.
 
-[Unreleased]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.3.3...HEAD
-[0.3.3]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.3.2...v0.3.3
-[0.3.2]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.3.1...v0.3.2
-[0.3.1]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.3.0...v0.3.1
-[0.3.0]: https://github.com/dantte-lp/nutanix-mcp/compare/v0.1.0...v0.3.0
-[0.1.0]: https://github.com/dantte-lp/nutanix-mcp/releases/tag/v0.1.0
+[Unreleased]: https://github.com/ioplane/nutanix-mcp/compare/v0.3.5...HEAD
+[0.3.5]: https://github.com/ioplane/nutanix-mcp/compare/v0.3.4...v0.3.5
+[0.3.4]: https://github.com/ioplane/nutanix-mcp/compare/v0.3.3...v0.3.4
+[0.3.3]: https://github.com/ioplane/nutanix-mcp/compare/v0.3.2...v0.3.3
+[0.3.2]: https://github.com/ioplane/nutanix-mcp/compare/v0.3.1...v0.3.2
+[0.3.1]: https://github.com/ioplane/nutanix-mcp/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/ioplane/nutanix-mcp/compare/v0.1.0...v0.3.0
+[0.1.0]: https://github.com/ioplane/nutanix-mcp/releases/tag/v0.1.0

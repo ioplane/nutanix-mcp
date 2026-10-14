@@ -8,6 +8,9 @@ name: scorecard
 # Why a separate workflow: Scorecard wants its own permissions block
 # (id-token: write for the public badge, security-events: write for SARIF)
 # and a clean trigger surface so weekly runs don't fight CI concurrency.
+# With publish_results the Scorecard API also rejects workflows that carry
+# top-level `env`/`defaults` or job containers/services, and only accepts
+# steps from its approved action list (harden-runner is on it).
 
 on:
   branch_protection_rule:
@@ -26,7 +29,7 @@ concurrency:
 jobs:
   analysis:
     name: Scorecard analysis
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     # Scorecard's public-results path requires a public repo; on private
     # repos the action errors out with "Resource not accessible by
     # integration" because GITHUB_TOKEN can't reach the public Scorecard
@@ -39,8 +42,12 @@ jobs:
       contents: read
       actions: read
     steps:
+      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+
       - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -54,14 +61,14 @@ jobs:
           publish_results: true
 
       - name: Upload artefact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: scorecard-results
           path: results.sarif
           retention-days: 14
 
       - name: Upload SARIF to code-scanning
-        uses: github/codeql-action/upload-sarif@9f759ee644a3e7c15c1390abf49868036c00067b # v3.38.3
+        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           sarif_file: results.sarif
           category: scorecard

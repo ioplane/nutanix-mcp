@@ -49,7 +49,8 @@ services:
   # Disabled by default — feedback memory shows listwise regresses 4.39pp on arista-mcp.
   # Enable: podman compose --profile llm up -d
   llm:
-    image: ghcr.io/ggml-org/llama.cpp:server
+    # `server` resolved 2026-10-15; bump the digest deliberately.
+    image: ghcr.io/ggml-org/llama.cpp:server@sha256:89f180f16f295ee496fe00924ec2118cae2efec519d1a82c605420af09d2a6df
     container_name: nutanix-mcp-llm
     restart: unless-stopped
     profiles: ["llm"]

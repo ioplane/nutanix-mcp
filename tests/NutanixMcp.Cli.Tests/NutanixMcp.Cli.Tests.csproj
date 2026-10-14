@@ -6,10 +6,9 @@
   <ItemGroup>
     <ProjectReference Include="../../src/NutanixMcp.Cli/NutanixMcp.Cli.csproj" />
     <ProjectReference Include="../../src/NutanixMcp.Core/NutanixMcp.Core.csproj" />
-    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.v3" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="FluentAssertions" />
-    <PackageReference Include="Xunit.SkippableFact" />
   </ItemGroup>
 </Project>

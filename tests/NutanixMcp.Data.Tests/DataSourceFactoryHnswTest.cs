@@ -15,7 +15,7 @@ public class DataSourceFactoryHnswTest(PgvectorFixture fx)
     public async Task AsyncOpenAppliesHnswOverrides(string requested, string expected)
     {
         await using var ds = DataSourceFactory.Build(fx.ConnectionString, hnswEfSearch: 123, hnswIterativeScan: requested);
-        await using var conn = await ds.OpenConnectionAsync();
+        await using var conn = await ds.OpenConnectionAsync(TestContext.Current.CancellationToken);
 
         Setting(conn, "hnsw.ef_search").Should().Be("123");
         Setting(conn, "hnsw.iterative_scan").Should().Be(expected);

@@ -5,7 +5,7 @@
 ```bash
 TAG=v0.3.3
 RID=linux-x64      # или linux-arm64, win-x64, win-arm64, osx-x64, osx-arm64
-gh release download "$TAG" -R dantte-lp/nutanix-mcp \
+gh release download "$TAG" -R ioplane/nutanix-mcp \
   -p "nutanix-mcp-${TAG}-${RID}.tar.gz"
 tar -xzf "nutanix-mcp-${TAG}-${RID}.tar.gz"
 cd "nutanix-mcp-${TAG}-${RID}"
@@ -102,7 +102,12 @@ dotnet test
 
 Интеграционный набор Data ожидает PostgreSQL на 5435 и при первом
 запуске создаёт базу `nutanix_test`. Embedding-набор гейтит тесты на
-реальной модели через `SkippableFact` — пропустит, если файлов нет.
+реальной модели через `Assert.SkipWhen` (xUnit v3) — пропустит, если файлов нет.
+
+Тесты запускаются на Microsoft.Testing.Platform (`global.json` → `test.runner`),
+поэтому отдельный проект запускается через `dotnet test --project <путь>`.
+Data-набор направлять на временную базу через `NUTANIX_MCP_TEST_CS`, а не на
+сервер с боевым корпусом.
 
 ## Запустить сервер
 

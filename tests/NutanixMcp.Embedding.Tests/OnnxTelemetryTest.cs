@@ -6,10 +6,10 @@ namespace NutanixMcp.Embedding.Tests;
 
 public sealed partial class OnnxTelemetryTest
 {
-    [SkippableFact]
+    [Fact]
     public void DisableForProcess_SetsOrtDisableTelemetryInNativeEnvironment()
     {
-        Skip.If(OperatingSystem.IsWindows(), "Windows telemetry is switched off through the OrtEnv API");
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "Windows telemetry is switched off through the OrtEnv API");
 
         OnnxTelemetry.DisableForProcess();
 

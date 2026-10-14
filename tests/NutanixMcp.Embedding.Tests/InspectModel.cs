@@ -1,6 +1,5 @@
 using Microsoft.ML.OnnxRuntime;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace NutanixMcp.Embedding.Tests;
 
@@ -9,11 +8,11 @@ namespace NutanixMcp.Embedding.Tests;
 public class InspectModel(ITestOutputHelper output)
 {
 #pragma warning disable S2699 // diagnostic-only test, no assertion needed
-    [SkippableFact]
+    [Fact]
     public void PrintEmbedderIO()
     {
         var paths = ModelPaths.Embedder();
-        Skip.If(paths is null, "embedder model assets not present");
+        Assert.SkipWhen(paths is null, "embedder model assets not present");
 
         OnnxTelemetry.DisableForProcess();
         using var sess = new InferenceSession(paths.Value.ModelPath);
@@ -30,11 +29,11 @@ public class InspectModel(ITestOutputHelper output)
         }
     }
 
-    [SkippableFact]
+    [Fact]
     public void PrintRerankerIO_Diagnostic()
     {
         var paths = ModelPaths.Reranker();
-        Skip.If(paths is null, "reranker model assets not present");
+        Assert.SkipWhen(paths is null, "reranker model assets not present");
 
         OnnxTelemetry.DisableForProcess();
         using var sess = new InferenceSession(paths.Value.ModelPath);

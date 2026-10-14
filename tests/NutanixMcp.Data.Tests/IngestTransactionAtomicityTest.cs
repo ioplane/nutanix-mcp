@@ -60,8 +60,8 @@ public class IngestTransactionAtomicityTest(PgvectorFixture fx)
         // Verify with a fresh context so we read the committed database state,
         // not tracked entities from the rolled-back context.
         await using var verify = fx.CreateContext();
-        (await verify.Documents.CountAsync()).Should().Be(0);
-        (await verify.Chunks.CountAsync()).Should().Be(0);
+        (await verify.Documents.CountAsync(cancellationToken: TestContext.Current.CancellationToken)).Should().Be(0);
+        (await verify.Chunks.CountAsync(cancellationToken: TestContext.Current.CancellationToken)).Should().Be(0);
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class IngestTransactionAtomicityTest(PgvectorFixture fx)
         }
 
         await using var verify = fx.CreateContext();
-        (await verify.Documents.CountAsync()).Should().Be(1);
-        (await verify.Chunks.CountAsync()).Should().Be(5);
+        (await verify.Documents.CountAsync(cancellationToken: TestContext.Current.CancellationToken)).Should().Be(1);
+        (await verify.Chunks.CountAsync(cancellationToken: TestContext.Current.CancellationToken)).Should().Be(5);
     }
 }

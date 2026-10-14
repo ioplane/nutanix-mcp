@@ -6,11 +6,11 @@ namespace NutanixMcp.Embedding.Tests;
 
 public class XlmRobertaOnnxRerankerTest
 {
-    [SkippableFact]
+    [Fact]
     public async Task RelevantBeatsIrrelevant()
     {
         var paths = ModelPaths.Reranker();
-        Skip.If(paths is null, "reranker model assets not present");
+        Assert.SkipWhen(paths is null, "reranker model assets not present");
 
         using var rr = new XlmRobertaOnnxReranker(new RerankerOptions
         {
@@ -39,11 +39,11 @@ public class XlmRobertaOnnxRerankerTest
             "VLAN-on-AHV candidate should outrank Pacemaker candidate");
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task EmptyCandidatesReturnsEmpty()
     {
         var paths = ModelPaths.Reranker();
-        Skip.If(paths is null, "reranker model assets not present");
+        Assert.SkipWhen(paths is null, "reranker model assets not present");
 
         using var rr = new XlmRobertaOnnxReranker(new RerankerOptions
         {

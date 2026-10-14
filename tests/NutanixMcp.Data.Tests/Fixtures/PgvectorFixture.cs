@@ -30,7 +30,7 @@ public sealed class PgvectorFixture : IAsyncLifetime
             ?? DefaultConnectionString;
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await EnsureTestDatabaseAsync();
 
@@ -46,7 +46,7 @@ public sealed class PgvectorFixture : IAsyncLifetime
         await ResetAsync();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (DataSource is not null)
         {

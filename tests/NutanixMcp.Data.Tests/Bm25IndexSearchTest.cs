@@ -28,7 +28,7 @@ public class Bm25IndexSearchTest(PgvectorFixture fx)
             MdPath = "m",
             JsonPath = "j",
         });
-        await ctx.SaveChangesAsync();
+        await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         string[] texts = new[]
         {
@@ -58,7 +58,7 @@ public class Bm25IndexSearchTest(PgvectorFixture fx)
             });
         }
 
-        await ctx.SaveChangesAsync();
+        await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // vchord_bm25 query shape:
         //   bm25v <&> to_bm25query('idx_chunks_bm25'::regclass, tokenize($1, 'chunks_tokenizer')::bm25vector)
@@ -77,14 +77,14 @@ public class Bm25IndexSearchTest(PgvectorFixture fx)
             LIMIT 3;
             """;
 
-        await using var conn = await fx.DataSource.OpenConnectionAsync();
+        await using var conn = await fx.DataSource.OpenConnectionAsync(TestContext.Current.CancellationToken);
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = sql;
         cmd.Parameters.Add(new NpgsqlParameter { Value = "AHV VLAN" });
 
         var results = new List<(int Idx, float Score)>();
-        await using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
+        await using var reader = await cmd.ExecuteReaderAsync(TestContext.Current.CancellationToken);
+        while (await reader.ReadAsync(TestContext.Current.CancellationToken))
         {
             results.Add((reader.GetInt32(0), reader.GetFloat(1)));
         }

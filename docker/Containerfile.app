@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1.28.0@sha256:bb22d9815c728170f72750f4e5b0d672e06176142e1d602c7e66c050100b7e5b
 #
 # Multi-stage Containerfile for the nutanix-mcp server image.
 #
@@ -7,7 +7,7 @@
 #                     Self-contained because the runtime stage is
 #                     `runtime-deps` (no managed runtime baked in).
 #
-#   Stage 2 (runtime) — `runtime-deps:10.0-noble-chiseled-extra`.
+#   Stage 2 (runtime) — `runtime-deps:10.0-resolute-chiseled-extra`.
 #                       Chiseled = no shell, no package manager, ~100 MB
 #                       smaller, fewer CVEs; the `-extra` variant keeps
 #                       ICU + tzdata which the corpus pipeline needs for
@@ -17,13 +17,15 @@
 # Multi-arch: docker buildx populates TARGETARCH (`amd64` / `arm64`);
 # we map that to the .NET RID once and reuse it for `dotnet publish`.
 
-ARG SDK_TAG=10.0-noble
-ARG RUNTIME_TAG=10.0-noble-chiseled-extra
+# Base images pinned by digest (Ubuntu 26.04 "resolute"); bump both together.
+ARG SDK_IMAGE=mcr.microsoft.com/dotnet/sdk:10.0.402-resolute@sha256:6924c5c6564690089a67509f5a6ae85d7afa28d7f0f6466ec1b8a5439764ca92
+ARG RUNTIME_IMAGE_NAME=mcr.microsoft.com/dotnet/runtime-deps:10.0.13-resolute-chiseled-extra
+ARG RUNTIME_IMAGE_DIGEST=sha256:8d3382bf11c0da9d087b1852dc2859c5ff113348cbab20fa1282babf36b2386a
 
 # ──────────────────────────────────────────────────────────────────────
 # Stage 1 — build
 # ──────────────────────────────────────────────────────────────────────
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:${SDK_TAG} AS build
+FROM --platform=$BUILDPLATFORM ${SDK_IMAGE} AS build
 ARG TARGETARCH
 ARG VERSION=0.0.0
 ARG COMMIT=unknown
@@ -70,17 +72,21 @@ RUN --mount=type=cache,target=/root/.nuget/packages,sharing=locked \
 # ──────────────────────────────────────────────────────────────────────
 # Stage 2 — runtime
 # ──────────────────────────────────────────────────────────────────────
-FROM mcr.microsoft.com/dotnet/runtime-deps:${RUNTIME_TAG} AS runtime
+FROM ${RUNTIME_IMAGE_NAME}@${RUNTIME_IMAGE_DIGEST} AS runtime
 
 ARG VERSION=0.0.0
 ARG COMMIT=unknown
+ARG RUNTIME_IMAGE_NAME
+ARG RUNTIME_IMAGE_DIGEST
 
 LABEL org.opencontainers.image.title="nutanix-mcp" \
       org.opencontainers.image.description="Hybrid retrieval MCP server for Nutanix documentation" \
-      org.opencontainers.image.source="https://github.com/dantte-lp/nutanix-mcp" \
+      org.opencontainers.image.source="https://github.com/ioplane/nutanix-mcp" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.version="${VERSION}" \
-      org.opencontainers.image.revision="${COMMIT}"
+      org.opencontainers.image.revision="${COMMIT}" \
+      org.opencontainers.image.base.name="${RUNTIME_IMAGE_NAME}" \
+      org.opencontainers.image.base.digest="${RUNTIME_IMAGE_DIGEST}"
 
 WORKDIR /app
 COPY --from=build --chown=app:app /app/publish/ /app/
