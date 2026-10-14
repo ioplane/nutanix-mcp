@@ -214,6 +214,7 @@ public static class BenchCommand
     {
         try
         {
+#pragma warning disable S4036 // Developer bench run inside a checkout; git location is whatever PATH provides.
             var psi = new System.Diagnostics.ProcessStartInfo
             {
                 FileName = "git",
@@ -223,6 +224,7 @@ public static class BenchCommand
                 UseShellExecute = false,
                 CreateNoWindow = true,
             };
+#pragma warning restore S4036
             using var p = System.Diagnostics.Process.Start(psi);
             if (p is null)
             {

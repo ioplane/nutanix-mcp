@@ -24,7 +24,7 @@ public class IngestRunRepositoryTest(PgvectorFixture fx)
 
         var last = await repo.GetLastAsync(CancellationToken.None);
         last.Should().NotBeNull();
-        last!.Id.Should().Be(run.Id);
+        last.Id.Should().Be(run.Id);
         last.Status.Should().Be("success");
         last.DocsUpserted.Should().Be(4);
         last.ChunksUpserted.Should().Be(42);

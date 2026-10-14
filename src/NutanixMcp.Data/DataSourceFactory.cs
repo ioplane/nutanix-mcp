@@ -31,59 +31,54 @@ public static class DataSourceFactory
         var b = new NpgsqlDataSourceBuilder(connectionString);
         b.UseVector();
 
-        if (hnswEfSearch.HasValue || !string.IsNullOrEmpty(hnswIterativeScan))
+        var gucs = new List<(string Name, string Value)>(2);
+        if (hnswEfSearch is { } ef)
         {
-            // Whitelist iterative_scan to a known-safe enum value before
-            // interpolating into the SET command (defense-in-depth — the
-            // value comes from a CLI flag, not user input, but cheap to
-            // pin).
-            string? scan;
-            if (string.IsNullOrEmpty(hnswIterativeScan))
-            {
-                scan = null;
-            }
-            else
-            {
-                scan = hnswIterativeScan.Equals("strict_order", StringComparison.OrdinalIgnoreCase)
-                    ? "strict_order"
-                    : "relaxed_order";
-            }
-            int? ef = hnswEfSearch;
+            gucs.Add(("hnsw.ef_search", ef.ToString(CultureInfo.InvariantCulture)));
+        }
 
+        if (!string.IsNullOrEmpty(hnswIterativeScan))
+        {
+            // Unknown values fall back to relaxed_order, the pgvector default mode.
+            gucs.Add(("hnsw.iterative_scan",
+                hnswIterativeScan.Equals("strict_order", StringComparison.OrdinalIgnoreCase)
+                    ? "strict_order"
+                    : "relaxed_order"));
+        }
+
+        if (gucs.Count > 0)
+        {
             b.UsePhysicalConnectionInitializer(
                 connectionInitializer: conn =>
                 {
-                    if (ef is { } v)
+                    foreach (var (name, value) in gucs)
                     {
-                        using var cmd = conn.CreateCommand();
-                        cmd.CommandText = $"SET hnsw.ef_search = {v.ToString(CultureInfo.InvariantCulture)}";
-                        cmd.ExecuteNonQuery();
-                    }
-                    if (scan is not null)
-                    {
-                        using var cmd = conn.CreateCommand();
-                        cmd.CommandText = $"SET hnsw.iterative_scan = '{scan}'";
+                        using var cmd = SetConfigCommand(conn, name, value);
                         cmd.ExecuteNonQuery();
                     }
                 },
                 connectionInitializerAsync: async conn =>
                 {
-                    if (ef is { } v)
+                    foreach (var (name, value) in gucs)
                     {
-                        await using var cmd = conn.CreateCommand();
-                        cmd.CommandText = $"SET hnsw.ef_search = {v.ToString(CultureInfo.InvariantCulture)}";
-                        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
-                    }
-                    if (scan is not null)
-                    {
-                        await using var cmd = conn.CreateCommand();
-                        cmd.CommandText = $"SET hnsw.iterative_scan = '{scan}'";
+                        await using var cmd = SetConfigCommand(conn, name, value);
                         await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                     }
                 });
         }
 
         return b.Build();
+    }
+
+    // set_config(name, value, is_local => false) is the session-level SET, but with bind
+    // parameters instead of a value spliced into the SQL text (PostgreSQL docs § 9.28.1).
+    private static NpgsqlCommand SetConfigCommand(NpgsqlConnection conn, string name, string value)
+    {
+        var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT set_config(@name, @value, false)";
+        cmd.Parameters.Add(new NpgsqlParameter<string>("name", name));
+        cmd.Parameters.Add(new NpgsqlParameter<string>("value", value));
+        return cmd;
     }
 
     private static string CapPoolSize(string connectionString)

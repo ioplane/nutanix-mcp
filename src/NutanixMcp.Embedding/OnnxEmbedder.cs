@@ -31,21 +31,7 @@ public sealed class OnnxEmbedder : IEmbedder
 
         _opt = opt;
         _tok = new XlmRobertaTokenizer(opt.VocabPath);
-
-        // Dispose the SessionOptions once the session is constructed — the
-        // native handle it owns is not needed past InferenceSession creation
-        // (the session retains whatever it needs internally).
-        using var so = new SessionOptions
-        {
-            GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
-            IntraOpNumThreads = Environment.ProcessorCount,
-        };
-        if (opt.Gpu)
-        {
-            so.AppendExecutionProvider_CUDA();
-        }
-
-        _session = new InferenceSession(opt.ModelPath, so);
+        _session = OnnxSessionDefaults.CreateSession(opt.ModelPath, opt.Gpu);
     }
 
     public async Task<float[][]> EmbedAsync(IReadOnlyList<string> texts, bool isQuery, CancellationToken ct)
@@ -95,7 +81,7 @@ public sealed class OnnxEmbedder : IEmbedder
             ["attention_mask"] = maskVal,
         };
 
-        using var runOpts = new RunOptions();
+        using var runOpts = OnnxSessionDefaults.CreateRunOptions();
         using var results = _session.Run(runOpts, feeds, ["sentence_embedding"]);
         var sentence = results[0].GetTensorDataAsSpan<float>();
 

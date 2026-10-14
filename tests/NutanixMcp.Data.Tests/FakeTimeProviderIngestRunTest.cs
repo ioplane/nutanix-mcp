@@ -28,9 +28,9 @@ public class FakeTimeProviderIngestRunTest(PgvectorFixture fx)
         var last = await repo.GetLastAsync(CancellationToken.None);
 
         last.Should().NotBeNull();
-        last!.StartedAt.Should().Be(t0);
+        last.StartedAt.Should().Be(t0);
         last.FinishedAt.Should().Be(t0 + TimeSpan.FromMinutes(5));
-        (last.FinishedAt!.Value - last.StartedAt).Should().Be(TimeSpan.FromMinutes(5));
+        (last.FinishedAt.Value - last.StartedAt).Should().Be(TimeSpan.FromMinutes(5));
     }
 
     [Fact]

@@ -10,5 +10,6 @@
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Xunit.SkippableFact" />
   </ItemGroup>
 </Project>

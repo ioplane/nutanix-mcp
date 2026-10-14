@@ -8,7 +8,55 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 
 ## [Unreleased]
 
-Nothing here yet.
+### Added
+
+- **Idle model unload.** `serve` loads the embedder and reranker on the
+  first query and releases them after `NUTANIX_MCP__ModelIdleUnloadMinutes`
+  (default `10`, `0` disables) without one. An idle process drops from
+  ~3.6 GB to ~260 MB RSS; the next query reloads the models (~7 s).
+
+### Changed
+
+- ONNX sessions disable the memory pattern (shapes vary per batch) and
+  shrink the CPU arena after each run: ~2.7 GB RSS while loaded instead of
+  ~3.6 GB, ~3.1 GB peak instead of ~3.6 GB. Rankings are unchanged on the
+  12-query probe (same top-10 order, score delta ≤ 0.0001).
+- The embedder warm-up run is gone; with lazy loading it only delayed the
+  first query, and it blocked on async code.
+- HNSW GUC overrides use parameterized `set_config(...)` instead of SQL
+  built by string formatting.
+- Dependencies: ModelContextProtocol 2.2.0, ONNX Runtime 1.31.0, EF Core
+  10.0.13 with Npgsql.EntityFrameworkCore.PostgreSQL 10.0.3,
+  Microsoft.Extensions.* 10.0.13, Microsoft.Extensions.AI 10.11.0,
+  OpenTelemetry 1.19.1, System.CommandLine 2.0.13, Spectre.Console 0.57.2,
+  test and analyzer packages. SDK pin 10.0.402.
+- CI: in-major action pin updates, semgrep 1.180.0, Node 24 and a pinned
+  `markdownlint-cli2` for docs lint.
+
+### Fixed
+
+- Memory freed by an unload now returns to the OS: the process pins the
+  glibc mmap threshold at start-up (without it ~1.4 GB stayed resident).
+- The CI PVS-Studio step read Windows exit codes (256/1024); on Linux
+  findings are bit 8 and license expiry bit 4, so any finding failed the job.
+- `main` did not build: NU1903 on SSH.NET 2025.1.0 pulled in by
+  Testcontainers 4.12.0; Testcontainers 4.16.0 brings SSH.NET 2026.0.0.
+
+### Removed
+
+- Unused NSubstitute test dependency.
+
+### Security
+
+- ONNX Runtime telemetry is switched off for the process. ORT 1.31 native
+  builds default to 1DS telemetry to `mobile.events.data.microsoft.com`;
+  the server sets `ORT_DISABLE_TELEMETRY=1` in the native environment before
+  ORT initializes (an operator-set value is kept). On Windows it calls
+  `OrtEnv.DisableTelemetryEvents()`.
+- Self-contained release bundles ship .NET runtime 10.0.13 (SDK 10.0.402),
+  which carries the fixes of the 10.0.12 and 10.0.13 security releases.
+- SSH.NET GHSA-mggc-4xg6-vcxf and GHSA-q939-rpr3-3284 (test-only
+  dependency) resolved by the Testcontainers update.
 
 ## [0.3.5] — 2026-07-02
 

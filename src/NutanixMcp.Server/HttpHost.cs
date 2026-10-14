@@ -11,6 +11,10 @@ public static class HttpHost
     public static Task RunAsync(NutanixMcpSettings settings, int port, CancellationToken ct)
         => RunAsync(settings, "127.0.0.1", port, ct);
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Security",
+        "S5332:Using clear-text protocols is security-sensitive",
+        Justification = "Binds 127.0.0.1 by default; TLS terminates at the reverse proxy (deploy/README.md § Reverse proxy + TLS).")]
     public static async Task RunAsync(NutanixMcpSettings settings, string bindAddress, int port, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(settings);

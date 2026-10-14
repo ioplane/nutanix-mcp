@@ -34,7 +34,13 @@ public static class ServerHosting
             o.UseNpgsql(ds, n => n.UseVector());
         });
 
-        services.AddSingleton<IEmbedder>(_ => BuildAndWarmEmbedder(settings));
+        // Both ONNX models load on the first query and are released after
+        // `ModelIdleUnloadMinutes` without one, so an idle server does not pin ~3.4 GB.
+        services.AddSingleton<IEmbedder>(sp => new IdleUnloadingEmbedder(
+            () => BuildEmbedder(settings),
+            settings.EmbeddingDim,
+            settings.ModelIdleUnloadTimeout,
+            sp.GetRequiredService<TimeProvider>()));
         // `RerankerDir` overrides `{ModelsDir}/reranker` so production deployments
         // can point at the INT8 fine-tune (e.g. /var/lib/nutanix-mcp/models/
         // reranker-finetuned-int8) without re-laying out the on-disk model tree.
@@ -42,7 +48,10 @@ public static class ServerHosting
         string rerankerDir = !string.IsNullOrWhiteSpace(settings.RerankerDir)
             ? settings.RerankerDir
             : ModelPaths.RerankerDir(settings.ModelsDir);
-        services.AddSingleton<IReranker>(_ => RerankerFamilyDetector.Build(rerankerDir, settings.Gpu));
+        services.AddSingleton<IReranker>(sp => new IdleUnloadingReranker(
+            () => RerankerFamilyDetector.Build(rerankerDir, settings.Gpu),
+            settings.ModelIdleUnloadTimeout,
+            sp.GetRequiredService<TimeProvider>()));
 
         services.AddScoped<IDocumentRepository, DocumentRepository>();
         services.AddScoped<IChunkRepository>(sp => new ChunkRepository(
@@ -66,28 +75,5 @@ public static class ServerHosting
             VocabPath = ModelPaths.EmbedderVocab(settings),
             Gpu = settings.Gpu,
         });
-    }
-
-    // Warm the ONNX session during DI resolution so the first real request
-    // doesn't pay the ~600 ms graph-init cost (bge-m3 is heavier than arista's
-    // Snowflake Arctic; ~2.27 GB external data file).
-    private static OnnxEmbedder BuildAndWarmEmbedder(NutanixMcpSettings settings)
-    {
-        var embedder = BuildEmbedder(settings);
-        try
-        {
-            _ = embedder.EmbedAsync(["warmup"], isQuery: false, CancellationToken.None)
-                .GetAwaiter().GetResult();
-        }
-        catch (Exception ex) when (ex is not OutOfMemoryException and not StackOverflowException)
-        {
-            // Warm-up failure should not block host startup. The real request
-            // will surface whatever underlying error this hit (model missing,
-            // GPU disabled, etc.) with a proper exception path. OOM/stack
-            // overflow still propagate.
-            System.Diagnostics.Debug.WriteLine(
-                $"[nutanix-mcp] embedder warm-up failed (non-fatal): {ex.Message}");
-        }
-        return embedder;
     }
 }

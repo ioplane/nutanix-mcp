@@ -47,7 +47,7 @@ after a tag bump.
 
 Prerequisites:
 
-- .NET 10 SDK 10.0.301 (managed by [`global.json`](../../global.json)).
+- .NET 10 SDK 10.0.402 (managed by [`global.json`](../../global.json)).
 - Podman or Docker (Compose v2).
 - PowerShell 7 (the model fetch script targets `pwsh`).
 

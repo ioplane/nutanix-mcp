@@ -69,6 +69,26 @@ When tuning:
    and rely on the container restart, or wipe the volume and
    re-provision.
 
+## Server memory
+
+`serve` loads both ONNX models on the first query: the bge-m3 embedder
+(FP32, ~2.27 GB of weights) and the reranker (~1.1 GB stock FP16). On a
+12-core reference host this measured ~2.7 GB RSS while loaded and ~3.1 GB
+peak during a query burst.
+
+After `NUTANIX_MCP__ModelIdleUnloadMinutes` (default `10`) without a query,
+both sessions are released and the process drops to ~260 MB; the next query
+reloads them (~7 s on the same host). Set `0` to keep the models resident
+for the process lifetime, for example on a latency-sensitive HTTP service.
+
+At start-up the process pins the glibc mmap threshold, so memory freed by an
+unload goes back to the OS (without it ~1.4 GB stayed resident). Hosts with
+musl or a non-Linux OS keep the allocator defaults.
+
+ONNX Runtime telemetry (1DS, on by default since ORT 1.31) is switched off:
+the process sets `ORT_DISABLE_TELEMETRY=1` before ORT initializes. Export
+`ORT_DISABLE_TELEMETRY=0` to opt back in.
+
 ## Logging and observability
 
 The stdio transport routes all framework logs to standard error
