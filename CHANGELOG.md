@@ -8,6 +8,10 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 
 ## [Unreleased]
 
+Nothing here yet.
+
+## [0.3.6] — 2026-10-15
+
 ### Added
 
 - **Idle model unload.** `serve` loads the embedder and reranker on the
@@ -1116,7 +1120,8 @@ Initial scaffold sprint. Solution skeleton, package pins, Postgres docker stack.
 - Compose project name explicitly set to `nutanix-mcp` to avoid clobbering
   arista-mcp's `docker/` directory namespace under Podman compose.
 
-[Unreleased]: https://github.com/ioplane/nutanix-mcp/compare/v0.3.5...HEAD
+[Unreleased]: https://github.com/ioplane/nutanix-mcp/compare/v0.3.6...HEAD
+[0.3.6]: https://github.com/ioplane/nutanix-mcp/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/ioplane/nutanix-mcp/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/ioplane/nutanix-mcp/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/ioplane/nutanix-mcp/compare/v0.3.2...v0.3.3
