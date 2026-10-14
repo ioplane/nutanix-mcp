@@ -34,8 +34,9 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
   selects `test.runner`, test projects are executables, dynamic skips use
   `Assert.SkipWhen`/`Assert.SkipUnless`, and async test calls pass
   `TestContext.Current.CancellationToken` (xUnit1051).
-- CI runs on Blacksmith runners (`blacksmith-*-ubuntu-2404`, Windows 2025
-  and macOS for the release matrix), every job starts with
+- CI runs on Linux Blacksmith runners (`blacksmith-*-ubuntu-2404`); the
+  release matrix cross-publishes all six RIDs on Linux (the SDK ad-hoc signs
+  the macOS apphost there). Every job starts with
   `step-security/harden-runner` in audit mode, and checkout no longer
   persists credentials. All actions move to their current majors on Node 24
   (checkout v7, setup-dotnet v6, setup-node v7, upload-artifact v7,
@@ -71,6 +72,8 @@ Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcomm
 - Unused NSubstitute test dependency.
 - `Xunit.SkippableFact` (xUnit v3 skips natively) and the QEMU setup step of
   the image build.
+- FluentAssertions, replaced by AwesomeAssertions 9.6.0 (Apache-2.0):
+  FluentAssertions 8 ships under a non-commercial Xceed licence.
 
 ### Security
 

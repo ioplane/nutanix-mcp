@@ -1,4 +1,4 @@
-using FluentAssertions;
+using AwesomeAssertions;
 using Xunit;
 
 namespace NutanixMcp.Server.Tests;

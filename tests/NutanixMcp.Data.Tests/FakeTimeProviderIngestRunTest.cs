@@ -1,4 +1,4 @@
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.Extensions.Time.Testing;
 using NutanixMcp.Data.Repositories;
 using NutanixMcp.Data.Tests.Fixtures;

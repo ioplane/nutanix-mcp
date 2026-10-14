@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using FluentAssertions;
+using AwesomeAssertions;
 using NutanixMcp.Cli.Configuration;
 using Xunit;
 

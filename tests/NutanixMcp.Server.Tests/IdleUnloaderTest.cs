@@ -1,4 +1,4 @@
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.Extensions.Time.Testing;
 using NutanixMcp.Server.Retrieval;
 using Xunit;

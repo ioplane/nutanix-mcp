@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using FluentAssertions;
+using AwesomeAssertions;
 using NutanixMcp.Core.Models;
 using NutanixMcp.Data.Entities;
 using NutanixMcp.Data.Repositories;

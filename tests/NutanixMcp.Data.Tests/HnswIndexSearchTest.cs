@@ -1,4 +1,4 @@
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.EntityFrameworkCore;
 using NutanixMcp.Data.Entities;
 using NutanixMcp.Data.Tests.Fixtures;
