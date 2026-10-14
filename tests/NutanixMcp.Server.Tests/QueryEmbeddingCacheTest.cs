@@ -1,4 +1,4 @@
-using FluentAssertions;
+using AwesomeAssertions;
 using NutanixMcp.Server.Retrieval;
 using Pgvector;
 using Xunit;

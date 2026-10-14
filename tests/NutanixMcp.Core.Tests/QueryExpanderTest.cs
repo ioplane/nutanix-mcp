@@ -1,4 +1,4 @@
-using FluentAssertions;
+using AwesomeAssertions;
 using NutanixMcp.Core.Retrieval;
 using Xunit;
 

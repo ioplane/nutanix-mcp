@@ -151,13 +151,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: blacksmith-4vcpu-ubuntu-2404,  rid: linux-x64,   archive: tar.gz }
-          - { os: blacksmith-4vcpu-ubuntu-2404,  rid: linux-arm64, archive: tar.gz }
-          - { os: blacksmith-4vcpu-windows-2025, rid: win-x64,     archive: zip }
-          - { os: blacksmith-4vcpu-windows-2025, rid: win-arm64,   archive: zip }
-          - { os: blacksmith-6vcpu-macos-latest, rid: osx-x64,     archive: tar.gz }
-          - { os: blacksmith-6vcpu-macos-latest, rid: osx-arm64,   archive: tar.gz }
-    runs-on: ${{ matrix.os }}
+          - { rid: linux-x64,   archive: tar.gz }
+          - { rid: linux-arm64, archive: tar.gz }
+          - { rid: win-x64,     archive: zip }
+          - { rid: win-arm64,   archive: zip }
+          - { rid: osx-x64,     archive: tar.gz }
+          - { rid: osx-arm64,   archive: tar.gz }
+    # Every RID cross-publishes on Linux: the SDK emits the Windows PE apphost
+    # and ad-hoc signs the macOS Mach-O apphost (LC_CODE_SIGNATURE, adhoc
+    # CodeDirectory) without a Windows or macOS host.
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     env:
       TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
       RID: ${{ matrix.rid }}
@@ -228,19 +231,16 @@ jobs:
           set -euo pipefail
           archive="nutanix-mcp-$TAG_NAME-$RID.tar.gz"
           (cd stage && tar -czf "../$archive" "nutanix-mcp-$TAG_NAME-$RID")
-          if command -v sha256sum >/dev/null; then sha256sum "$archive"; else shasum -a 256 "$archive"; fi > "$archive.sha256"
+          sha256sum "$archive" > "$archive.sha256"
 
       - name: Archive (zip)
         if: matrix.archive == 'zip'
-        shell: pwsh
         run: |
-          $ErrorActionPreference = 'Stop'
-          $name    = "nutanix-mcp-$env:TAG_NAME-$env:RID"
-          $archive = "$name.zip"
-          Compress-Archive -Path "stage/$name" -DestinationPath $archive
-          Get-FileHash $archive -Algorithm SHA256 |
-            ForEach-Object { "$($_.Hash.ToLower())  $archive" } |
-            Set-Content "$archive.sha256"
+          set -euo pipefail
+          name="nutanix-mcp-$TAG_NAME-$RID"
+          archive="$name.zip"
+          (cd stage && zip -qr "../$archive" "$name")
+          sha256sum "$archive" > "$archive.sha256"
 
       - name: Keep artefacts for the release job
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

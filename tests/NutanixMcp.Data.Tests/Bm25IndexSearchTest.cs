@@ -1,5 +1,5 @@
 using System.Globalization;
-using FluentAssertions;
+using AwesomeAssertions;
 using Npgsql;
 using NutanixMcp.Data.Entities;
 using NutanixMcp.Data.Tests.Fixtures;
