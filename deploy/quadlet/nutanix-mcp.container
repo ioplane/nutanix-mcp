@@ -6,8 +6,9 @@ After=network-online.target nutanix-mcp-postgres.service
 
 [Container]
 ContainerName=nutanix-mcp
-# Server image is built from the repo's Containerfile.release; pull from
-# ghcr.io once published by the release pipeline.
+# Server image is built from docker/Containerfile.app by the release
+# pipeline. Images up to v0.3.5 live under dantte-lp; switch to
+# ghcr.io/ioplane/nutanix-mcp:latest once the first ioplane release is out.
 Image=ghcr.io/dantte-lp/nutanix-mcp:latest
 
 Network=nutanix-mcp.network

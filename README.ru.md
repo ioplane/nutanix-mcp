@@ -61,7 +61,7 @@ Cli → Server → Core ← Embedding, Data
 
 Однофайловые бинарники собирает workflow `release` для Windows, Linux и
 macOS на amd64 и arm64. Последний тег и SHA-256 — на странице
-[Releases](https://github.com/dantte-lp/nutanix-mcp/releases).
+[Releases](https://github.com/ioplane/nutanix-mcp/releases).
 
 ## Плагин для Claude Code
 
@@ -69,7 +69,7 @@ macOS на amd64 и arm64. Последний тег и SHA-256 — на стр�
 marketplace:
 
 ```text
-/plugin marketplace add https://github.com/dantte-lp/nutanix-mcp
+/plugin marketplace add https://github.com/ioplane/nutanix-mcp
 /plugin install nutanix-mcp
 ```
 

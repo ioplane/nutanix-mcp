@@ -28,13 +28,13 @@
     <FileVersion>0.3.5.0</FileVersion>
 
     <Authors>dantte-lp</Authors>
-    <Company>dantte-lp</Company>
+    <Company>ioplane</Company>
     <Product>nutanix-mcp</Product>
     <Description>Hybrid retrieval MCP server for Nutanix documentation — .NET 10 + pgvector + ONNX</Description>
 
-    <RepositoryUrl>https://github.com/dantte-lp/nutanix-mcp</RepositoryUrl>
+    <RepositoryUrl>https://github.com/ioplane/nutanix-mcp</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageProjectUrl>https://github.com/dantte-lp/nutanix-mcp</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/ioplane/nutanix-mcp</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Copyright>Copyright (c) 2026 dantte-lp</Copyright>
 

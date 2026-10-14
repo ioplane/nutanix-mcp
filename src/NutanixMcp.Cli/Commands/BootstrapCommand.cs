@@ -47,7 +47,7 @@ public static class BootstrapCommand
     // browser-style html URL because private repositories do not
     // serve `releases/download/...` paths even with a Bearer token —
     // see https://docs.github.com/en/rest/releases/assets.
-    private const string ReleaseRepoOwner = "dantte-lp";
+    private const string ReleaseRepoOwner = "ioplane";
     private const string ReleaseRepoName = "nutanix-mcp";
     private static readonly System.Text.CompositeFormat s_releaseDumpAssetName =
         System.Text.CompositeFormat.Parse("nutanix-corpus-{0}.dump");

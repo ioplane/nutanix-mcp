@@ -1,8 +1,8 @@
 {
   "name": "nutanix-mcp",
   "owner": {
-    "name": "dantte-lp",
-    "url": "https://github.com/dantte-lp"
+    "name": "ioplane",
+    "url": "https://github.com/ioplane"
   },
   "plugins": [
     {

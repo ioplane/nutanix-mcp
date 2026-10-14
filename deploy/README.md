@@ -90,19 +90,25 @@ through unchanged.
 
 ## Container
 
-The production server image is `ghcr.io/dantte-lp/nutanix-mcp:vX.Y.Z`,
+The production server image is `ghcr.io/ioplane/nutanix-mcp:vX.Y.Z`,
 built from `docker/Containerfile.app` (multi-stage: SDK 10 → chiseled
-`runtime-deps:10.0-noble-chiseled-extra`, non-root `app` user, read-only
-rootfs). It runs `serve --transport http --bind 0.0.0.0 --port 7456` by
-default. The multi-arch manifest covers `linux/amd64` and `linux/arm64`,
-signed with `cosign` keyless-OIDC on every tag by
-`.github/workflows/release.yml`.
+`runtime-deps:10.0-resolute-chiseled-extra`, both pinned by digest,
+non-root `app` user, read-only rootfs). It runs `serve --transport http
+--bind 0.0.0.0 --port 7456` by default. The multi-arch manifest covers
+`linux/amd64` and `linux/arm64`, signed with `cosign` keyless-OIDC on
+every tag by `.github/workflows/release.yml`.
+
+The repository moved from `dantte-lp` to the `ioplane` organisation. Images
+up to v0.3.5 stay at `ghcr.io/dantte-lp/nutanix-mcp`; later tags are pushed
+to `ghcr.io/ioplane/nutanix-mcp` and signed with cosign v3, which stores the
+signature as an OCI 1.1 referrer, so verify them with cosign v3 or newer.
+The identity pattern below accepts both owners:
 
 ```bash
-podman pull ghcr.io/dantte-lp/nutanix-mcp:v0.3.3
-cosign verify ghcr.io/dantte-lp/nutanix-mcp:v0.3.3 \
+podman pull ghcr.io/ioplane/nutanix-mcp:vX.Y.Z
+cosign verify ghcr.io/ioplane/nutanix-mcp:vX.Y.Z \
   --certificate-identity-regexp \
-    '^https://github\.com/dantte-lp/nutanix-mcp/\.github/workflows/release\.yml@refs/tags/.+' \
+    '^https://github\.com/(dantte-lp|ioplane)/nutanix-mcp/\.github/workflows/release\.yml@refs/tags/.+' \
   --certificate-oidc-issuer-regexp \
     '^https://token\.actions\.githubusercontent\.com$'
 ```
