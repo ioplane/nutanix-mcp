@@ -6,14 +6,14 @@
 # Two entry points:
 #
 #   A. From a release tarball (recommended):
-#        gh release download vX.Y.Z -R dantte-lp/nutanix-mcp \
+#        gh release download vX.Y.Z -R ioplane/nutanix-mcp \
 #          -p 'nutanix-mcp-vX.Y.Z-linux-x64.tar.gz'
 #        tar -xzf nutanix-mcp-vX.Y.Z-linux-x64.tar.gz
 #        cd nutanix-mcp-vX.Y.Z-linux-x64
 #        bash scripts/install.sh
 #
 #   B. From a git checkout:
-#        git clone https://github.com/dantte-lp/nutanix-mcp
+#        git clone https://github.com/ioplane/nutanix-mcp
 #        cd nutanix-mcp && bash scripts/install.sh
 #
 # The script picks the newest release automatically unless TAG=vX.Y.Z is

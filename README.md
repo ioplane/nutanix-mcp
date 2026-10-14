@@ -27,7 +27,7 @@ on a CPU-only laptop reaching the local-host PG.
 ```bash
 TAG=v0.3.3
 RID=linux-x64
-gh release download "$TAG" -R dantte-lp/nutanix-mcp \
+gh release download "$TAG" -R ioplane/nutanix-mcp \
   -p "nutanix-mcp-${TAG}-${RID}.tar.gz"
 tar -xzf "nutanix-mcp-${TAG}-${RID}.tar.gz"
 cd "nutanix-mcp-${TAG}-${RID}"
@@ -86,7 +86,7 @@ component table in [`docs/en/architecture.md`](./docs/en/architecture.md).
 
 Single-file binaries are published from the `release` workflow for
 Windows, Linux, and macOS on amd64 and arm64. See the
-[Releases page](https://github.com/dantte-lp/nutanix-mcp/releases) for
+[Releases page](https://github.com/ioplane/nutanix-mcp/releases) for
 the latest tag and SHA-256 checksums.
 
 ## Claude Code plugin
@@ -95,7 +95,7 @@ A first-party plugin lives under [`plugin/`](./plugin/). To install via
 the marketplace:
 
 ```text
-/plugin marketplace add https://github.com/dantte-lp/nutanix-mcp
+/plugin marketplace add https://github.com/ioplane/nutanix-mcp
 /plugin install nutanix-mcp
 ```
 

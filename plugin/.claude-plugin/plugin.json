@@ -6,8 +6,8 @@
     "name": "dantte-lp",
     "url": "https://github.com/dantte-lp"
   },
-  "homepage": "https://github.com/dantte-lp/nutanix-mcp",
-  "repository": "https://github.com/dantte-lp/nutanix-mcp.git",
+  "homepage": "https://github.com/ioplane/nutanix-mcp",
+  "repository": "https://github.com/ioplane/nutanix-mcp.git",
   "license": "MIT",
   "keywords": [
     "nutanix",

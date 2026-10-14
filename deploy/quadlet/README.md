@@ -27,7 +27,7 @@ boilerplate.
 | `nutanix-mcp.network` | Internal bridge network the server uses to reach PG by name. |
 | `nutanix-mcp-postgres.volume` | Named Podman volume for the PG data dir (survives container redeploys). |
 | `nutanix-mcp-postgres.container` | Postgres 18 + vchord-suite. Health-checks via `pg_isready`. Auto-updates against `tensorchord/vchord-suite:pg18-latest`. |
-| `nutanix-mcp.container` | The MCP server itself. Pulls `ghcr.io/dantte-lp/nutanix-mcp:latest` (after first release-pipeline push). |
+| `nutanix-mcp.container` | The MCP server itself. Pulls `ghcr.io/dantte-lp/nutanix-mcp:latest` (v0.3.5 and earlier); switch to `ghcr.io/ioplane/nutanix-mcp:latest` after the first release from the `ioplane` organisation. |
 
 ## Install — rootless (user-mode)
 
