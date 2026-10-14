@@ -5,11 +5,11 @@ namespace NutanixMcp.Embedding.Tests;
 
 public class OnnxEmbedderTest
 {
-    [SkippableFact]
+    [Fact]
     public async Task EmbeddingDimensionIs1024()
     {
         var paths = ModelPaths.Embedder();
-        Skip.If(paths is null, "embedder model assets not present");
+        Assert.SkipWhen(paths is null, "embedder model assets not present");
 
         using var emb = new OnnxEmbedder(new EmbeddingOptions
         {
@@ -24,11 +24,11 @@ public class OnnxEmbedderTest
         v[0].Length.Should().Be(1024);
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task NormalizedEmbeddingsHaveUnitNorm()
     {
         var paths = ModelPaths.Embedder();
-        Skip.If(paths is null, "embedder model assets not present");
+        Assert.SkipWhen(paths is null, "embedder model assets not present");
 
         using var emb = new OnnxEmbedder(new EmbeddingOptions
         {
@@ -53,11 +53,11 @@ public class OnnxEmbedderTest
         }
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task SimilarTopicsLandCloserThanUnrelatedTopics()
     {
         var paths = ModelPaths.Embedder();
-        Skip.If(paths is null, "embedder model assets not present");
+        Assert.SkipWhen(paths is null, "embedder model assets not present");
 
         using var emb = new OnnxEmbedder(new EmbeddingOptions
         {
@@ -81,11 +81,11 @@ public class OnnxEmbedderTest
             "two AHV-VLAN sentences should be closer than AHV-VLAN vs hardware-replacement");
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task MultilingualCrossLingualSanity()
     {
         var paths = ModelPaths.Embedder();
-        Skip.If(paths is null, "embedder model assets not present");
+        Assert.SkipWhen(paths is null, "embedder model assets not present");
 
         using var emb = new OnnxEmbedder(new EmbeddingOptions
         {

@@ -25,7 +25,7 @@ public class HalfVectorRoundtripTest(PgvectorFixture fx)
             JsonPath = "j",
         };
         ctx.Documents.Add(doc);
-        await ctx.SaveChangesAsync();
+        await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var vec = new Half[1024];
         for (int i = 0; i < 1024; i++)
@@ -43,9 +43,9 @@ public class HalfVectorRoundtripTest(PgvectorFixture fx)
             Embedding = new HalfVector(vec),
         };
         ctx.Chunks.Add(chunk);
-        await ctx.SaveChangesAsync();
+        await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var loaded = await ctx.Chunks.AsNoTracking().FirstAsync(c => c.DocumentId == "doc1");
+        var loaded = await ctx.Chunks.AsNoTracking().FirstAsync(c => c.DocumentId == "doc1", cancellationToken: TestContext.Current.CancellationToken);
         loaded.Embedding.Should().NotBeNull();
         var arr = loaded.Embedding.ToArray();
         arr.Length.Should().Be(1024);

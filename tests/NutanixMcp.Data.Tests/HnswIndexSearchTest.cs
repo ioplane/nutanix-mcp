@@ -29,7 +29,7 @@ public class HnswIndexSearchTest(PgvectorFixture fx)
             MdPath = "m",
             JsonPath = "j",
         });
-        await ctx.SaveChangesAsync();
+        await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         const int chunkCount = 500;
         for (int i = 0; i < chunkCount; i++)
@@ -51,16 +51,16 @@ public class HnswIndexSearchTest(PgvectorFixture fx)
             });
         }
 
-        await ctx.SaveChangesAsync();
+        await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var query = (await ctx.Chunks.AsNoTracking().FirstAsync(c => c.ChunkIndex == 0)).Embedding!;
+        var query = (await ctx.Chunks.AsNoTracking().FirstAsync(c => c.ChunkIndex == 0, cancellationToken: TestContext.Current.CancellationToken)).Embedding!;
 
         var nearest = await ctx.Chunks
             .Where(c => c.Embedding != null)
             .OrderBy(c => c.Embedding!.CosineDistance(query))
             .Take(5)
             .Select(c => c.ChunkIndex)
-            .ToListAsync();
+            .ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         nearest.Should().HaveCount(5);
         nearest[0].Should().Be(0);

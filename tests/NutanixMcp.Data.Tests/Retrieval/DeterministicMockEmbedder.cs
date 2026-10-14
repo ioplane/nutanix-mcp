@@ -11,7 +11,7 @@ namespace NutanixMcp.Data.Tests.Retrieval;
 // test issues the chunk content as the query.
 //
 // Why not run real bge-m3 in tests? Two reasons. First, the model is 2.27 GB
-// of external data; we keep CI without HF downloads green via SkippableFact.
+// of external data; we keep CI without HF downloads green via Assert.SkipWhen.
 // Second, retrieval-pipeline tests should fail because the SQL/RRF/rerank
 // glue broke, not because the embedder is non-deterministic across batch
 // sizes (real ONNX runtimes occasionally drift float results across

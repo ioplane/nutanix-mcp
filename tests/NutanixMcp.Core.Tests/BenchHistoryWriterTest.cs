@@ -17,7 +17,7 @@ public class BenchHistoryWriterTest
             await BenchHistoryWriter.AppendAsync(path, MakeRun("a"), CancellationToken.None);
             await BenchHistoryWriter.AppendAsync(path, MakeRun("b"), CancellationToken.None);
 
-            string[] lines = await File.ReadAllLinesAsync(path);
+            string[] lines = await File.ReadAllLinesAsync(path, TestContext.Current.CancellationToken);
             lines.Should().HaveCount(2);
             lines[0].Should().Contain("\"label\":\"a\"");
             lines[1].Should().Contain("\"label\":\"b\"");
@@ -59,7 +59,7 @@ public class BenchHistoryWriterTest
             };
             await BenchHistoryWriter.AppendAsync(path, run, CancellationToken.None);
 
-            string line = (await File.ReadAllLinesAsync(path))[0];
+            string line = (await File.ReadAllLinesAsync(path, TestContext.Current.CancellationToken))[0];
             line.Should().Contain("\"ef_search\":200");
             line.Should().Contain("\"iterative_scan\":\"strict_order\"");
             line.Should().Contain("\"reranker_dir\":\"models/reranker-finetuned\"");
@@ -78,7 +78,7 @@ public class BenchHistoryWriterTest
         try
         {
             await BenchHistoryWriter.AppendAsync(path, MakeRun("default"), CancellationToken.None);
-            string line = (await File.ReadAllLinesAsync(path))[0];
+            string line = (await File.ReadAllLinesAsync(path, TestContext.Current.CancellationToken))[0];
             line.Should().NotContain("ef_search");
             line.Should().NotContain("iterative_scan");
             line.Should().NotContain("reranker_dir");

@@ -8,5 +8,7 @@
          MA0051 — long arrange/act/assert blocks intentionally not extracted. -->
     <NoWarn>$(NoWarn);CA1707;CA1711;MA0004;MA0051</NoWarn>
     <IsPackable>false</IsPackable>
+    <!-- xUnit v3 test projects are stand-alone executables. -->
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
 </Project>

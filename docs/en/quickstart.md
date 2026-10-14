@@ -5,7 +5,7 @@
 ```bash
 TAG=v0.3.3
 RID=linux-x64      # or linux-arm64, win-x64, win-arm64, osx-x64, osx-arm64
-gh release download "$TAG" -R dantte-lp/nutanix-mcp \
+gh release download "$TAG" -R ioplane/nutanix-mcp \
   -p "nutanix-mcp-${TAG}-${RID}.tar.gz"
 tar -xzf "nutanix-mcp-${TAG}-${RID}.tar.gz"
 cd "nutanix-mcp-${TAG}-${RID}"
@@ -102,7 +102,12 @@ dotnet test
 The Data integration suite expects a running PostgreSQL on port 5435 and
 provisions a `nutanix_test` database on first use. The Embedding suite
 gates real-model tests on the presence of the model files via
-`SkippableFact`.
+`Assert.SkipWhen` (xUnit v3).
+
+Tests run on Microsoft.Testing.Platform (`global.json` → `test.runner`), so a
+single project takes `dotnet test --project <path>`. Point the Data suite at a
+throwaway database with `NUTANIX_MCP_TEST_CS`, not at a server that holds a
+production corpus.
 
 ## Start the server
 

@@ -1,18 +1,26 @@
 name: release
 
-# 4-stage release gate, adapted from gobfd:
+# Release gate, adapted from gobfd:
 #
-#   1. ci-mirror   — reuses ci.yml in workflow_call mode (build + format
-#                    + unit + integration + docs-lint + semgrep + pvs).
-#                    Fails fast.
-#   2. publish     — matrix x6 RIDs. dotnet publish single-file +
-#                    self-contained. Per-artefact SBOM (CycloneDX JSON
-#                    via syft) + SHA-256 checksum.
-#   3. container   — buildx multi-arch (linux/amd64,arm64). Image SBOM
-#                    via syft. Keyless cosign signature. Push to
-#                    ghcr.io/dantte-lp/nutanix-mcp:<tag> + :latest.
-#   4. finalize    — extracts the [<tag>] block from CHANGELOG.md as
-#                    release notes; updates the GitHub Release.
+#   1. ci-mirror     — reuses ci.yml in workflow_call mode (build + format
+#                      + unit + integration + docs-lint + semgrep + pvs).
+#   2. publish       — matrix x6 RIDs. dotnet publish single-file +
+#                      self-contained. Per-artefact SBOM (CycloneDX + SPDX
+#                      JSON via syft) + SHA-256 checksum. Read-only: the
+#                      archives leave the job as workflow artefacts.
+#   3. container     — multi-arch (linux/amd64,arm64) image on the
+#                      Blacksmith builder. Keyless cosign signature. Push to
+#                      ghcr.io/<owner>/nutanix-mcp:<tag> + :latest.
+#   4. finalize      — extracts the [<tag>] block from CHANGELOG.md as
+#                      release notes; updates the GitHub Release.
+#
+# Two paths share the build steps:
+#   - tag push / workflow_dispatch: a real release.
+#   - pull_request touching the release pipeline: a dry run that builds all
+#     six archives and the image but cannot publish. Every job that writes
+#     (create-release, upload-assets, container, corpus-dump, finalize) is
+#     skipped on pull_request at job level, and the jobs that do run on a
+#     pull request hold only `contents: read`.
 #
 # Tag format gate: only `v\d+\.\d+\.\d+(-[A-Za-z0-9.-]+)?` triggers a
 # real release. Anything else fails the validate-tag step before any
@@ -21,6 +29,11 @@ name: release
 on:
   push:
     tags: ["v*.*.*"]
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/release.yml
+      - docker/Containerfile.app
   workflow_dispatch:
     inputs:
       tag:
@@ -36,6 +49,11 @@ env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  SYFT_VERSION: v1.54.1
+
+defaults:
+  run:
+    shell: bash
 
 concurrency:
   group: release-${{ github.ref }}
@@ -56,29 +74,37 @@ jobs:
       PVS_KEY: ${{ secrets.PVS_KEY }}
     permissions:
       contents: read
-      security-events: write
 
   # ──────────────────────────────────────────────────────────────────
-  # Validate the tag format before we burn build minutes.
+  # Validate the tag format before we burn build minutes. A pull request
+  # gets a synthetic pre-release version that only names artefacts.
   # ──────────────────────────────────────────────────────────────────
   validate-tag:
     name: validate tag
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     permissions:
       contents: read
     outputs:
       tag: ${{ steps.tag.outputs.name }}
       version: ${{ steps.tag.outputs.version }}
     steps:
+      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
       - name: Resolve and validate tag
         id: tag
         env:
           INPUT_TAG: ${{ inputs.tag }}
           REF_NAME: ${{ github.ref_name }}
-        shell: bash
+          EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
-          candidate="${INPUT_TAG:-$REF_NAME}"
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            candidate="v0.0.0-pr.${PR_NUMBER}"
+          else
+            candidate="${INPUT_TAG:-$REF_NAME}"
+          fi
           if ! printf '%s' "$candidate" \
               | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$'; then
               printf 'invalid release tag: %q\n' "$candidate" >&2
@@ -90,23 +116,22 @@ jobs:
 
   # ──────────────────────────────────────────────────────────────────
   # Create the GitHub Release once, before any uploader runs.
-  # softprops/action-gh-release both creates and uploads; the `publish`
-  # matrix (6 legs) and the `container` job all target the same tag, so
-  # running them against a not-yet-existing release races on creation.
-  # Create it here first with no files, then let each leg upload to the
-  # now-existing release.
   # ──────────────────────────────────────────────────────────────────
   create-release:
     name: create release
     needs: [ci-mirror, validate-tag]
-    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     permissions:
       contents: write
     env:
       TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
     steps:
+      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
       - name: Create the release (no assets)
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: ${{ env.TAG_NAME }}
           name: ${{ env.TAG_NAME }}
@@ -114,37 +139,42 @@ jobs:
           prerelease: ${{ contains(env.TAG_NAME, '-') }}
 
   # ──────────────────────────────────────────────────────────────────
-  # GATE 2 — single-file binaries for 6 RIDs. SBOM + checksums per
-  # archive. Uploads to the GitHub Release.
+  # GATE 2 — single-file binaries for 6 RIDs, SBOMs and checksums.
+  # Read-only; upload-assets attaches them to the release.
   # ──────────────────────────────────────────────────────────────────
   publish:
     name: publish ${{ matrix.rid }}
-    needs: [ci-mirror, validate-tag, create-release]
+    needs: [ci-mirror, validate-tag]
     permissions:
-      contents: write
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest,  rid: linux-x64,   archive: tar.gz }
-          - { os: ubuntu-latest,  rid: linux-arm64, archive: tar.gz }
-          - { os: windows-latest, rid: win-x64,     archive: zip }
-          - { os: windows-latest, rid: win-arm64,   archive: zip }
-          - { os: macos-latest,   rid: osx-x64,     archive: tar.gz }
-          - { os: macos-latest,   rid: osx-arm64,   archive: tar.gz }
+          - { os: blacksmith-4vcpu-ubuntu-2404,  rid: linux-x64,   archive: tar.gz }
+          - { os: blacksmith-4vcpu-ubuntu-2404,  rid: linux-arm64, archive: tar.gz }
+          - { os: blacksmith-4vcpu-windows-2025, rid: win-x64,     archive: zip }
+          - { os: blacksmith-4vcpu-windows-2025, rid: win-arm64,   archive: zip }
+          - { os: blacksmith-6vcpu-macos-latest, rid: osx-x64,     archive: tar.gz }
+          - { os: blacksmith-6vcpu-macos-latest, rid: osx-arm64,   archive: tar.gz }
     runs-on: ${{ matrix.os }}
     env:
       TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
       RID: ${{ matrix.rid }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
 
-      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: global.json
 
       - name: Publish single-file
-        shell: bash
         run: |
           set -euo pipefail
           dotnet publish src/NutanixMcp.Cli/NutanixMcp.Cli.csproj \
@@ -158,7 +188,6 @@ jobs:
             --output "publish/$RID"
 
       - name: Stage release artefacts
-        shell: bash
         run: |
           set -euo pipefail
           stage="stage/nutanix-mcp-$TAG_NAME-$RID"
@@ -175,33 +204,31 @@ jobs:
           # Only ship cross-platform helper scripts in the bundle.
           cp scripts/fetch-models.ps1 "$stage/scripts/" 2>/dev/null || true
           # install.sh drives the one-command end-user path referenced by
-          # README.md / docs/en/quickstart.md. Ship it too, otherwise
-          # `bash scripts/install.sh` from an extracted tarball fails with
-          # "No such file or directory".
+          # README.md / docs/en/quickstart.md.
           cp scripts/install.sh "$stage/scripts/" 2>/dev/null || true
           chmod +x "$stage/scripts/install.sh" 2>/dev/null || true
 
-      # ── SBOM (CycloneDX JSON) for the staged artefact ──
+      # ── SBOMs (CycloneDX + SPDX JSON) for the staged artefact ──
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
-          syft-version: v1.43.0
+          syft-version: ${{ env.SYFT_VERSION }}
 
-      - name: Generate SBOM
-        shell: bash
+      - name: Generate SBOMs
         run: |
           set -euo pipefail
-          syft "stage/nutanix-mcp-$TAG_NAME-$RID" \
-            --output "cyclonedx-json=nutanix-mcp-$TAG_NAME-$RID.sbom.json"
+          base="nutanix-mcp-$TAG_NAME-$RID"
+          syft "stage/$base" \
+            --output "cyclonedx-json=$base.sbom.cdx.json" \
+            --output "spdx-json=$base.sbom.spdx.json"
 
       - name: Archive (tar.gz)
         if: matrix.archive == 'tar.gz'
-        shell: bash
         run: |
           set -euo pipefail
           archive="nutanix-mcp-$TAG_NAME-$RID.tar.gz"
           (cd stage && tar -czf "../$archive" "nutanix-mcp-$TAG_NAME-$RID")
-          sha256sum "$archive" > "$archive.sha256"
+          if command -v sha256sum >/dev/null; then sha256sum "$archive"; else shasum -a 256 "$archive"; fi > "$archive.sha256"
 
       - name: Archive (zip)
         if: matrix.archive == 'zip'
@@ -215,28 +242,98 @@ jobs:
             ForEach-Object { "$($_.Hash.ToLower())  $archive" } |
             Set-Content "$archive.sha256"
 
+      - name: Keep artefacts for the release job
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-${{ matrix.rid }}
+          path: |
+            nutanix-mcp-*.tar.gz
+            nutanix-mcp-*.tar.gz.sha256
+            nutanix-mcp-*.zip
+            nutanix-mcp-*.zip.sha256
+            nutanix-mcp-*.sbom.*.json
+          if-no-files-found: error
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────────────────
+  # Attach the six archives to the release in one place.
+  # ──────────────────────────────────────────────────────────────────
+  upload-assets:
+    name: upload release assets
+    needs: [validate-tag, create-release, publish]
+    if: github.event_name != 'pull_request'
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    permissions:
+      contents: write
+    env:
+      TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
+    steps:
+      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+      - name: Download archives
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: dist
       - name: Upload to release
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: ${{ env.TAG_NAME }}
           name: ${{ env.TAG_NAME }}
           draft: false
           prerelease: ${{ contains(env.TAG_NAME, '-') }}
-          files: |
-            nutanix-mcp-*.tar.gz
-            nutanix-mcp-*.tar.gz.sha256
-            nutanix-mcp-*.zip
-            nutanix-mcp-*.zip.sha256
-            nutanix-mcp-*.sbom.json
+          files: dist/*
+
+  # ──────────────────────────────────────────────────────────────────
+  # Pull-request dry run of the image build: same builder and inputs as
+  # `container`, but read-only and never pushed.
+  # ──────────────────────────────────────────────────────────────────
+  container-verify:
+    name: container (dry run)
+    needs: [ci-mirror, validate-tag]
+    if: github.event_name == 'pull_request'
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    permissions:
+      contents: read
+    env:
+      VERSION: ${{ needs.validate-tag.outputs.version }}
+    steps:
+      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2.2.0
+        with:
+          cache-key: nutanix-mcp-containerfile-app
+      - name: Build (no push)
+        uses: useblacksmith/build-push-action@9b0579bbec7a6cad2f171596c57e7ac1e7658850 # v2.3.0
+        with:
+          context: .
+          file: docker/Containerfile.app
+          platforms: linux/amd64,linux/arm64
+          push: false
+          provenance: false
+          build-args: |
+            VERSION=${{ env.VERSION }}
+            COMMIT=${{ github.sha }}
 
   # ──────────────────────────────────────────────────────────────────
   # GATE 3 — multi-arch container image, signed with cosign keyless,
-  # pushed to GHCR. Image SBOM attached.
+  # pushed to GHCR. Image SBOMs attached to the release.
+  #
+  # No QEMU: the build stage runs on $BUILDPLATFORM and cross-publishes,
+  # and the runtime stage only copies files, so no instruction executes
+  # under the target architecture.
   # ──────────────────────────────────────────────────────────────────
   container:
     name: container
     needs: [ci-mirror, validate-tag, create-release]
-    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: write   # required so softprops/action-gh-release can attach the image SBOM
       packages: write
@@ -245,37 +342,28 @@ jobs:
       TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
       VERSION: ${{ needs.validate-tag.outputs.version }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
 
-      - name: Skip if Containerfile missing
-        id: precheck
-        shell: bash
-        run: |
-          if [ ! -f docker/Containerfile.app ]; then
-            echo "Containerfile.app not present yet — skipping container build."
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
-        if: steps.precheck.outputs.skip != 'true'
-
-      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
-        if: steps.precheck.outputs.skip != 'true'
+      - uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2.2.0
+        with:
+          cache-key: nutanix-mcp-containerfile-app
 
       - name: Log in to GHCR
-        if: steps.precheck.outputs.skip != 'true'
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Container metadata
-        if: steps.precheck.outputs.skip != 'true'
         id: meta
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
@@ -284,9 +372,8 @@ jobs:
             type=raw,value=latest,enable=${{ !contains(env.TAG_NAME, '-') }}
 
       - name: Build and push
-        if: steps.precheck.outputs.skip != 'true'
         id: build
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        uses: useblacksmith/build-push-action@9b0579bbec7a6cad2f171596c57e7ac1e7658850 # v2.3.0
         with:
           context: .
           file: docker/Containerfile.app
@@ -301,34 +388,36 @@ jobs:
             COMMIT=${{ github.sha }}
 
       - name: Install cosign
-        if: steps.precheck.outputs.skip != 'true'
-        uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          # v3.1.3 fixes GHSA-fx35-mq7g-6g98; the installer default is v3.0.6.
+          cosign-release: v3.1.3
 
       - name: Install Syft
-        if: steps.precheck.outputs.skip != 'true'
         uses: anchore/sbom-action/download-syft@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
-          syft-version: v1.43.0
+          syft-version: ${{ env.SYFT_VERSION }}
 
       - name: Sign image (keyless)
-        if: steps.precheck.outputs.skip != 'true'
         env:
           IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
         run: cosign sign --yes "$IMAGE"
 
-      - name: Generate image SBOM
-        if: steps.precheck.outputs.skip != 'true'
+      - name: Generate image SBOMs
         env:
-          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
         run: |
-          syft "$IMAGE" --output "cyclonedx-json=image-sbom.json"
+          syft "$IMAGE" \
+            --output "cyclonedx-json=image-sbom.cdx.json" \
+            --output "spdx-json=image-sbom.spdx.json"
 
-      - name: Upload image SBOM to release
-        if: steps.precheck.outputs.skip != 'true'
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+      - name: Upload image SBOMs to release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: ${{ env.TAG_NAME }}
-          files: image-sbom.json
+          files: |
+            image-sbom.cdx.json
+            image-sbom.spdx.json
 
   # ──────────────────────────────────────────────────────────────────
   # Corpus dump bring-forward.
@@ -346,23 +435,26 @@ jobs:
   # ──────────────────────────────────────────────────────────────────
   corpus-dump:
     name: corpus dump
-    needs: [validate-tag, publish]
-    runs-on: ubuntu-latest
+    needs: [validate-tag, upload-assets]
+    if: github.event_name != 'pull_request'
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     permissions:
       contents: write
     env:
       TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
 
       - name: Bring-forward last release's corpus dump
-        shell: bash
         run: |
           set -euo pipefail
 
           asset="nutanix-corpus-${TAG_NAME}.dump"
-          repo="${{ github.repository }}"
+          repo="$REPO"
           mkdir -p _carry
 
           # Skip if the new release already has the asset (someone
@@ -411,9 +503,11 @@ jobs:
             rm -f "_carry/${src_asset}.sha256"
           fi
 
-          gh release upload "$TAG_NAME" -R "$repo" --clobber \
-            "_carry/$asset" \
-            $([ -f "_carry/${asset}.sha256" ] && echo "_carry/${asset}.sha256")
+          files=("_carry/$asset")
+          if [ -f "_carry/${asset}.sha256" ]; then
+            files+=("_carry/${asset}.sha256")
+          fi
+          gh release upload "$TAG_NAME" -R "$repo" --clobber "${files[@]}"
 
   # ──────────────────────────────────────────────────────────────────
   # Extract the [<tag>] block from CHANGELOG.md as release notes.
@@ -422,20 +516,26 @@ jobs:
   # ──────────────────────────────────────────────────────────────────
   finalize:
     name: finalize release notes
-    needs: [publish, container, corpus-dump, validate-tag]
-    if: always() && needs.publish.result == 'success'
-    runs-on: ubuntu-latest
+    needs: [upload-assets, container, corpus-dump, validate-tag]
+    if: always() && github.event_name != 'pull_request' && needs.upload-assets.result == 'success'
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     permissions:
       contents: write
     env:
       TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
       VERSION: ${{ needs.validate-tag.outputs.version }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Extract release notes
-        shell: bash
         run: |
           set -euo pipefail
           # awk: collect lines between `## [<version>]` and the next
@@ -454,7 +554,7 @@ jobs:
             {
               echo "## What's Changed"
               echo
-              echo "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details."
+              echo "See [CHANGELOG.md](https://github.com/${REPO}/blob/main/CHANGELOG.md) for details."
             } > release-notes.md
           fi
           echo "── release notes ──"
@@ -462,4 +562,4 @@ jobs:
           echo "──────────────────"
 
       - name: Update release
-        run: gh release edit "$TAG_NAME" --notes-file release-notes.md
+        run: gh release edit "$TAG_NAME" -R "$REPO" --notes-file release-notes.md

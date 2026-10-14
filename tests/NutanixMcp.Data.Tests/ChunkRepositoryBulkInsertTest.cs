@@ -27,7 +27,7 @@ public class ChunkRepositoryBulkInsertTest(PgvectorFixture fx)
             MdPath = "m",
             JsonPath = "j",
         });
-        await ctx.SaveChangesAsync();
+        await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var rng = new Random(7);
         var chunks = Enumerable.Range(0, 1000).Select(i =>
@@ -77,7 +77,7 @@ public class ChunkRepositoryBulkInsertTest(PgvectorFixture fx)
             MdPath = "m",
             JsonPath = "j",
         });
-        await ctx.SaveChangesAsync();
+        await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var chunks = Enumerable.Range(0, 10).Select(i => new NutanixChunk
         {
