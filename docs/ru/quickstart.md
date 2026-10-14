@@ -50,7 +50,7 @@ sudo bash scripts/install.sh
 
 Требования:
 
-- .NET 10 SDK 10.0.301 (управляется через [`global.json`](../../global.json)).
+- .NET 10 SDK 10.0.402 (управляется через [`global.json`](../../global.json)).
 - Podman или Docker (Compose v2).
 - PowerShell 7 (скрипт скачивания моделей рассчитан на `pwsh`).
 

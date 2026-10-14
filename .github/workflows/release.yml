@@ -137,7 +137,7 @@ jobs:
       TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
       RID: ${{ matrix.rid }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
@@ -183,7 +183,7 @@ jobs:
 
       # ── SBOM (CycloneDX JSON) for the staged artefact ──
       - name: Install Syft
-        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        uses: anchore/sbom-action/download-syft@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
           syft-version: v1.43.0
 
@@ -245,7 +245,7 @@ jobs:
       TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
       VERSION: ${{ needs.validate-tag.outputs.version }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Skip if Containerfile missing
         id: precheck
@@ -306,7 +306,7 @@ jobs:
 
       - name: Install Syft
         if: steps.precheck.outputs.skip != 'true'
-        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        uses: anchore/sbom-action/download-syft@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
           syft-version: v1.43.0
 
@@ -354,7 +354,7 @@ jobs:
       TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Bring-forward last release's corpus dump
         shell: bash
@@ -432,7 +432,7 @@ jobs:
       VERSION: ${{ needs.validate-tag.outputs.version }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Extract release notes
         shell: bash

@@ -41,6 +41,27 @@ public class NutanixMcpSettingsValidateTest
     }
 
     [Fact]
+    public void NegativeModelIdleUnloadMinutes_Throws()
+    {
+        var s = new NutanixMcpSettings { ModelIdleUnloadMinutes = -1 };
+        s.Invoking(x => x.Validate()).Should().Throw<InvalidOperationException>()
+            .WithMessage("*ModelIdleUnloadMinutes*");
+    }
+
+    [Fact]
+    public void ZeroModelIdleUnloadMinutes_DisablesUnload()
+    {
+        new NutanixMcpSettings { ModelIdleUnloadMinutes = 0 }.ModelIdleUnloadTimeout
+            .Should().Be(Timeout.InfiniteTimeSpan);
+    }
+
+    [Fact]
+    public void ModelIdleUnloadMinutes_DefaultsToTenMinutes()
+    {
+        new NutanixMcpSettings().ModelIdleUnloadTimeout.Should().Be(TimeSpan.FromMinutes(10));
+    }
+
+    [Fact]
     public void ChunkThresholdsOutOfOrder_Throws()
     {
         // target > max violates min <= target <= max.

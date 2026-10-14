@@ -31,6 +31,15 @@ public sealed class NutanixMcpSettings
     public McpTransport Transport { get; set; } = McpTransport.Stdio;
     public int HttpPort { get; set; } = 7456;
 
+    // Minutes without a search before `serve` releases the ONNX embedder and reranker
+    // (~3.4 GB of weights with bge-m3 FP32 + the FP16 reranker); the next query reloads
+    // them. 0 keeps both loaded for the process lifetime.
+    public int ModelIdleUnloadMinutes { get; set; } = 10;
+
+    public TimeSpan ModelIdleUnloadTimeout => ModelIdleUnloadMinutes == 0
+        ? Timeout.InfiniteTimeSpan
+        : TimeSpan.FromMinutes(ModelIdleUnloadMinutes);
+
     public int IngestBatchSize { get; set; } = 32;
 
     // Chunking thresholds — see docs/plans/chunking-strategy.md § 4.2.
@@ -60,6 +69,12 @@ public sealed class NutanixMcpSettings
         {
             throw new InvalidOperationException(
                 $"EmbeddingDim must be positive, got {EmbeddingDim}.");
+        }
+
+        if (ModelIdleUnloadMinutes < 0)
+        {
+            throw new InvalidOperationException(
+                $"ModelIdleUnloadMinutes must not be negative (0 disables unloading), got {ModelIdleUnloadMinutes}.");
         }
 
         if (IngestBatchSize <= 0)

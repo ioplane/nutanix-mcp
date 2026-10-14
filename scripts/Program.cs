@@ -57,13 +57,25 @@ foreach (var line in lines)
     if (current.Length + line.Length > 512 && current.Length > 0)
     {
         paragraphs.Add(current.ToString());
-        if (paragraphs.Count >= count) break;
+        if (paragraphs.Count >= count)
+        {
+            break;
+        }
+
         current.Clear();
     }
-    if (current.Length > 0) current.Append(' ');
+
+    if (current.Length > 0)
+    {
+        current.Append(' ');
+    }
+
     current.Append(line);
 }
-if (current.Length > 0 && paragraphs.Count < count) paragraphs.Add(current.ToString());
+if (current.Length > 0 && paragraphs.Count < count)
+{
+    paragraphs.Add(current.ToString());
+}
 
 if (paragraphs.Count < count)
 {

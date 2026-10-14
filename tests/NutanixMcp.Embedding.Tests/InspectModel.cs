@@ -15,7 +15,8 @@ public class InspectModel(ITestOutputHelper output)
         var paths = ModelPaths.Embedder();
         Skip.If(paths is null, "embedder model assets not present");
 
-        using var sess = new InferenceSession(paths!.Value.ModelPath);
+        OnnxTelemetry.DisableForProcess();
+        using var sess = new InferenceSession(paths.Value.ModelPath);
         output.WriteLine("=== embedder inputs ===");
         foreach (var (name, meta) in sess.InputMetadata)
         {
@@ -35,7 +36,8 @@ public class InspectModel(ITestOutputHelper output)
         var paths = ModelPaths.Reranker();
         Skip.If(paths is null, "reranker model assets not present");
 
-        using var sess = new InferenceSession(paths!.Value.ModelPath);
+        OnnxTelemetry.DisableForProcess();
+        using var sess = new InferenceSession(paths.Value.ModelPath);
         output.WriteLine("=== reranker inputs ===");
         foreach (var (name, meta) in sess.InputMetadata)
         {

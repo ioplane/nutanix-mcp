@@ -36,6 +36,10 @@ plugin/
     FP32 `bge-reranker-v2-m3`).
     **Requires v0.3.3+** — earlier releases documented this variable but
     silently ignored it (no matching property on `NutanixMcpSettings`).
+  - `NUTANIX_MCP__ModelIdleUnloadMinutes` — optional, default `10`; minutes
+    without a query before the server releases the ONNX models (~2.7 GB →
+    ~260 MB). `0` keeps them loaded. See
+    [`docs/en/operations.md`](../docs/en/operations.md#server-memory).
 
 ## Install
 

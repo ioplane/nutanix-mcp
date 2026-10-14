@@ -13,7 +13,7 @@ public class OnnxEmbedderTest
 
         using var emb = new OnnxEmbedder(new EmbeddingOptions
         {
-            ModelPath = paths!.Value.ModelPath,
+            ModelPath = paths.Value.ModelPath,
             VocabPath = paths.Value.VocabPath,
         });
 
@@ -32,7 +32,7 @@ public class OnnxEmbedderTest
 
         using var emb = new OnnxEmbedder(new EmbeddingOptions
         {
-            ModelPath = paths!.Value.ModelPath,
+            ModelPath = paths.Value.ModelPath,
             VocabPath = paths.Value.VocabPath,
         });
 
@@ -61,7 +61,7 @@ public class OnnxEmbedderTest
 
         using var emb = new OnnxEmbedder(new EmbeddingOptions
         {
-            ModelPath = paths!.Value.ModelPath,
+            ModelPath = paths.Value.ModelPath,
             VocabPath = paths.Value.VocabPath,
         });
 
@@ -89,7 +89,7 @@ public class OnnxEmbedderTest
 
         using var emb = new OnnxEmbedder(new EmbeddingOptions
         {
-            ModelPath = paths!.Value.ModelPath,
+            ModelPath = paths.Value.ModelPath,
             VocabPath = paths.Value.VocabPath,
         });
 

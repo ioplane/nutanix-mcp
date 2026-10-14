@@ -7,6 +7,8 @@ internal static class Program
 {
     private static Task<int> Main(string[] args)
     {
+        NativeMemoryTuning.TryUseFixedMmapThreshold();
+
         var root = new RootCommand("nutanix-mcp — hybrid retrieval MCP server for Nutanix documentation")
         {
             ServeCommand.Build(),

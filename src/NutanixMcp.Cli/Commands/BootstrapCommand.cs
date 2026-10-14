@@ -338,11 +338,13 @@ public static class BootstrapCommand
             // --clean drops existing schema, --if-exists tolerates a fresh DB.
             // -j 4 parallelises restore; HNSW index rebuild may still serialize.
 #pragma warning disable S2068 // Const credential — see DefaultPgPassword docstring.
+#pragma warning disable S5443 // /tmp of the DB container (copied in above, removed after restore), not the host.
             string restoreArgs = string.Join(' ',
                 $"exec -e PGPASSWORD={DefaultPgPassword} {args.ContainerName}",
                 $"pg_restore -h 127.0.0.1 -U {DefaultUser} -d {DefaultDatabase}",
                 "--no-owner --no-acl --clean --if-exists -j 4",
                 "/tmp/nutanix-corpus.dump");
+#pragma warning restore S5443
 #pragma warning restore S2068
             var (code, restoreStderr) = await RunStreamingCaptureAsync(runtime, restoreArgs, console, ct).ConfigureAwait(false);
             if (code != 0)
@@ -591,10 +593,10 @@ public static class BootstrapCommand
                         {
                             n = await input.ReadAsync(buf, idle.Token).ConfigureAwait(false);
                         }
-                        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+                        catch (OperationCanceledException ex) when (!ct.IsCancellationRequested)
                         {
                             throw new TimeoutException(
-                                $"download stalled: no data received for {idleTimeout.TotalSeconds:F0}s");
+                                $"download stalled: no data received for {idleTimeout.TotalSeconds:F0}s", ex);
                         }
                     }
 
@@ -693,8 +695,8 @@ public static class BootstrapCommand
     private static void TryDelete(string path)
     {
         try { File.Delete(path); }
-        catch (IOException) { /* best-effort */ }
-        catch (UnauthorizedAccessException) { /* best-effort */ }
+        catch (IOException) { /* best-effort */ } //-V3163 intentional: narrow best-effort handler
+        catch (UnauthorizedAccessException) { /* best-effort */ } //-V3163 intentional: narrow best-effort handler
     }
 
     // Restore the pg_tokenizer registry state that pg_dump skipped. After
@@ -824,7 +826,7 @@ public static class BootstrapCommand
                 // running in the background — kill the whole tree so the next
                 // bootstrap attempt isn't blocked by a stale child.
                 try { p.Kill(entireProcessTree: true); }
-                catch (InvalidOperationException) { /* already exited */ }
+                catch (InvalidOperationException) { /* already exited */ } //-V3163 intentional: narrow best-effort handler
                 throw;
             }
             return p.ExitCode;
@@ -866,7 +868,7 @@ public static class BootstrapCommand
             catch (OperationCanceledException)
             {
                 try { p.Kill(entireProcessTree: true); }
-                catch (InvalidOperationException) { /* already exited */ }
+                catch (InvalidOperationException) { /* already exited */ } //-V3163 intentional: narrow best-effort handler
                 throw;
             }
             return p.ExitCode == 0
@@ -918,7 +920,7 @@ public static class BootstrapCommand
             // Kill the whole tree so an interrupted pg_restore / podman pull
             // doesn't keep running past the abandoned bootstrap.
             try { p.Kill(entireProcessTree: true); }
-            catch (InvalidOperationException) { /* already exited */ }
+            catch (InvalidOperationException) { /* already exited */ } //-V3163 intentional: narrow best-effort handler
             throw;
         }
         return p.ExitCode;
@@ -970,7 +972,7 @@ public static class BootstrapCommand
         catch (OperationCanceledException)
         {
             try { p.Kill(entireProcessTree: true); }
-            catch (InvalidOperationException) { /* already exited */ }
+            catch (InvalidOperationException) { /* already exited */ } //-V3163 intentional: narrow best-effort handler
             throw;
         }
 

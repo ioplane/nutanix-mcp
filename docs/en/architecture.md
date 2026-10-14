@@ -20,7 +20,7 @@ flowchart LR
 | Project | Role |
 |---|---|
 | `NutanixMcp.Core` | Domain models, retrieval primitives, settings, model paths. No external deps beyond the BCL. |
-| `NutanixMcp.Data` | EF Core 9.0.15, Npgsql binary COPY, repositories. Owns migrations. |
+| `NutanixMcp.Data` | EF Core 10.0.13, Npgsql binary COPY, repositories. Owns migrations. |
 | `NutanixMcp.Embedding` | ONNX Runtime, SentencePiece tokenizer, embedder and reranker implementations. |
 | `NutanixMcp.Server` | MCP tool surface, hybrid retriever, hosting (stdio and HTTP). |
 | `NutanixMcp.Cli` | `nutanix-mcp` executable; entry verbs include `serve`. |
@@ -121,15 +121,15 @@ expansion, and no listwise re-rank — the rationale is recorded in
 
 | Component | Pinned version | Rationale |
 |---|---|---|
-| .NET SDK | 10.0.301 | TFM `net10.0`. |
-| EF Core | 9.0.15 | `Pgvector.EntityFrameworkCore` 0.3.0 transitively pulls 9.0.1; direct pin to 9.0.15 wins. |
-| Npgsql.EFCore | 9.0.4 | Matches EF 9. |
+| .NET SDK | 10.0.402 | TFM `net10.0`; ships runtime 10.0.13 into self-contained bundles. |
+| EF Core | 10.0.13 | `Pgvector.EntityFrameworkCore` 0.3.0 transitively pulls an older EF Core; the direct pin wins. |
+| Npgsql.EFCore | 10.0.3 | Matches EF Core 10. |
 | pgvector | 0.8.2 | Bundled by `vchord-suite:pg18-latest`. |
 | vchord | 1.1.1 | Bundled. |
 | vchord_bm25 | 0.3.0 | Bundled. |
 | pg_tokenizer | 0.1.1 | Bundled. |
-| ModelContextProtocol / .AspNetCore | 1.4.0 | MCP SDK. |
-| Microsoft.ML.OnnxRuntime (CPU / .Gpu) | 1.27.0 | CPU is default; GPU build switches to `*.Gpu` via `-p:UseGpuOnnx=true`. |
+| ModelContextProtocol / .AspNetCore | 2.2.0 | MCP SDK. |
+| Microsoft.ML.OnnxRuntime (CPU / .Gpu) | 1.31.0 | CPU is default; GPU build switches to `*.Gpu` via `-p:UseGpuOnnx=true`. |
 | Microsoft.ML.Tokenizers | 2.0.0 | Loads SentencePiece via `SentencePieceTokenizer.Create`. |
 | `bge-m3` | from BAAI on Hugging Face | Embedder ONNX, external-data layout (`model.onnx` plus `model.onnx_data`). |
-| `bge-reranker-v2-m3` | from `hooman650/bge-reranker-v2-m3-onnx-o4` | Optimum-O4 ONNX export, FP32. |
+| `bge-reranker-v2-m3` | from `hooman650/bge-reranker-v2-m3-onnx-o4` | Optimum-O4 ONNX export, FP16 weights. |

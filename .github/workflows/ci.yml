@@ -32,7 +32,7 @@ jobs:
     name: build + unit tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           global-json-file: global.json
@@ -65,7 +65,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           global-json-file: global.json
@@ -88,12 +88,12 @@ jobs:
     name: docs lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '20'
+          node-version: '24'
       - name: Install markdownlint-cli2
-        run: npm install --global markdownlint-cli2
+        run: npm install --global markdownlint-cli2@0.23.3
       - name: Lint Markdown
         run: markdownlint-cli2 '**/*.md' '#node_modules' '#bin' '#obj'
 
@@ -101,11 +101,11 @@ jobs:
     name: semgrep
     runs-on: ubuntu-latest
     container:
-      # Digest-pinned semgrep/semgrep:latest (resolved 2026-07). Bump the digest
+      # Digest-pinned semgrep/semgrep 1.180.0 (resolved 2026-10). Bump the digest
       # deliberately rather than tracking a moving :latest tag.
-      image: semgrep/semgrep@sha256:06938c1f365d3f67b8cedd8bc117607ae64253f88a0e768e9da9408548927dd6
+      image: semgrep/semgrep@sha256:529ee8a277ec8adc5b534d7c74eea0a47e9de21d62852b6ba7ac6ba9566845c3
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Semgrep scan (auto rules, fail on blocking)
         run: |
           semgrep scan \
@@ -125,7 +125,7 @@ jobs:
     # and dispatched runs see the secret and run the full scan.
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           global-json-file: global.json
@@ -166,9 +166,11 @@ jobs:
           for proj in src/NutanixMcp.*/NutanixMcp.*.csproj; do
             name=$(basename "$proj" .csproj)
             pvs-studio-dotnet -t "$proj" -c Release -o "pvs-out/${name}.plog" || code=$?
-            # Bit-mask: 256 = findings, 1024 = license expiring soon — both
-            # tolerated.
-            if [ -n "${code:-}" ] && [ $((code & ~256 & ~1024)) -ne 0 ]; then
+            # pvs-studio-dotnet (Linux) bit-mask: 8 = findings, 4 = license
+            # expiring within a month — both tolerated; 1 = license error,
+            # 2 = analyzer error fail the job. (256/1024 are the Windows
+            # PVS-Studio_Cmd codes.) https://pvs-studio.com/en/docs/manual/0035/
+            if [ -n "${code:-}" ] && [ $((code & ~8 & ~4)) -ne 0 ]; then
               exit "$code"
             fi
             unset code
