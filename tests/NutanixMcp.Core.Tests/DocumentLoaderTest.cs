@@ -6,6 +6,47 @@ namespace NutanixMcp.Core.Tests;
 
 public class DocumentLoaderTest
 {
+    [Theory]
+    [InlineData("```yaml", "```")]
+    [InlineData("~~~~yaml", "~~~~")]
+    [InlineData(" ```yaml", "   ````")]
+    [InlineData("````yaml", "`````")]
+    public void PreservesFencedSourceAndIgnoresCodeHeadings(string opening, string closing)
+    {
+        const string code = "ownerUuid:\n  pattern: \"^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{12}$\"\n# source comment\n{42}---\n![](_page_3_Picture_5.jpeg)";
+        string fenced = opening + "\n" + code + "\n" + closing;
+        var sections = DocumentLoader.ExtractSectionsFromMarkdown(
+            "# Reference\n\n" + fenced + "\n\n## Prose\n\n{9}---\nbody", "Fallback");
+
+        sections.Should().HaveCount(2);
+        sections[0].Title.Should().Be("Reference");
+        sections[0].Content.Should().Be(fenced.Trim());
+        sections[1].Title.Should().Be("Prose");
+        sections[1].Content.Should().Be("body");
+    }
+
+    [Fact]
+    public void ShorterAndMismatchedFencesDoNotEndSource()
+    {
+        const string fenced = "````yaml\n{8}---\n```\n# code heading\n~~~~\n## another code heading\n````";
+        var sections = DocumentLoader.ExtractSectionsFromMarkdown(
+            "# Reference\n\n" + fenced + "\n\n## Prose\n\nbody", "Fallback");
+
+        sections.Should().HaveCount(2);
+        sections[0].Content.Should().Be(fenced);
+        sections[1].Title.Should().Be("Prose");
+    }
+
+    [Fact]
+    public void UnclosedFencePreservesSourceToEndOfDocument()
+    {
+        const string fenced = "~~~yaml\npattern: \"{8}-{4}-\"\n# source comment\n![](_page_3_Picture_5.jpeg)";
+        var sections = DocumentLoader.ExtractSectionsFromMarkdown("# Reference\n\n" + fenced, "Fallback");
+
+        sections.Should().HaveCount(1);
+        sections[0].Content.Should().Be(fenced);
+    }
+
     [Fact]
     public void StripsCrlfBeforeMatchingHeadings()
     {
