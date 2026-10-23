@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using NutanixMcp.Core.Chunking;
@@ -28,6 +29,9 @@ public static partial class DocumentLoader
         @"^(?<level>\#{1,6})[ \t]+(?<title>[^\r\n]+)$",
         RegexOptions.Multiline | RegexOptions.ExplicitCapture)]
     private static partial Regex HeadingRegex();
+
+    [GeneratedRegex(@"^ {0,3}(?<fence>`{3,}|~{3,})(?<suffix>[^\r\n]*)$", RegexOptions.ExplicitCapture)]
+    private static partial Regex FenceRegex();
 
     [GeneratedRegex(@"<[^>]+>", RegexOptions.ExplicitCapture)]
     private static partial Regex HtmlTagRegex();
@@ -165,15 +169,8 @@ public static partial class DocumentLoader
         string lf = md.Replace("\r\n", "\n", StringComparison.Ordinal)
                    .Replace('\r', '\n');
 
-        // Strip marker page-break tokens so they do not bleed into section
-        // bodies. About a quarter of the local corpus carries them.
-        string noPageMarkers = PageMarkerRegex().Replace(lf, string.Empty);
-
-        // Strip empty marker image references — they have no semantic content
-        // and pollute embeddings.
-        string cleaned = EmptyImageRegex().Replace(noPageMarkers, string.Empty);
-
-        var matches = HeadingRegex().Matches(cleaned);
+        var (cleaned, headingInput) = CleanProse(lf);
+        var matches = HeadingRegex().Matches(headingInput);
         if (matches.Count == 0)
         {
             string body = cleaned.Trim();
@@ -215,6 +212,49 @@ public static partial class DocumentLoader
         }
 
         return sections;
+    }
+
+    private static (string Cleaned, string HeadingInput) CleanProse(string markdown)
+    {
+        var cleaned = new StringBuilder(markdown.Length);
+        var headingInput = new StringBuilder(markdown.Length);
+        string fence = "";
+        using var reader = new StringReader(markdown);
+        while (reader.ReadLine() is string line)
+        {
+            bool code = fence.Length > 0;
+            var match = FenceRegex().Match(line);
+            if (match.Success)
+            {
+                string candidate = match.Groups["fence"].Value;
+                string suffix = match.Groups["suffix"].Value;
+                if (!code && (candidate[0] != '`' || !suffix.Contains('`')))
+                {
+                    fence = candidate;
+                    code = true;
+                }
+                else if (code && candidate[0] == fence[0] && candidate.Length >= fence.Length
+                    && suffix.Trim(' ', '\t').Length == 0)
+                {
+                    fence = "";
+                }
+            }
+
+            // PDF cleanup and ATX heading recognition must not rewrite fenced source.
+            string content = code ? line : EmptyImageRegex().Replace(
+                PageMarkerRegex().Replace(line, string.Empty), string.Empty);
+            cleaned.Append(content).Append('\n');
+            if (code)
+            {
+                headingInput.Append(' ', content.Length);
+            }
+            else
+            {
+                headingInput.Append(content);
+            }
+            headingInput.Append('\n');
+        }
+        return (cleaned.ToString(), headingInput.ToString());
     }
 
     private static List<Section> DropTocSection(List<Section> sections)
