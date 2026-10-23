@@ -193,7 +193,9 @@ jobs:
         env:
           PVS_USER: ${{ secrets.PVS_USER }}
           PVS_KEY: ${{ secrets.PVS_KEY }}
-        run: pvs-studio-dotnet credentials -u "$PVS_USER" -n "$PVS_KEY"
+        run: |
+          umask 077
+          printf '%s\n%s\n' "$PVS_USER" "$PVS_KEY" > "$RUNNER_TEMP/PVS-Studio.lic"
       - name: Build
         if: steps.precheck.outputs.skip != 'true'
         run: dotnet build nutanix-mcp.slnx --configuration Release
@@ -204,7 +206,8 @@ jobs:
           mkdir -p pvs-out
           for proj in src/NutanixMcp.*/NutanixMcp.*.csproj; do
             name=$(basename "$proj" .csproj)
-            pvs-studio-dotnet -t "$proj" -c Release -o "pvs-out/${name}.plog" || code=$?
+            pvs-studio-dotnet -t "$proj" -c Release \
+              --licFile "$RUNNER_TEMP/PVS-Studio.lic" -o "pvs-out/${name}.plog" || code=$?
             # pvs-studio-dotnet (Linux) bit-mask: 8 = findings, 4 = license
             # expiring within a month — both tolerated; 1 = license error,
             # 2 = analyzer error fail the job. (256/1024 are the Windows
@@ -220,3 +223,6 @@ jobs:
         with:
           name: pvs-studio-plogs
           path: pvs-out/
+      - name: Remove temporary license
+        if: always()
+        run: rm -f -- "$RUNNER_TEMP/PVS-Studio.lic"

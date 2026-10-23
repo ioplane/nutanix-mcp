@@ -39,16 +39,26 @@ when a finding is irrelevant.
 
 ## Layer 3: PVS-Studio
 
-`pvs-studio.cfg` at the repo root holds the licence path and analysis
-mode. Local run:
+Linux CI reads the repository Actions secrets `PVS_USER` and `PVS_KEY`.
+It creates a two-line license file under `RUNNER_TEMP` with mode `0600`,
+passes its path through `pvs-studio-dotnet --licFile`, and removes it
+after the job, including failure paths. The license stays outside the
+checkout and the `pvs-studio-plogs` artifact. Missing secrets skip the
+scan; that result is not analysis evidence.
+
+The job analyzes each production project and uploads its `.plog` report.
+Analyzer errors and invalid licenses fail the job. Findings and the
+near-expiry warning are informational; the workflow does not compare
+warnings against a `main` baseline. Inspect the reports before claiming
+a clean scan. See the documented
+[Linux exit codes and license-file option](https://pvs-studio.com/en/docs/manual/0035/).
+
+Local Windows run:
 
 ```bash
 PVS-Studio_Cmd.exe -t nutanix-mcp.slnx -o pvs-results.plog -c Release
 HtmlGenerator.exe -t pvs-results.plog -o pvs-report -r
 ```
-
-The CI job is informational against the baseline, but the build fails
-on new W-level warnings versus `main`.
 
 ## Layer 4: Format
 
